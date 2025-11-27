@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lime Phát Âm - Hệ Thống Luyện Phát Âm</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f8ff; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        button { background: #4CAF50; color: white; border: none; padding: 10px 15px; margin: 5px; cursor: pointer; border-radius: 4px; }
+        button:hover { background: #45a049; }
+        input, select { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        .word { font-size: 24px; font-weight: bold; }
+        .feedback { color: #2196F3; font-style: italic; }
+        .error { color: red; }
+        .success { color: green; }
+        .motivation { background: #FFEB3B; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .stats-table { width: 100%; border-collapse: collapse; }
+        .stats-table th, .stats-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .stats-table th { background: #f2f2f2; }
+        audio { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const firebaseConfig = {
+            apiKey: "AIzaSyB2VOZ0A5im13MC6FNLa4bEupKedm5iiBo",
+            authDomain: "lime-phat-am.firebaseapp.com",
+            projectId: "lime-phat-am",
+            storageBucket: "lime-phat-am.firebasestorage.app",
+            messagingSenderId: "434295865710",
+            appId: "1:434295865710:web:5f373900f5e8c1d679417f",
+            measurementId: "G-K1PHBV3HMY"
+        };
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore(app);
+        const auth = firebase.auth(app);
+        const storage = firebase.storage(app);
+
+        const HF_TOKEN = "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";
+        const HF_MODEL = "openai/whisper-large-v3"; // Model HF cho speech-to-text và pronunciation scoring
+
+        // Hàm helper để phân tích syllables (dùng thư viện đơn giản tự code)
+        function getSyllables(word) {
+            // Logic đơn giản: split theo nguyên âm cơ bản (có thể cải tiến sau)
+            return word.split(/[^aeiouy]+/i).filter(s => s);
+        }
+
+        // Hàm gọi HF API cho speech recognition và scoring
+        async function analyzePronunciation(audioBlob, targetText) {
+            const formData = new FormData();
+            formData.append("file", audioBlob, "audio.wav");
+            const response = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}`, {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${HF_TOKEN}` },
+                body: formData
+            });
+            const result = await response.json();
+            const transcript = result.text || "";
+            
+            // Tính điểm similarity (Levenshtein distance đơn giản)
+            const distance = levenshteinDistance(transcript.toLowerCase(), targetText.toLowerCase());
+            const score = Math.max(0, 100 - (distance / targetText.length) * 100);
+            
+            // Detect syllables sai
+            const targetSyls = getSyllables(targetText);
+            const transSyls = getSyllables(transcript);
+            const wrongSyls = targetSyls.map((syl, i) => transSyls[i] !== syl ? syl : null).filter(Boolean);
+            
+            return { transcript, score, wrongSyls };
+        }
+
+        // Levenshtein distance helper
+        function levenshteinDistance(s, t) {
+            if (!s.length) return t.length;
+            if (!t.length) return s.length;
+            const arr = [];
+            for (let i = 0; i <= t.length; i++) {
+                arr[i] = [i];
+                for (let j = 1; j <= s.length; j++) {
+                    arr[i][j] = i === 0 ? j : Math.min(
+                        arr[i - 1][j] + 1,
+                        arr[i][j - 1] + 1,
+                        arr[i - 1][j - 1] + (s[j - 1] === t[i - 1] ? 0 : 1)
+                    );
+                }
+            }
+            return arr[t.length][s.length];
+        }
+
+        // Motivation messages
+        const motivations = [
+            "Cố lên! Bạn đã cải thiện rồi đấy!",
+            "Gần đúng lắm! Thử lại xem sao.",
+            "Tuyệt vời! Điểm số đang tăng lên.",
+            "Bạn thật kiên trì! Tiếp tục nhé.",
+            "Đã tốt hơn lần trước 10% rồi!"
+        ];
+
+        class App extends React.Component {
+            constructor(props) {
+                super(props);
+                this.state = {
+                    userType: null, // 'teacher' or 'student'
+                    userId: '',
+                    classId: '',
+                    classes: [],
+                    students: [],
+                    assignments: [],
+                    currentAssignment: [],
+                    stats: {},
+                    progress: [],
+                    recording: false,
+                    audio: null,
+                    score: null,
+                    feedback: '',
+                    motivation: '',
+                    attempts: 0,
+                    bestScore: 0,
+                    slowMode: false,
+                    voice: 'en-US',
+                    error: ''
+                };
+                this.recorder = null;
+            }
+
+            componentDidMount() {
+                // Listen for auth changes (simple email/password for teacher, code for student)
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        this.setState({ userType: 'teacher', userId: user.uid });
+                        this.loadClasses(user.uid);
+                    }
+                });
+            }
+
+            login = async (type, id) => {
+                try {
+                    if (type === 'teacher') {
+                        await auth.signInWithEmailAndPassword(id + '@teacher.com', 'password'); // Simple auth, change in prod
+                    } else {
+                        // Student login by code
+                        const studentRef = db.collection('students').where('code', '==', id).get();
+                        const student = (await studentRef).docs[0]?.data();
+                        if (student) {
+                            this.setState({ userType: 'student', userId: student.code, classId: student.classId });
+                            this.loadAssignments(student.classId);
+                            this.loadProgress(student.code);
+                        } else {
+                            this.setState({ error: 'Mã học sinh không tồn tại' });
+                        }
+                    }
+                } catch (err) {
+                    this.setState({ error: 'Đăng nhập thất bại: ' + err.message });
+                }
+            }
+
+            logout = () => {
+                auth.signOut();
+                this.setState({ userType: null, userId: '', classId: '', classes: [], students: [], assignments: [], stats: {}, progress: [] });
+            }
+
+            loadClasses = async (teacherId) => {
+                const classesRef = db.collection('classes').where('teacherId', '==', teacherId);
+                const snapshot = await classesRef.get();
+                const classes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                this.setState({ classes });
+            }
+
+            createClass = async (name) => {
+                const newClass = await db.collection('classes').add({ name, teacherId: this.state.userId, students: [] });
+                this.loadClasses(this.state.userId);
+            }
+
+            addStudent = async (classId, name, code) => {
+                await db.collection('students').add({ name, code, classId });
+                await db.collection('classes').doc(classId).update({
+                    students: firebase.firestore.FieldValue.arrayUnion({ name, code })
+                });
+                this.loadStudents(classId);
+            }
+
+            loadStudents = async (classId) => {
+                const classDoc = await db.collection('classes').doc(classId).get();
+                this.setState({ students: classDoc.data().students || [] });
+            }
+
+            assignWords = async (classId, words) => {
+                await db.collection('assignments').add({ classId, words: words.split(','), week: new Date().toISOString().slice(0,10) });
+                this.loadAssignments(classId);
+            }
+
+            loadAssignments = async (classId) => {
+                const assignsRef = db.collection('assignments').where('classId', '==', classId);
+                const snapshot = await assignsRef.get();
+                const assignments = snapshot.docs.map(doc => doc.data().words);
+                this.setState({ assignments, currentAssignment: assignments[assignments.length - 1] || [] });
+            }
+
+            loadProgress = async (studentId) => {
+                const progressRef = db.collection('progress').where('studentId', '==', studentId);
+                const snapshot = await progressRef.get();
+                const progress = snapshot.docs.map(doc => doc.data());
+                this.setState({ progress });
+                this.calculateStats();
+            }
+
+            startRecording = async () => {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    this.recorder = new MediaRecorder(stream);
+                    this.recorder.start();
+                    this.setState({ recording: true });
+                    this.recorder.ondataavailable = e => this.setState({ audio: e.data });
+                } catch (err) {
+                    this.setState({ error: 'Không thể ghi âm: ' + err.message });
+                }
+            }
+
+            stopRecording = (word) => {
+                this.recorder.stop();
+                this.setState({ recording: false });
+                setTimeout(() => this.processAudio(word), 500);
+            }
+
+            processAudio = async (word) => {
+                const { audio, attempts, bestScore, progress } = this.state;
+                if (audio) {
+                    const analysis = await analyzePronunciation(audio, word);
+                    const newScore = analysis.score;
+                    const newBest = Math.max(bestScore, newScore);
+                    const motivation = motivations[Math.floor(Math.random() * motivations.length)] + 
+                        (newScore > bestScore ? ` Điểm tăng ${newScore - bestScore}%!` : '');
+                    const wrongSyls = analysis.wrongSyls.join(', ');
+                    const feedback = wrongSyls ? `Sai ở syllables: ${wrongSyls}. Thử luyện lại!` : 'Hoàn hảo!';
+
+                    // Lưu progress
+                    await db.collection('progress').add({
+                        studentId: this.state.userId,
+                        word,
+                        score: newBest,
+                        attempts: attempts + 1,
+                        timestamp: new Date()
+                    });
+
+                    this.setState({
+                        score: newScore,
+                        bestScore: newBest,
+                        feedback,
+                        motivation,
+                        attempts: attempts + 1
+                    });
+                    this.loadProgress(this.state.userId);
+                }
+            }
+
+            playAudio = (text, slow = false) => {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = this.state.voice;
+                utterance.rate = slow ? 0.6 : 1.0;
+                speechSynthesis.speak(utterance);
+            }
+
+            calculateStats = () => {
+                const { progress, currentAssignment } = this.state;
+                // Tính stats cho HS
+                const completed = progress.length / currentAssignment.length * 100;
+                const avgScore = progress.reduce((sum, p) => sum + p.score, 0) / progress.length || 0;
+                const attemptsPerWord = {}; // Tính trung bình
+                progress.forEach(p => attemptsPerWord[p.word] = (attemptsPerWord[p.word] || 0) + 1);
+                const worstWord = progress.filter(p => p.score < 60).map(p => p.word)[0] || 'Không có';
+                
+                // So sánh tuần này vs trước (giả sử week từ timestamp)
+                const thisWeek = progress.filter(p => new Date(p.timestamp).getWeek() === new Date().getWeek());
+                const lastWeek = progress.filter(p => new Date(p.timestamp).getWeek() === new Date().getWeek() - 1);
+                const progressDiff = (thisWeek.reduce((sum, p) => sum + p.score, 0) / thisWeek.length) - 
+                                    (lastWeek.reduce((sum, p) => sum + p.score, 0) / lastWeek.length) || 0;
+
+                this.setState({
+                    stats: {
+                        completed: completed.toFixed(2) + '%',
+                        avgScore: avgScore.toFixed(2),
+                        attempts: Object.values(attemptsPerWord).reduce((a, b) => a + b, 0) / Object.keys(attemptsPerWord).length || 0,
+                        worstWord,
+                        progressDiff: progressDiff.toFixed(2)
+                    }
+                });
+            }
+
+            loadClassStats = async (classId) => {
+                const students = this.state.students;
+                const progresses = await Promise.all(students.map(s => this.loadProgress(s.code)));
+                // Tính class stats
+                const completedPercent = (progresses.filter(p => p.length >= 20).length / students.length * 100).toFixed(2) + '%';
+                const classAvg = progresses.reduce((sum, ps) => sum + (ps.reduce((s, p) => s + p.score, 0) / ps.length), 0) / progresses.length || 0;
+                const top5 = students.sort((a, b) => b.avgScore - a.avgScore).slice(0,5).map(s => s.name);
+                const commonWorst = {}; // Tính từ kém chung
+                progresses.forEach(ps => ps.filter(p => p.score < 60).forEach(p => commonWorst[p.word] = (commonWorst[p.word] || 0) + 1));
+                const worstWords = Object.keys(commonWorst).sort((a,b) => commonWorst[b] - commonWorst[a]).slice(0,5);
+
+                this.setState({
+                    stats: {
+                        classCompleted: completedPercent,
+                        classAvg: classAvg.toFixed(2),
+                        top5,
+                        worstWords
+                    }
+                });
+            }
+
+            renderLogin() {
+                const { userType, userId, error } = this.state;
+                return (
+                    <div className="container">
+                        <h1>Đăng Nhập Lime Phát Âm</h1>
+                        {error && <p className="error">{error}</p>}
+                        <select onChange={e => this.setState({ userType: e.target.value })}>
+                            <option>Chọn vai trò</option>
+                            <option value="teacher">Giáo viên</option>
+                            <option value="student">Học sinh</option>
+                        </select>
+                        <input placeholder="Email GV hoặc Mã HS" onChange={e => this.setState({ userId: e.target.value })} />
+                        <button onClick={() => this.login(userType, userId)}>Đăng nhập</button>
+                    </div>
+                );
+            }
+
+            renderTeacher() {
+                const { classes, students, classId, assignments, stats } = this.state;
+                return (
+                    <div className="container">
+                        <h1>Trang Giáo Viên</h1>
+                        <button onClick={this.logout}>Đăng xuất</button>
+                        <h2>Tạo Lớp</h2>
+                        <input id="className" placeholder="Tên lớp (ví dụ: Lớp 6A)" />
+                        <button onClick={() => this.createClass(document.getElementById('className').value)}>Tạo</button>
+                        
+                        <h2>Lớp Học</h2>
+                        <select onChange={e => { this.setState({ classId: e.target.value }); this.loadStudents(e.target.value); this.loadAssignments(e.target.value); this.loadClassStats(e.target.value); }}>
+                            {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        </select>
+                        
+                        {classId && (
+                            <>
+                                <h2>Thêm Học Sinh</h2>
+                                <input id="studentName" placeholder="Tên HS" />
+                                <input id="studentCode" placeholder="Mã HS (ví dụ: HS001)" />
+                                <button onClick={() => this.addStudent(classId, document.getElementById('studentName').value, document.getElementById('studentCode').value)}>Thêm</button>
+                                
+                                <h2>Danh Sách HS</h2>
+                                <ul>{students.map(s => <li key={s.code}>{s.name} ({s.code})</li>)}</ul>
+                                
+                                <h2>Giao Bài Tập (20 từ, cách nhau dấu phẩy)</h2>
+                                <input id="words" placeholder="apple,banana,invitation,..." style={{width: '100%'}} />
+                                <button onClick={() => this.assignWords(classId, document.getElementById('words').value)}>Giao</button>
+                                
+                                <h2>Bài Tập Đã Giao</h2>
+                                <ul>{assignments.map((a, i) => <li key={i}>{a.join(', ')}</li>)}</ul>
+                                
+                                <h2>Thống Kê Lớp</h2>
+                                <table className="stats-table">
+                                    <tr><th>% Hoàn Thành</th><td>{stats.classCompleted}</td></tr>
+                                    <tr><th>Điểm TB Lớp</th><td>{stats.classAvg}</td></tr>
+                                    <tr><th>Top 5 HS</th><td>{stats.top5?.join(', ')}</td></tr>
+                                    <tr><th>Từ Kém Chung</th><td>{stats.worstWords?.join(', ')}</td></tr>
+                                </table>
+                            </>
+                        )}
+                    </div>
+                );
+            }
+
+            renderStudent() {
+                const { currentAssignment, recording, score, feedback, motivation, attempts, bestScore, stats, slowMode, voice } = this.state;
+                return (
+                    <div className="container">
+                        <h1>Trang Học Sinh</h1>
+                        <button onClick={this.logout}>Đăng xuất</button>
+                        <h2>Bài Tập Tuần Này (20 từ)</h2>
+                        {currentAssignment.map(word => (
+                            <div key={word}>
+                                <p className="word">{word}</p>
+                                <select onChange={e => this.setState({ voice: e.target.value })}>
+                                    <option value="en-US">Giọng Mỹ</option>
+                                    <option value="en-GB">Giọng Anh</option>
+                                </select>
+                                <button onClick={() => this.playAudio(word, false)}>Nghe Bình Thường</button>
+                                <button onClick={() => this.playAudio(word, true)}>Nghe Chậm</button>
+                                {!recording ? (
+                                    <button onClick={this.startRecording}>Ghi Âm</button>
+                                ) : (
+                                    <button onClick={() => this.stopRecording(word)}>Dừng & Chấm</button>
+                                )}
+                                {score !== null && (
+                                    <div>
+                                        <p className="feedback">Điểm: {score} (Tốt nhất: {bestScore})</p>
+                                        <p>{feedback}</p>
+                                        <p className="motivation">{motivation}</p>
+                                        <p>Số lần luyện: {attempts}</p>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                        
+                        <h2>Tiến Độ Cá Nhân</h2>
+                        <table className="stats-table">
+                            <tr><th>% Hoàn Thành</th><td>{stats.completed}</td></tr>
+                            <tr><th>Điểm TB</th><td>{stats.avgScore}</td></tr>
+                            <tr><th>Số Lần Luyện/Từ</th><td>{stats.attempts.toFixed(1)}</td></tr>
+                            <tr><th>Từ Kém Nhất</th><td>{stats.worstWord}</td></tr>
+                            <tr><th>Tiến Độ (vs tuần trước)</th><td>{stats.progressDiff > 0 ? '+' : ''}{stats.progressDiff}%</td></tr>
+                        </table>
+                        
+                        <p className="motivation">Kích thích luyện ở nhà: Luyện >5 lần/tuần để nhận badge "Siêu Chăm Chỉ"! Coin: {attempts * 10}</p>
+                    </div>
+                );
+            }
+
+            render() {
+                const { userType } = this.state;
+                if (!userType) return this.renderLogin();
+                if (userType === 'teacher') return this.renderTeacher();
+                return this.renderStudent();
+            }
+        }
+
+        // Extension for Date.getWeek
+        Date.prototype.getWeek = function() {
+            const date = new Date(this.getTime());
+            date.setHours(0, 0, 0, 0);
+            date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+            const week1 = new Date(date.getFullYear(), 0, 4);
+            return 1 + Math.round(((date - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
