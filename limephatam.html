@@ -791,26 +791,40 @@ window.recordWord = async function(word) {
             
             const audioBlob = new Blob(chunks, { type: 'audio/webm' });
             
-            try {
-                // Convert to base64
-                const reader = new FileReader();
-                const base64Audio = await new Promise((resolve, reject) => {
-                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(audioBlob);
-                });
-                
-                // Gọi Apps Script proxy
-                const response = await fetch(PROXY_URL, {
-                    method: 'POST',
-                    body: base64Audio
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
+           try {
+    // Convert to base64
+    const reader = new FileReader();
+    const base64Audio = await new Promise((resolve, reject) => {
+        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(audioBlob);
+    });
+    
+    // Gọi Apps Script proxy bằng XMLHttpRequest
+    const result = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', PROXY_URL, true);
+        xhr.setRequestHeader('Content-Type', 'text/plain');
+        
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    resolve(data);
+                } catch (e) {
+                    reject(new Error('Không thể parse response: ' + e.message));
                 }
-                
-                const result = await response.json();
+            } else {
+                reject(new Error('Request thất bại với status: ' + xhr.status));
+            }
+        };
+        
+        xhr.onerror = function() {
+            reject(new Error('Lỗi kết nối mạng'));
+        };
+        
+        xhr.send(base64Audio);
+    });
                 
                 if (result.error) {
                     throw new Error(result.error);
