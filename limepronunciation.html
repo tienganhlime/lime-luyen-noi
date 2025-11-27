@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lime Phát Âm - Hệ Thống Luyện Phát Âm</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"> <!-- Bootstrap cho UI đẹp -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -12,20 +13,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.0.0/firebase-firestore-compat.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.0.0/firebase-storage-compat.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f8ff; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        button { background: #4CAF50; color: white; border: none; padding: 10px 15px; margin: 5px; cursor: pointer; border-radius: 4px; }
-        button:hover { background: #45a049; }
-        input, select { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        body { background: #f0f8ff; }
+        .container { max-width: 800px; margin: auto; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); background: white; }
         .word { font-size: 24px; font-weight: bold; }
         .feedback { color: #2196F3; font-style: italic; }
         .error { color: red; }
         .success { color: green; }
         .motivation { background: #FFEB3B; padding: 10px; border-radius: 4px; margin: 10px 0; }
-        .stats-table { width: 100%; border-collapse: collapse; }
-        .stats-table th, .stats-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        .stats-table th { background: #f2f2f2; }
-        audio { margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -101,7 +95,7 @@
                 this.state = {
                     userType: null,
                     userId: '',
-                    password: '', // Thêm state cho password
+                    password: '',
                     classId: '',
                     classes: [],
                     students: [],
@@ -118,7 +112,8 @@
                     bestScore: 0,
                     slowMode: false,
                     voice: 'en-US',
-                    error: ''
+                    error: '',
+                    loading: false // Thêm loading state
                 };
                 this.recorder = null;
             }
@@ -133,78 +128,92 @@
             }
 
             login = async (type) => {
+                this.setState({ loading: true, error: '' });
                 const { userId, password } = this.state;
                 try {
                     if (type === 'teacher') {
                         if (!userId || !password) {
                             throw new Error('Vui lòng nhập email và mật khẩu');
                         }
-                        await auth.signInWithEmailAndPassword(userId, password); // Sử dụng password input
+                        await auth.signInWithEmailAndPassword(userId, password);
                     } else {
                         const studentRef = db.collection('students').where('code', '==', userId);
                         const snapshot = await studentRef.get();
                         const student = snapshot.docs[0]?.data();
                         if (student) {
                             this.setState({ userType: 'student', userId: student.code, classId: student.classId });
-                            this.loadAssignments(student.classId);
-                            this.loadProgress(student.code);
+                            await this.loadAssignments(student.classId);
+                            await this.loadProgress(student.code);
                         } else {
-                            this.setState({ error: 'Mã học sinh không tồn tại' });
+                            throw new Error('Mã học sinh không tồn tại');
                         }
                     }
                 } catch (err) {
                     this.setState({ error: 'Đăng nhập thất bại: ' + err.message });
+                } finally {
+                    this.setState({ loading: false });
                 }
             }
 
             logout = () => {
                 auth.signOut();
-                this.setState({ userType: null, userId: '', password: '', classId: '', classes: [], students: [], assignments: [], stats: {}, progress: [] });
+                this.setState({ userType: null, userId: '', password: '', classId: '', classes: [], students: [], assignments: [], currentAssignment: [], stats: {}, progress: [], loading: false });
             }
-           
+
             loadClasses = async (teacherId) => {
+                this.setState({ loading: true });
                 const classesRef = db.collection('classes').where('teacherId', '==', teacherId);
                 const snapshot = await classesRef.get();
                 const classes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                this.setState({ classes });
+                this.setState({ classes, loading: false });
             }
 
             createClass = async (name) => {
-                const newClass = await db.collection('classes').add({ name, teacherId: this.state.userId, students: [] });
+                this.setState({ loading: true });
+                await db.collection('classes').add({ name, teacherId: this.state.userId, students: [] });
                 this.loadClasses(this.state.userId);
+                this.setState({ loading: false });
             }
 
             addStudent = async (classId, name, code) => {
+                this.setState({ loading: true });
                 await db.collection('students').add({ name, code, classId });
                 await db.collection('classes').doc(classId).update({
                     students: firebase.firestore.FieldValue.arrayUnion({ name, code })
                 });
                 this.loadStudents(classId);
+                this.setState({ loading: false });
             }
 
             loadStudents = async (classId) => {
+                this.setState({ loading: true });
                 const classDoc = await db.collection('classes').doc(classId).get();
-                this.setState({ students: classDoc.data().students || [] });
+                this.setState({ students: classDoc.data().students || [], loading: false });
             }
 
             assignWords = async (classId, words) => {
+                this.setState({ loading: true });
                 await db.collection('assignments').add({ classId, words: words.split(','), week: new Date().toISOString().slice(0,10) });
                 this.loadAssignments(classId);
+                this.setState({ loading: false });
             }
 
             loadAssignments = async (classId) => {
+                this.setState({ loading: true });
                 const assignsRef = db.collection('assignments').where('classId', '==', classId);
                 const snapshot = await assignsRef.get();
                 const assignments = snapshot.docs.map(doc => doc.data().words);
-                this.setState({ assignments, currentAssignment: assignments[assignments.length - 1] || [] });
+                this.setState({ assignments, currentAssignment: assignments[assignments.length - 1] || [], loading: false });
             }
 
             loadProgress = async (studentId) => {
+                this.setState({ loading: true });
                 const progressRef = db.collection('progress').where('studentId', '==', studentId);
                 const snapshot = await progressRef.get();
                 const progress = snapshot.docs.map(doc => doc.data());
                 this.setState({ progress });
                 this.calculateStats();
+                this.setState({ loading: false });
             }
 
             startRecording = async () => {
@@ -226,7 +235,7 @@
             }
 
             processAudio = async (word) => {
-                const { audio, attempts, bestScore, progress } = this.state;
+                const { audio, attempts, bestScore } = this.state;
                 if (audio) {
                     const analysis = await analyzePronunciation(audio, word);
                     const newScore = analysis.score;
@@ -236,7 +245,6 @@
                     const wrongSyls = analysis.wrongSyls.join(', ');
                     const feedback = wrongSyls ? `Sai ở syllables: ${wrongSyls}. Thử luyện lại!` : 'Hoàn hảo!';
 
-                    // Lưu progress
                     await db.collection('progress').add({
                         studentId: this.state.userId,
                         word,
@@ -265,109 +273,133 @@
 
             calculateStats = () => {
                 const { progress, currentAssignment } = this.state;
-                // Tính stats cho HS
-                const completed = progress.length / currentAssignment.length * 100;
-                const avgScore = progress.reduce((sum, p) => sum + p.score, 0) / progress.length || 0;
-                const attemptsPerWord = {}; // Tính trung bình
+                const progressLength = progress.length;
+                const assignmentLength = currentAssignment.length;
+                const completed = assignmentLength > 0 ? (progressLength / assignmentLength * 100).toFixed(2) + '%' : '0%';
+
+                const avgScore = progressLength > 0 ? (progress.reduce((sum, p) => sum + p.score, 0) / progressLength).toFixed(2) : 0;
+
+                const attemptsPerWord = {};
                 progress.forEach(p => attemptsPerWord[p.word] = (attemptsPerWord[p.word] || 0) + 1);
+                const attemptsKeysLength = Object.keys(attemptsPerWord).length;
+                const attempts = attemptsKeysLength > 0 ? (Object.values(attemptsPerWord).reduce((a, b) => a + b, 0) / attemptsKeysLength).toFixed(1) : 0;
+
                 const worstWord = progress.filter(p => p.score < 60).map(p => p.word)[0] || 'Không có';
-                
-                // So sánh tuần này vs trước (giả sử week từ timestamp)
+
                 const thisWeek = progress.filter(p => new Date(p.timestamp).getWeek() === new Date().getWeek());
                 const lastWeek = progress.filter(p => new Date(p.timestamp).getWeek() === new Date().getWeek() - 1);
-                const progressDiff = (thisWeek.reduce((sum, p) => sum + p.score, 0) / thisWeek.length) - 
-                                    (lastWeek.reduce((sum, p) => sum + p.score, 0) / lastWeek.length) || 0;
+                const thisAvg = thisWeek.length > 0 ? thisWeek.reduce((sum, p) => sum + p.score, 0) / thisWeek.length : 0;
+                const lastAvg = lastWeek.length > 0 ? lastWeek.reduce((sum, p) => sum + p.score, 0) / lastWeek.length : 0;
+                const progressDiff = (thisAvg - lastAvg).toFixed(2);
 
                 this.setState({
                     stats: {
-                        completed: completed.toFixed(2) + '%',
-                        avgScore: avgScore.toFixed(2),
-                        attempts: Object.values(attemptsPerWord).reduce((a, b) => a + b, 0) / Object.keys(attemptsPerWord).length || 0,
+                        completed,
+                        avgScore,
+                        attempts,
                         worstWord,
-                        progressDiff: progressDiff.toFixed(2)
+                        progressDiff: isNaN(progressDiff) ? 0 : progressDiff
                     }
                 });
             }
 
             loadClassStats = async (classId) => {
+                this.setState({ loading: true });
                 const students = this.state.students;
-                const progresses = await Promise.all(students.map(s => this.loadProgress(s.code)));
-                // Tính class stats
-                const completedPercent = (progresses.filter(p => p.length >= 20).length / students.length * 100).toFixed(2) + '%';
-                const classAvg = progresses.reduce((sum, ps) => sum + (ps.reduce((s, p) => s + p.score, 0) / ps.length), 0) / progresses.length || 0;
-                const top5 = students.sort((a, b) => b.avgScore - a.avgScore).slice(0,5).map(s => s.name);
-                const commonWorst = {}; // Tính từ kém chung
+                const progresses = await Promise.all(students.map(async s => {
+                    const progressRef = db.collection('progress').where('studentId', '==', s.code);
+                    const snapshot = await progressRef.get();
+                    return snapshot.docs.map(doc => doc.data());
+                }));
+                const completedPercent = students.length > 0 ? (progresses.filter(p => p.length >= 20).length / students.length * 100).toFixed(2) + '%' : '0%';
+                const classAvg = progresses.length > 0 ? (progresses.reduce((sum, ps) => sum + (ps.length > 0 ? ps.reduce((s, p) => s + p.score, 0) / ps.length : 0), 0) / progresses.length).toFixed(2) : 0;
+                const top5 = students.map(s => {
+                    const ps = progresses.find((p, i) => students[i].code === s.code) || [];
+                    const avg = ps.length > 0 ? ps.reduce((sum, p) => sum + p.score, 0) / ps.length : 0;
+                    return { ...s, avg };
+                }).sort((a, b) => b.avg - a.avg).slice(0,5).map(s => s.name);
+                const commonWorst = {};
                 progresses.forEach(ps => ps.filter(p => p.score < 60).forEach(p => commonWorst[p.word] = (commonWorst[p.word] || 0) + 1));
                 const worstWords = Object.keys(commonWorst).sort((a,b) => commonWorst[b] - commonWorst[a]).slice(0,5);
 
                 this.setState({
                     stats: {
                         classCompleted: completedPercent,
-                        classAvg: classAvg.toFixed(2),
+                        classAvg,
                         top5,
                         worstWords
-                    }
+                    },
+                    loading: false
                 });
             }
 
             renderLogin() {
-                const { userType, userId, password, error } = this.state;
+                const { userType, userId, password, error, loading } = this.state;
+                if (loading) return <div className="container text-center"><p>Đang đăng nhập...</p></div>;
                 return (
                     <div className="container">
-                        <h1>Đăng Nhập Lime Phát Âm</h1>
-                        {error && <p className="error">{error}</p>}
-                        <select onChange={e => this.setState({ userType: e.target.value })}>
+                        <h1 className="text-center">Đăng Nhập Lime Phát Âm</h1>
+                        {error && <p className="error text-center">{error}</p>}
+                        <select className="form-select" onChange={e => this.setState({ userType: e.target.value })}>
                             <option>Chọn vai trò</option>
                             <option value="teacher">Giáo viên</option>
                             <option value="student">Học sinh</option>
                         </select>
-                        <input placeholder={userType === 'teacher' ? "Email GV (ví dụ: teacher1@example.com)" : "Mã HS"} onChange={e => this.setState({ userId: e.target.value })} />
+                        <input className="form-control" placeholder={userType === 'teacher' ? "Email GV (ví dụ: teacher1@example.com)" : "Mã HS"} onChange={e => this.setState({ userId: e.target.value })} />
                         {userType === 'teacher' && (
-                            <input type="password" placeholder="Mật khẩu" onChange={e => this.setState({ password: e.target.value })} />
+                            <input className="form-control" type="password" placeholder="Mật khẩu" onChange={e => this.setState({ password: e.target.value })} />
                         )}
-                        <button onClick={() => this.login(userType)}>Đăng nhập</button>
+                        <button className="btn btn-primary w-100" onClick={() => this.login(userType)}>Đăng nhập</button>
                     </div>
                 );
             }
 
             renderTeacher() {
-                const { classes, students, classId, assignments, stats } = this.state;
+                const { classes, students, classId, assignments, stats, loading } = this.state;
+                if (loading) return <div className="container text-center"><p>Đang tải dữ liệu...</p></div>;
                 return (
                     <div className="container">
-                        <h1>Trang Giáo Viên</h1>
-                        <button onClick={this.logout}>Đăng xuất</button>
+                        <h1 className="text-center">Trang Giáo Viên</h1>
+                        <button className="btn btn-danger" onClick={this.logout}>Đăng xuất</button>
                         <h2>Tạo Lớp</h2>
-                        <input id="className" placeholder="Tên lớp (ví dụ: Lớp 6A)" />
-                        <button onClick={() => this.createClass(document.getElementById('className').value)}>Tạo</button>
+                        <input className="form-control" id="className" placeholder="Tên lớp (ví dụ: Lớp 6A)" />
+                        <button className="btn btn-success" onClick={() => this.createClass(document.getElementById('className').value)}>Tạo</button>
                         
                         <h2>Lớp Học</h2>
-                        <select onChange={e => { this.setState({ classId: e.target.value }); this.loadStudents(e.target.value); this.loadAssignments(e.target.value); this.loadClassStats(e.target.value); }}>
+                        <select className="form-select" onChange={e => { this.setState({ classId: e.target.value }); this.loadStudents(e.target.value); this.loadAssignments(e.target.value); this.loadClassStats(e.target.value); }}>
+                            <option>Chọn lớp</option>
                             {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                         
                         {classId && (
                             <>
                                 <h2>Thêm Học Sinh</h2>
-                                <input id="studentName" placeholder="Tên HS" />
-                                <input id="studentCode" placeholder="Mã HS (ví dụ: HS001)" />
-                                <button onClick={() => this.addStudent(classId, document.getElementById('studentName').value, document.getElementById('studentCode').value)}>Thêm</button>
+                                <input className="form-control" id="studentName" placeholder="Tên HS" />
+                                <input className="form-control" id="studentCode" placeholder="Mã HS (ví dụ: HS001)" />
+                                <button className="btn btn-success" onClick={() => this.addStudent(classId, document.getElementById('studentName').value, document.getElementById('studentCode').value)}>Thêm</button>
                                 
                                 <h2>Danh Sách HS</h2>
-                                <ul>{students.map(s => <li key={s.code}>{s.name} ({s.code})</li>)}</ul>
+                                <ul className="list-group">
+                                    {students.map(s => <li key={s.code} className="list-group-item">{s.name} ({s.code})</li>)}
+                                </ul>
                                 
                                 <h2>Giao Bài Tập (20 từ, cách nhau dấu phẩy)</h2>
-                                <input id="words" placeholder="apple,banana,invitation,..." style={{width: '100%'}} />
-                                <button onClick={() => this.assignWords(classId, document.getElementById('words').value)}>Giao</button>
+                                <input className="form-control" id="words" placeholder="apple,banana,invitation,..." />
+                                <button className="btn btn-success" onClick={() => this.assignWords(classId, document.getElementById('words').value)}>Giao</button>
                                 
                                 <h2>Bài Tập Đã Giao</h2>
-                                <ul>{assignments.map((a, i) => <li key={i}>{a.join(', ')}</li>)}</ul>
+                                <ul className="list-group">
+                                    {assignments.map((a, i) => <li key={i} className="list-group-item">{a.join(', ')}</li>)}
+                                </ul>
                                 
                                 <h2>Thống Kê Lớp</h2>
-                                <table className="stats-table">
-                                    <tr><th>% Hoàn Thành</th><td>{stats.classCompleted}</td></tr>
-                                    <tr><th>Điểm TB Lớp</th><td>{stats.classAvg}</td></tr>
-                                    <tr><th>Top 5 HS</th><td>{stats.top5?.join(', ')}</td></tr>
-                                    <tr><th>Từ Kém Chung</th><td>{stats.worstWords?.join(', ')}</td></tr>
+                                <table className="table table-striped">
+                                    <tbody>
+                                        <tr><th>% Hoàn Thành</th><td>{stats.classCompleted || '0%'}</td></tr>
+                                        <tr><th>Điểm TB Lớp</th><td>{stats.classAvg || 0}</td></tr>
+                                        <tr><th>Top 5 HS</th><td>{stats.top5?.join(', ') || 'Chưa có'}</td></tr>
+                                        <tr><th>Từ Kém Chung</th><td>{stats.worstWords?.join(', ') || 'Chưa có'}</td></tr>
+                                    </tbody>
                                 </table>
                             </>
                         )}
@@ -376,47 +408,52 @@
             }
 
             renderStudent() {
-                const { currentAssignment, recording, score, feedback, motivation, attempts, bestScore, stats, slowMode, voice } = this.state;
+                const { currentAssignment, recording, score, feedback, motivation, attempts, bestScore, stats, voice, loading } = this.state;
+                if (loading) return <div className="container text-center"><p>Đang tải tiến độ...</p></div>;
                 return (
                     <div className="container">
-                        <h1>Trang Học Sinh</h1>
-                        <button onClick={this.logout}>Đăng xuất</button>
+                        <h1 className="text-center">Trang Học Sinh</h1>
+                        <button className="btn btn-danger" onClick={this.logout}>Đăng xuất</button>
                         <h2>Bài Tập Tuần Này (20 từ)</h2>
                         {currentAssignment.map(word => (
-                            <div key={word}>
-                                <p className="word">{word}</p>
-                                <select onChange={e => this.setState({ voice: e.target.value })}>
-                                    <option value="en-US">Giọng Mỹ</option>
-                                    <option value="en-GB">Giọng Anh</option>
-                                </select>
-                                <button onClick={() => this.playAudio(word, false)}>Nghe Bình Thường</button>
-                                <button onClick={() => this.playAudio(word, true)}>Nghe Chậm</button>
-                                {!recording ? (
-                                    <button onClick={this.startRecording}>Ghi Âm</button>
-                                ) : (
-                                    <button onClick={() => this.stopRecording(word)}>Dừng & Chấm</button>
-                                )}
-                                {score !== null && (
-                                    <div>
-                                        <p className="feedback">Điểm: {score} (Tốt nhất: {bestScore})</p>
-                                        <p>{feedback}</p>
-                                        <p className="motivation">{motivation}</p>
-                                        <p>Số lần luyện: {attempts}</p>
-                                    </div>
-                                )}
+                            <div key={word} className="card mb-3">
+                                <div className="card-body">
+                                    <p className="word">{word}</p>
+                                    <select className="form-select d-inline-block w-auto" onChange={e => this.setState({ voice: e.target.value })}>
+                                        <option value="en-US">Giọng Mỹ</option>
+                                        <option value="en-GB">Giọng Anh</option>
+                                    </select>
+                                    <button className="btn btn-info ms-2" onClick={() => this.playAudio(word, false)}>Nghe Bình Thường</button>
+                                    <button className="btn btn-info ms-2" onClick={() => this.playAudio(word, true)}>Nghe Chậm</button>
+                                    {!recording ? (
+                                        <button className="btn btn-primary ms-2" onClick={this.startRecording}>Ghi Âm</button>
+                                    ) : (
+                                        <button className="btn btn-warning ms-2" onClick={() => this.stopRecording(word)}>Dừng & Chấm</button>
+                                    )}
+                                    {score !== null && (
+                                        <div className="mt-3">
+                                            <p className="feedback">Điểm: {score} (Tốt nhất: {bestScore})</p>
+                                            <p>{feedback}</p>
+                                            <p className="motivation">{motivation}</p>
+                                            <p>Số lần luyện: {attempts}</p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         ))}
                         
                         <h2>Tiến Độ Cá Nhân</h2>
-                        <table className="stats-table">
-                            <tr><th>% Hoàn Thành</th><td>{stats.completed}</td></tr>
-                            <tr><th>Điểm TB</th><td>{stats.avgScore}</td></tr>
-                            <tr><th>Số Lần Luyện/Từ</th><td>{stats.attempts.toFixed(1)}</td></tr>
-                            <tr><th>Từ Kém Nhất</th><td>{stats.worstWord}</td></tr>
-                            <tr><th>Tiến Độ (vs tuần trước)</th><td>{stats.progressDiff > 0 ? '+' : ''}{stats.progressDiff}%</td></tr>
+                        <table className="table table-striped">
+                            <tbody>
+                                <tr><th>% Hoàn Thành</th><td>{stats.completed || '0%'}</td></tr>
+                                <tr><th>Điểm TB</th><td>{stats.avgScore || 0}</td></tr>
+                                <tr><th>Số Lần Luyện/Từ</th><td>{stats.attempts || 0}</td></tr>
+                                <tr><th>Từ Kém Nhất</th><td>{stats.worstWord || 'Chưa có'}</td></tr>
+                                <tr><th>Tiến Độ (vs tuần trước)</th><td>{stats.progressDiff > 0 ? '+' : ''}{stats.progressDiff || 0}%</td></tr>
+                            </tbody>
                         </table>
                         
-                        <p className="motivation">Kích thích luyện ở nhà: Luyện >5 lần/tuần để nhận badge "Siêu Chăm Chỉ"! Coin: {attempts * 10}</p>
+                        <p className="motivation text-center">Kích thích luyện ở nhà: Luyện >5 lần/tuần để nhận badge "Siêu Chăm Chỉ"! Coin: {attempts * 10}</p>
                     </div>
                 );
             }
