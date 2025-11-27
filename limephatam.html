@@ -537,26 +537,42 @@ window.startPractice = async function(assignmentId) {
     document.getElementById('assignmentTitle').textContent = assign.name;
     
     // Render words
-    let html = '';
-    for (const word of assign.words) {
-        html += `
-            <div class="bg-white rounded-xl shadow-xl p-6 text-center">
-                <h3 class="text-3xl font-bold mb-4">${word}</h3>
-                <div class="space-x-2 mb-4">
-                    <button onclick="speakWord('${word}', 0.6)" class="bg-gray-400 text-white px-3 py-2 rounded hover:bg-gray-500">
-                        🐢 Chậm
-                    </button>
-                    <button onclick="speakWord('${word}', 1)" class="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600">
-                        ▶️ Bình thường
-                    </button>
+let html = '';
+for (const word of assign.words) {
+    const syllables = splitIntoSyllables(word);
+    const syllableDisplay = syllables.map(s => `<span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full mx-1 font-mono font-bold">${s}</span>`).join('');
+    
+    html += `
+        <div class="bg-white rounded-2xl shadow-2xl p-8 text-center border-2 border-gray-200 hover:border-blue-400 transition">
+            <h3 class="text-5xl font-bold mb-4 text-gray-800">${word}</h3>
+            
+            <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                <p class="text-sm text-gray-600 mb-2">📝 Âm tiết:</p>
+                <div class="flex flex-wrap justify-center gap-1">
+                    ${syllableDisplay}
                 </div>
-                <button onclick="recordWord('${word}')" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-semibold w-full">
-                    🎤 Thu âm
-                </button>
-                <div id="result-${word}" class="mt-4"></div>
             </div>
-        `;
-    }
+            
+            <div class="flex gap-2 mb-4 justify-center">
+                <button onclick="speakWord('${word}', 0.5)" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 font-semibold flex items-center gap-2">
+                    🐢 Chậm
+                </button>
+                <button onclick="speakWord('${word}', 1)" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 font-semibold flex items-center gap-2">
+                    ▶️ Bình thường
+                </button>
+                <button onclick="speakSyllables('${word}')" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 font-semibold flex items-center gap-2">
+                    🔊 Từng âm
+                </button>
+            </div>
+            
+            <button onclick="recordWord('${word}')" class="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-8 py-4 rounded-xl font-bold text-lg w-full shadow-lg transform hover:scale-105 transition">
+                🎤 BẮT ĐẦU THU ÂM
+            </button>
+            
+            <div id="result-${word}" class="mt-6"></div>
+        </div>
+    `;
+}
     
     document.getElementById('wordsList').innerHTML = html;
     updateProgress();
@@ -570,7 +586,27 @@ window.speakWord = function(word, rate) {
     utterance.lang = 'en-US';
     speechSynthesis.speak(utterance);
 }
-
+window.speakSyllables = function(word) {
+    const syllables = splitIntoSyllables(word);
+    let index = 0;
+    
+    const speakNext = () => {
+        if (index < syllables.length) {
+            speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(syllables[index]);
+            utterance.rate = 0.7;
+            utterance.lang = 'en-US';
+            utterance.onend = () => {
+                index++;
+                setTimeout(speakNext, 800);
+            };
+            speechSynthesis.speak(utterance);
+        }
+    };
+    
+    speakNext();
+};
 // ==================== SYLLABLE ANALYSIS ====================
 
 // Database âm tiết tiếng Anh (mẫu - có thể mở rộng)
@@ -926,3 +962,4 @@ showLoading(false);
 </script>
 </body>
 </html>
+
