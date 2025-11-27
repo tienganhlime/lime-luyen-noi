@@ -629,24 +629,17 @@ window.startPractice = async function(assignmentId) {
                     </div>
                 </div>
                 
-                <div class="flex gap-2 mb-4 justify-center">
-                    <button onclick="speakWord('${word}', 0.5)" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 font-semibold flex items-center gap-2">
-                        🐢 Chậm
-                    </button>
-                    <button onclick="speakWord('${word}', 1)" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 font-semibold flex items-center gap-2">
-                        ▶️ Bình thường
-                    </button>
-                    ${ipa ? `
-                    <button onclick="speakSyllablesWithIPA('${word}', '${syllables.join(',')}', '${ipa}')" 
-                            class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 font-semibold flex items-center gap-2">
-                        🎯 Từng âm (IPA)
-                    </button>
-                    ` : `
-                    <button onclick="speakSyllables('${word}')" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 font-semibold flex items-center gap-2">
-                        🔊 Từng âm
-                    </button>
-                    `}
-                </div>
+              <div class="flex gap-2 mb-4 justify-center">
+    <button onclick="speakWord('${word}', 0.3)" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 font-semibold flex items-center gap-2">
+        🐢 Rất chậm
+    </button>
+    <button onclick="speakWord('${word}', 0.6)" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 font-semibold flex items-center gap-2">
+        🐌 Chậm
+    </button>
+    <button onclick="speakWord('${word}', 1)" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 font-semibold flex items-center gap-2">
+        ▶️ Bình thường
+    </button>
+</div>
                 
                 <button onclick="recordWord('${word}')" class="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-8 py-4 rounded-xl font-bold text-lg w-full shadow-lg transform hover:scale-105 transition">
                     🎤 BẮT ĐẦU THU ÂM
@@ -1133,6 +1126,7 @@ window.speakSyllablesWithIPA = function(word, syllablesStr, ipa) {
 </script>
 </body>
 </html>
+
 
 
 
