@@ -353,12 +353,30 @@ window.createAssignment = function(classId, className) {
         <button onclick="showAssignments()" class="text-blue-600 mb-4">← Quay lại</button>
         
         <input type="text" id="assignmentName" placeholder="Tên bài (vd: Week 1 - Unit 1)" class="w-full p-3 border rounded-lg mb-4">
-        <textarea id="assignmentWords" placeholder="Nhập từ, mỗi từ một dòng (tối đa 20 từ):
-ship
-cat
-apple
-dog
-..." rows="12" class="w-full p-3 border rounded-lg mb-4 font-mono"></textarea>
+        
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <h3 class="font-bold mb-2">📝 Hướng dẫn nhập từ vựng:</h3>
+            <p class="text-sm text-gray-700 mb-2">Mỗi dòng 1 từ, có thể kèm IPA (tùy chọn):</p>
+            <div class="bg-white p-3 rounded font-mono text-sm space-y-1">
+                <div>fibre</div>
+                <div>fibre | ˈfaɪ.bə</div>
+                <div>carbohydrate | ˌkɑːr.boʊˈhaɪ.dreɪt</div>
+                <div>stomach upset | ˈstʌm.ək ˈʌp.set</div>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">
+                💡 Lấy IPA từ: 
+                <a href="https://dictionary.cambridge.org" target="_blank" class="text-blue-600">Cambridge Dictionary</a> |
+                <a href="https://www.oxfordlearnersdictionaries.com" target="_blank" class="text-blue-600">Oxford Dictionary</a>
+            </p>
+        </div>
+        
+        <textarea id="assignmentWords" placeholder="Nhập từ vựng (tối đa 20 từ)
+Ví dụ:
+fibre | ˈfaɪ.bə
+protein | ˈproʊ.tiːn
+carbohydrate | ˌkɑːr.boʊˈhaɪ.dreɪt" 
+            rows="12" class="w-full p-3 border rounded-lg mb-4 font-mono"></textarea>
+        
         <button onclick="saveAssignment('${classId}')" class="bg-purple-500 text-white px-6 py-3 rounded-lg font-semibold">
             Lưu và giao bài
         </button>
@@ -371,20 +389,50 @@ window.saveAssignment = async function(classId) {
     
     if (!name || !wordsText) return alert('Vui lòng điền đầy đủ thông tin');
     
-    const words = wordsText.split('\n').map(w => w.trim()).filter(Boolean).slice(0, 20);
+    const lines = wordsText.split('\n').map(w => w.trim()).filter(Boolean).slice(0, 20);
     
-    if (words.length === 0) return alert('Vui lòng nhập ít nhất 1 từ');
+    if (lines.length === 0) return alert('Vui lòng nhập ít nhất 1 từ');
+    
+    // Parse từ và IPA
+    const wordsData = lines.map(line => {
+        // Tách theo dấu |
+        const parts = line.split('|').map(p => p.trim());
+        const word = parts[0];
+        const ipa = parts[1] || null; // IPA là tùy chọn
+        
+        // Tách syllables từ IPA nếu có
+        let syllables = null;
+        if (ipa) {
+            // Tách theo dấu chấm trong IPA
+            syllables = ipa
+                .replace(/ˈ|ˌ/g, '') // Bỏ dấu nhấn
+                .split('.')
+                .map(s => s.trim())
+                .filter(Boolean);
+            
+            // Nếu không có dấu chấm, coi như 1 syllable
+            if (syllables.length === 0) {
+                syllables = [ipa.replace(/ˈ|ˌ/g, '')];
+            }
+        }
+        
+        return {
+            word: word,
+            ipa: ipa,
+            syllables: syllables
+        };
+    });
     
     showLoading(true);
     await addDoc(collection(db, 'assignments'), {
         name,
-        words,
+        wordsData: wordsData, // Lưu object thay vì array string
         classId,
         teacherCode: currentUser.code,
         createdAt: new Date()
     });
     
-    alert(`Đã giao bài "${name}" với ${words.length} từ!`);
+    alert(`Đã giao bài "${name}" với ${wordsData.length} từ!`);
     showAssignments();
     showLoading(false);
 }
@@ -410,10 +458,15 @@ window.viewStats = async function(classId, className) {
         html += '<p class="text-gray-600">Chưa có bài tập nào được giao.</p>';
     } else {
         for (const assignDoc of assignSnap.docs) {
-            const assign = assignDoc.data();
-            html += `<div class="border rounded-lg p-4 mb-4">
-                <h3 class="text-xl font-bold mb-2">${assign.name}</h3>
-                <p class="text-gray-600 mb-3">Số từ: ${assign.words.length}</p>
+    const assign = assignDoc.data();
+    
+    const wordCount = assign.wordsData 
+        ? assign.wordsData.length 
+        : (assign.words || []).length;
+    
+    html += `<div class="border rounded-lg p-4 mb-4">
+        <h3 class="text-xl font-bold mb-2">${assign.name}</h3>
+        <p class="text-gray-600 mb-3">Số từ: ${wordCount}</p>  // ← Fix!
                 <div class="space-y-2">
             `;
             
@@ -443,7 +496,7 @@ window.viewStats = async function(classId, className) {
                 });
                 
                 const avgScore = attempts > 0 ? Math.round(totalScore / attempts) : 0;
-                const progress = Math.round((completed / assign.words.length) * 100);
+                const progress = Math.round((completed / wordCount) * 100);  // ← Fix!
                 
                 html += `
                     <div class="bg-gray-50 p-3 rounded flex justify-between items-center">
@@ -485,6 +538,10 @@ window.loadStudentAssignments = async function() {
     } else {
         for (const doc of snap.docs) {
             const assign = doc.data();
+             // Lấy số từ từ cả format cũ và mới
+    const wordCount = assign.wordsData 
+        ? assign.wordsData.length 
+        : (assign.words || []).length;
             
             // Tính tiến độ
             const resultsRef = collection(db, 'results');
@@ -510,7 +567,7 @@ window.loadStudentAssignments = async function() {
                 <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-2xl transition cursor-pointer" onclick="startPractice('${doc.id}')">
                     <h3 class="text-2xl font-bold mb-3">${assign.name}</h3>
                     <div class="space-y-2 text-gray-600">
-                        <p>📝 Số từ: ${assign.words.length}</p>
+                        <p>📝 Số từ: ${wordCount}</p>
                         <p>✅ Hoàn thành: ${progress}%</p>
                         <p>⭐ Điểm TB: ${avgScore}</p>
                     </div>
@@ -536,43 +593,87 @@ window.startPractice = async function(assignmentId) {
     
     document.getElementById('assignmentTitle').textContent = assign.name;
     
-    // Render words
-let html = '';
-for (const word of assign.words) {
-    const syllables = splitIntoSyllables(word);
-    const syllableDisplay = syllables.map(s => `<span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full mx-1 font-mono font-bold">${s}</span>`).join('');
+    // Kiểm tra format dữ liệu cũ/mới
+    let wordsData = [];
+    if (assign.wordsData) {
+        // Format mới (có IPA)
+        wordsData = assign.wordsData;
+    } else if (assign.words) {
+        // Format cũ (chỉ có từ)
+        wordsData = assign.words.map(w => ({
+            word: w,
+            ipa: null,
+            syllables: null
+        }));
+    }
     
-    html += `
-        <div class="bg-white rounded-2xl shadow-2xl p-8 text-center border-2 border-gray-200 hover:border-blue-400 transition">
-            <h3 class="text-5xl font-bold mb-4 text-gray-800">${word}</h3>
-            
-            <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                <p class="text-sm text-gray-600 mb-2">📝 Âm tiết:</p>
-                <div class="flex flex-wrap justify-center gap-1">
-                    ${syllableDisplay}
+    // Render words
+    let html = '';
+    for (const data of wordsData) {
+        const word = data.word;
+        const ipa = data.ipa;
+        let syllables = data.syllables;
+        
+        // Nếu không có IPA từ giáo viên, dùng thuật toán tự động
+        if (!syllables) {
+            syllables = splitIntoSyllables(word);
+        }
+        
+        // Hiển thị syllables
+        const syllableDisplay = syllables.map((s, idx) => {
+            return `<span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full mx-1 font-mono font-bold">
+                ${s}
+            </span>`;
+        }).join('');
+        
+        // Hiển thị IPA nếu có
+        const ipaDisplay = ipa ? `
+            <div class="bg-purple-50 rounded-lg p-3 mb-3">
+                <p class="text-sm text-purple-700 mb-1">🔊 Phiên âm quốc tế (IPA):</p>
+                <p class="text-2xl font-bold text-purple-900">${ipa}</p>
+            </div>
+        ` : '';
+        
+        html += `
+            <div class="bg-white rounded-2xl shadow-2xl p-8 text-center border-2 border-gray-200 hover:border-blue-400 transition">
+                <h3 class="text-5xl font-bold mb-4 text-gray-800">${word}</h3>
+                
+                ${ipaDisplay}
+                
+                <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <p class="text-sm text-gray-600 mb-2">📝 Âm tiết:</p>
+                    <div class="flex flex-wrap justify-center gap-1">
+                        ${syllableDisplay}
+                    </div>
                 </div>
+                
+                <div class="flex gap-2 mb-4 justify-center">
+                    <button onclick="speakWord('${word}', 0.5)" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 font-semibold flex items-center gap-2">
+                        🐢 Chậm
+                    </button>
+                    <button onclick="speakWord('${word}', 1)" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 font-semibold flex items-center gap-2">
+                        ▶️ Bình thường
+                    </button>
+                    ${ipa ? `
+                    <button onclick="speakSyllablesWithIPA('${word}', '${syllables.join(',')}', '${ipa}')" 
+                            class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 font-semibold flex items-center gap-2">
+                        🎯 Từng âm (IPA)
+                    </button>
+                    ` : `
+                    <button onclick="speakSyllables('${word}')" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 font-semibold flex items-center gap-2">
+                        🔊 Từng âm
+                    </button>
+                    `}
+                </div>
+                
+                <button onclick="recordWord('${word}')" class="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-8 py-4 rounded-xl font-bold text-lg w-full shadow-lg transform hover:scale-105 transition">
+                    🎤 BẮT ĐẦU THU ÂM
+                </button>
+                
+                <div id="result-${word}" class="mt-6"></div>
             </div>
-            
-            <div class="flex gap-2 mb-4 justify-center">
-                <button onclick="speakWord('${word}', 0.5)" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 font-semibold flex items-center gap-2">
-                    🐢 Chậm
-                </button>
-                <button onclick="speakWord('${word}', 1)" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 font-semibold flex items-center gap-2">
-                    ▶️ Bình thường
-                </button>
-                <button onclick="speakSyllables('${word}')" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 font-semibold flex items-center gap-2">
-                    🔊 Từng âm
-                </button>
-            </div>
-            
-            <button onclick="recordWord('${word}')" class="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-8 py-4 rounded-xl font-bold text-lg w-full shadow-lg transform hover:scale-105 transition">
-                🎤 BẮT ĐẦU THU ÂM
-            </button>
-            
-            <div id="result-${word}" class="mt-6"></div>
-        </div>
-    `;
-}
+        `;
+    }
     
     document.getElementById('wordsList').innerHTML = html;
     updateProgress();
@@ -590,18 +691,36 @@ window.speakSyllables = function(word) {
     const syllables = splitIntoSyllables(word);
     let index = 0;
     
+    alert(`🎯 Từ "${word}" có ${syllables.length} âm tiết. Hãy lắng nghe từng âm!`);
+    
     const speakNext = () => {
         if (index < syllables.length) {
             speechSynthesis.cancel();
             
-            const utterance = new SpeechSynthesisUtterance(syllables[index]);
-            utterance.rate = 0.7;
+            // Đọc âm tiết trong context của từ gốc để phát âm đúng hơn
+            const syllable = syllables[index];
+            
+            // Tạo context: thêm từ gốc sau đó để AI hiểu ngữ cảnh
+            const context = `${syllable}... ${word}`;
+            
+            const utterance = new SpeechSynthesisUtterance(syllable);
+            utterance.rate = 0.6; // Chậm hơn
+            utterance.pitch = 1.0;
             utterance.lang = 'en-US';
+            utterance.volume = 1.0;
+            
             utterance.onend = () => {
                 index++;
-                setTimeout(speakNext, 800);
+                setTimeout(speakNext, 1000); // Dừng 1 giây giữa các âm
             };
+            
             speechSynthesis.speak(utterance);
+        } else {
+            // Sau khi đọc hết các âm tiết, đọc cả từ
+            setTimeout(() => {
+                alert(`✨ Giờ nghe cả từ: "${word}"`);
+                speakWord(word, 0.8);
+            }, 1500);
         }
     };
     
@@ -609,7 +728,6 @@ window.speakSyllables = function(word) {
 };
 // ==================== SYLLABLE ANALYSIS ====================
 
-// Database âm tiết tiếng Anh (mẫu - có thể mở rộng)
 const syllableDB = {
     'carbohydrate': ['car', 'bo', 'hy', 'drate'],
     'fibre': ['fi', 'bre'],
@@ -627,47 +745,73 @@ const syllableDB = {
     'healthy': ['heal', 'thy'],
     'water': ['wa', 'ter'],
     'something': ['some', 'thing'],
-    'weight': ['weight']
+    'weight': ['weight'],
+    'stomach': ['stom', 'ach'],
+    'upset': ['up', 'set'],
+    'casualty': ['cas', 'u', 'al', 'ty'],
+    'department': ['de', 'part', 'ment'],
+    'stomach upset': ['stom', 'ach', 'up', 'set'],
+    'casualty department': ['cas', 'u', 'al', 'ty', 'de', 'part', 'ment']
 };
 
-// Tự động tách syllable cho từ không có trong DB
 function splitIntoSyllables(word) {
-    word = word.toLowerCase();
+    const original = word;
+    word = word.toLowerCase().trim();
     
     // Kiểm tra trong database trước
     if (syllableDB[word]) {
         return syllableDB[word];
     }
     
-    // Thuật toán đơn giản tách syllable
+    // Nếu từ có khoảng trắng (cụm từ), tách từng từ
+    if (word.includes(' ')) {
+        const words = word.split(' ').filter(w => w.length > 0);
+        let allSyllables = [];
+        words.forEach(w => {
+            const syls = splitIntoSyllables(w);
+            allSyllables = allSyllables.concat(syls);
+        });
+        return allSyllables;
+    }
+    
+    // Nếu từ quá ngắn (1-3 ký tự), không tách
+    if (word.length <= 3) {
+        return [word];
+    }
+    
+    // Thuật toán cải tiến tách syllable
     const vowels = 'aeiouy';
     const syllables = [];
-    let currentSyllable = '';
+    let start = 0;
     
-    for (let i = 0; i < word.length; i++) {
-        currentSyllable += word[i];
+    for (let i = 1; i < word.length; i++) {
+        const prevIsVowel = vowels.includes(word[i - 1]);
+        const currIsVowel = vowels.includes(word[i]);
         
-        // Nếu gặp nguyên âm và ký tự tiếp theo là phụ âm
-        if (vowels.includes(word[i]) && i < word.length - 1 && !vowels.includes(word[i + 1])) {
-            // Thêm phụ âm tiếp theo vào syllable hiện tại
-            if (i < word.length - 2) {
-                currentSyllable += word[i + 1];
-                i++;
-            }
-            syllables.push(currentSyllable);
-            currentSyllable = '';
+        // Tách khi: vowel -> consonant (và còn ký tự phía sau)
+        if (prevIsVowel && !currIsVowel && i < word.length - 1) {
+            // Thêm consonant vào syllable hiện tại
+            syllables.push(word.substring(start, i + 1));
+            start = i + 1;
         }
     }
     
     // Thêm phần còn lại
-    if (currentSyllable) {
+    if (start < word.length) {
         if (syllables.length > 0) {
-            syllables[syllables.length - 1] += currentSyllable;
+            // Nếu phần còn lại quá ngắn, gộp vào syllable cuối
+            const remaining = word.substring(start);
+            if (remaining.length <= 2) {
+                syllables[syllables.length - 1] += remaining;
+            } else {
+                syllables.push(remaining);
+            }
         } else {
-            syllables.push(currentSyllable);
+            syllables.push(word.substring(start));
         }
     }
     
+    // Nếu không tách được gì, trả về nguyên từ
     return syllables.length > 0 ? syllables : [word];
 }
 
@@ -837,19 +981,32 @@ window.recordWord = async function(word) {
     });
     
     // Gọi Apps Script proxy bằng XMLHttpRequest
-    const result = await new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', PROXY_URL, true);
-        xhr.setRequestHeader('Content-Type', 'text/plain');
-        
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                try {
-                    const data = JSON.parse(xhr.responseText);
-                    resolve(data);
-                } catch (e) {
-                    reject(new Error('Không thể parse response: ' + e.message));
+   // Gọi Apps Script proxy bằng XMLHttpRequest
+const result = await new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', PROXY_URL, true);
+    xhr.setRequestHeader('Content-Type', 'text/plain');
+    
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            try {
+                // Loại bỏ các ký tự lạ trước khi parse JSON
+                let responseText = xhr.responseText.trim();
+                
+                // Nếu response bắt đầu bằng HTML, tìm JSON trong đó
+                if (responseText.startsWith('<!DOCTYPE') || responseText.startsWith('<html')) {
+                    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        responseText = jsonMatch[0];
+                    }
                 }
+                
+                const data = JSON.parse(responseText);
+                resolve(data);
+            } catch (e) {
+                console.error('Response text:', xhr.responseText);
+                reject(new Error('Không thể parse response: ' + e.message));
+            }
             } else {
                 reject(new Error('Request thất bại với status: ' + xhr.status));
             }
@@ -949,8 +1106,13 @@ snap.forEach(doc => {
 });
 
 const avgScore = snap.size > 0 ? Math.round(totalScore / snap.size) : 0;
+    // Lấy tổng số từ từ cả 2 format
+    const totalWords = currentAssignment.wordsData 
+        ? currentAssignment.wordsData.length 
+        : (currentAssignment.words || []).length;
 
-document.getElementById('progressText').textContent = `${completed}/${currentAssignment.words.length}`;
+
+ document.getElementById('progressText').textContent = `${completed}/${totalWords}`;  // ← Fix!
 document.getElementById('avgScoreText').textContent = avgScore;
 }
 window.backToStudent = function() {
@@ -959,7 +1121,41 @@ showScreen('studentDashboard');
 loadStudentAssignments();
 }
 showLoading(false);
+window.speakSyllablesWithIPA = function(word, syllablesStr, ipa) {
+    const syllables = syllablesStr.split(',');
+    
+    alert(`🎯 Từ "${word}" có ${syllables.length} âm tiết theo IPA: ${ipa}\n\nHãy lắng nghe cẩn thận!`);
+    
+    let index = 0;
+    const speakNext = () => {
+        if (index < syllables.length) {
+            const syllable = syllables[index];
+            
+            // Hiển thị âm tiết đang đọc
+            console.log(`🔊 Đang đọc âm: ${syllable}`);
+            
+            const utterance = new SpeechSynthesisUtterance(syllable);
+            utterance.rate = 0.5;
+            utterance.lang = 'en-US';
+            
+            utterance.onend = () => {
+                index++;
+                setTimeout(speakNext, 1200);
+            };
+            
+            speechSynthesis.speak(utterance);
+        } else {
+            setTimeout(() => {
+                alert(`✨ Giờ nghe cả từ: "${word}"`);
+                speakWord(word, 0.7);
+            }, 1500);
+        }
+    };
+    
+    speakNext();
+};
 </script>
 </body>
 </html>
+
 
