@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lime Phát Âm - Hệ Thống Luyện Phát Âm</title>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.0.0/firebase-app-compat.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.0.0/firebase-auth-compat.min.js"></script>
@@ -46,15 +46,12 @@
         const storage = firebase.storage(app);
 
         const HF_TOKEN = "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";
-        const HF_MODEL = "openai/whisper-large-v3"; // Model HF cho speech-to-text và pronunciation scoring
+        const HF_MODEL = "openai/whisper-large-v3";
 
-        // Hàm helper để phân tích syllables (dùng thư viện đơn giản tự code)
         function getSyllables(word) {
-            // Logic đơn giản: split theo nguyên âm cơ bản (có thể cải tiến sau)
             return word.split(/[^aeiouy]+/i).filter(s => s);
         }
 
-        // Hàm gọi HF API cho speech recognition và scoring
         async function analyzePronunciation(audioBlob, targetText) {
             const formData = new FormData();
             formData.append("file", audioBlob, "audio.wav");
@@ -65,20 +62,14 @@
             });
             const result = await response.json();
             const transcript = result.text || "";
-            
-            // Tính điểm similarity (Levenshtein distance đơn giản)
             const distance = levenshteinDistance(transcript.toLowerCase(), targetText.toLowerCase());
             const score = Math.max(0, 100 - (distance / targetText.length) * 100);
-            
-            // Detect syllables sai
             const targetSyls = getSyllables(targetText);
             const transSyls = getSyllables(transcript);
             const wrongSyls = targetSyls.map((syl, i) => transSyls[i] !== syl ? syl : null).filter(Boolean);
-            
             return { transcript, score, wrongSyls };
         }
 
-        // Levenshtein distance helper
         function levenshteinDistance(s, t) {
             if (!s.length) return t.length;
             if (!t.length) return s.length;
@@ -96,7 +87,6 @@
             return arr[t.length][s.length];
         }
 
-        // Motivation messages
         const motivations = [
             "Cố lên! Bạn đã cải thiện rồi đấy!",
             "Gần đúng lắm! Thử lại xem sao.",
@@ -109,8 +99,9 @@
             constructor(props) {
                 super(props);
                 this.state = {
-                    userType: null, // 'teacher' or 'student'
+                    userType: null,
                     userId: '',
+                    password: '', // Thêm state cho password
                     classId: '',
                     classes: [],
                     students: [],
@@ -133,7 +124,6 @@
             }
 
             componentDidMount() {
-                // Listen for auth changes (simple email/password for teacher, code for student)
                 auth.onAuthStateChanged(user => {
                     if (user) {
                         this.setState({ userType: 'teacher', userId: user.uid });
@@ -142,13 +132,16 @@
                 });
             }
 
-            login = async (type, id) => {
+            login = async (type) => {
+                const { userId, password } = this.state;
                 try {
                     if (type === 'teacher') {
-                        await auth.signInWithEmailAndPassword(id + '@teacher.com', 'password'); // Simple auth, change in prod
+                        if (!userId || !password) {
+                            throw new Error('Vui lòng nhập email và mật khẩu');
+                        }
+                        await auth.signInWithEmailAndPassword(userId, password); // Sử dụng password input
                     } else {
-                        // Student login by code
-                        const studentRef = db.collection('students').where('code', '==', id);
+                        const studentRef = db.collection('students').where('code', '==', userId);
                         const snapshot = await studentRef.get();
                         const student = snapshot.docs[0]?.data();
                         if (student) {
@@ -166,9 +159,9 @@
 
             logout = () => {
                 auth.signOut();
-                this.setState({ userType: null, userId: '', classId: '', classes: [], students: [], assignments: [], stats: {}, progress: [] });
+                this.setState({ userType: null, userId: '', password: '', classId: '', classes: [], students: [], assignments: [], stats: {}, progress: [] });
             }
-
+           
             loadClasses = async (teacherId) => {
                 const classesRef = db.collection('classes').where('teacherId', '==', teacherId);
                 const snapshot = await classesRef.get();
@@ -298,18 +291,11 @@
 
             loadClassStats = async (classId) => {
                 const students = this.state.students;
-                const progresses = await Promise.all(students.map(async s => {
-                    const progress = await this.loadProgress(s.code);
-                    return progress;
-                }));
-                // Tính class stats (fix to use progresses correctly)
+                const progresses = await Promise.all(students.map(s => this.loadProgress(s.code)));
+                // Tính class stats
                 const completedPercent = (progresses.filter(p => p.length >= 20).length / students.length * 100).toFixed(2) + '%';
-                const classAvg = progresses.reduce((sum, ps) => sum + (ps.reduce((s, p) => s + p.score, 0) / ps.length || 0), 0) / progresses.length || 0;
-                const top5 = students.sort((a, b) => {
-                    const aAvg = progresses.find(ps => ps[0]?.studentId === a.code)?.reduce((s, p) => s + p.score, 0) / progresses.length || 0;
-                    const bAvg = progresses.find(ps => ps[0]?.studentId === b.code)?.reduce((s, p) => s + p.score, 0) / progresses.length || 0;
-                    return bAvg - aAvg;
-                }).slice(0,5).map(s => s.name);
+                const classAvg = progresses.reduce((sum, ps) => sum + (ps.reduce((s, p) => s + p.score, 0) / ps.length), 0) / progresses.length || 0;
+                const top5 = students.sort((a, b) => b.avgScore - a.avgScore).slice(0,5).map(s => s.name);
                 const commonWorst = {}; // Tính từ kém chung
                 progresses.forEach(ps => ps.filter(p => p.score < 60).forEach(p => commonWorst[p.word] = (commonWorst[p.word] || 0) + 1));
                 const worstWords = Object.keys(commonWorst).sort((a,b) => commonWorst[b] - commonWorst[a]).slice(0,5);
@@ -325,7 +311,7 @@
             }
 
             renderLogin() {
-                const { userType, userId, error } = this.state;
+                const { userType, userId, password, error } = this.state;
                 return (
                     <div className="container">
                         <h1>Đăng Nhập Lime Phát Âm</h1>
@@ -335,8 +321,11 @@
                             <option value="teacher">Giáo viên</option>
                             <option value="student">Học sinh</option>
                         </select>
-                        <input placeholder="Email GV hoặc Mã HS" onChange={e => this.setState({ userId: e.target.value })} />
-                        <button onClick={() => this.login(userType, userId)}>Đăng nhập</button>
+                        <input placeholder={userType === 'teacher' ? "Email GV (ví dụ: teacher1@example.com)" : "Mã HS"} onChange={e => this.setState({ userId: e.target.value })} />
+                        {userType === 'teacher' && (
+                            <input type="password" placeholder="Mật khẩu" onChange={e => this.setState({ password: e.target.value })} />
+                        )}
+                        <button onClick={() => this.login(userType)}>Đăng nhập</button>
                     </div>
                 );
             }
@@ -440,7 +429,6 @@
             }
         }
 
-        // Extension for Date.getWeek
         Date.prototype.getWeek = function() {
             const date = new Date(this.getTime());
             date.setHours(0, 0, 0, 0);
