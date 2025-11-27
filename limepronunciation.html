@@ -6,11 +6,11 @@
     <title>Lime Phát Âm - Hệ Thống Luyện Phát Âm</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.0.0/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.0.0/firebase-auth-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.0.0/firebase-firestore-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.0.0/firebase-storage-compat.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f8ff; }
         .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
@@ -30,7 +30,7 @@
 </head>
 <body>
     <div id="root"></div>
-    <script type="text/babel">
+    <script type="text/babel" data-presets="env,react">
         const firebaseConfig = {
             apiKey: "AIzaSyB2VOZ0A5im13MC6FNLa4bEupKedm5iiBo",
             authDomain: "lime-phat-am.firebaseapp.com",
@@ -148,8 +148,9 @@
                         await auth.signInWithEmailAndPassword(id + '@teacher.com', 'password'); // Simple auth, change in prod
                     } else {
                         // Student login by code
-                        const studentRef = db.collection('students').where('code', '==', id).get();
-                        const student = (await studentRef).docs[0]?.data();
+                        const studentRef = db.collection('students').where('code', '==', id);
+                        const snapshot = await studentRef.get();
+                        const student = snapshot.docs[0]?.data();
                         if (student) {
                             this.setState({ userType: 'student', userId: student.code, classId: student.classId });
                             this.loadAssignments(student.classId);
@@ -297,11 +298,18 @@
 
             loadClassStats = async (classId) => {
                 const students = this.state.students;
-                const progresses = await Promise.all(students.map(s => this.loadProgress(s.code)));
-                // Tính class stats
+                const progresses = await Promise.all(students.map(async s => {
+                    const progress = await this.loadProgress(s.code);
+                    return progress;
+                }));
+                // Tính class stats (fix to use progresses correctly)
                 const completedPercent = (progresses.filter(p => p.length >= 20).length / students.length * 100).toFixed(2) + '%';
-                const classAvg = progresses.reduce((sum, ps) => sum + (ps.reduce((s, p) => s + p.score, 0) / ps.length), 0) / progresses.length || 0;
-                const top5 = students.sort((a, b) => b.avgScore - a.avgScore).slice(0,5).map(s => s.name);
+                const classAvg = progresses.reduce((sum, ps) => sum + (ps.reduce((s, p) => s + p.score, 0) / ps.length || 0), 0) / progresses.length || 0;
+                const top5 = students.sort((a, b) => {
+                    const aAvg = progresses.find(ps => ps[0]?.studentId === a.code)?.reduce((s, p) => s + p.score, 0) / progresses.length || 0;
+                    const bAvg = progresses.find(ps => ps[0]?.studentId === b.code)?.reduce((s, p) => s + p.score, 0) / progresses.length || 0;
+                    return bAvg - aAvg;
+                }).slice(0,5).map(s => s.name);
                 const commonWorst = {}; // Tính từ kém chung
                 progresses.forEach(ps => ps.filter(p => p.score < 60).forEach(p => commonWorst[p.word] = (commonWorst[p.word] || 0) + 1));
                 const worstWords = Object.keys(commonWorst).sort((a,b) => commonWorst[b] - commonWorst[a]).slice(0,5);
