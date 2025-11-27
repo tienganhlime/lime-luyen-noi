@@ -560,10 +560,6 @@ window.loadStudentAssignments = async function() {
                 totalScore += r.score;
             });
             
-           // Lấy số từ từ cả format cũ và mới
-const wordCount = assign.wordsData 
-    ? assign.wordsData.length 
-    : (assign.words || []).length;
 
 const progress = Math.round((completed / wordCount) * 100);
             const avgScore = resultsSnap.size > 0 ? Math.round(totalScore / resultsSnap.size) : 0;
@@ -1162,6 +1158,7 @@ window.speakSyllablesWithIPA = function(word, syllablesStr, ipa) {
 </script>
 </body>
 </html>
+
 
 
 
