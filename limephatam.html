@@ -356,25 +356,25 @@ window.createAssignment = function(classId, className) {
         
         <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
             <h3 class="font-bold mb-2">📝 Hướng dẫn nhập từ vựng:</h3>
-            <p class="text-sm text-gray-700 mb-2">Mỗi dòng 1 từ, có thể kèm IPA (tùy chọn):</p>
+            <p class="text-sm text-gray-700 mb-2">Mỗi dòng 1 từ, sau đó CÁCH 2 KHOẢNG TRẮNG rồi ghi IPA:</p>
             <div class="bg-white p-3 rounded font-mono text-sm space-y-1">
-                <div>fibre</div>
-                <div>fibre | ˈfaɪ.bə</div>
-                <div>carbohydrate | ˌkɑːr.boʊˈhaɪ.dreɪt</div>
-                <div>stomach upset | ˈstʌm.ək ˈʌp.set</div>
+                <div>fibre  ˈfaɪ.bə</div>
+                <div>carbohydrate  ˌkɑːr.boʊˈhaɪ.dreɪt</div>
+                <div>stomach upset  ˈstʌm.ək ˈʌp.set</div>
             </div>
             <p class="text-xs text-gray-500 mt-2">
                 💡 Lấy IPA từ: 
                 <a href="https://dictionary.cambridge.org" target="_blank" class="text-blue-600">Cambridge Dictionary</a> |
                 <a href="https://www.oxfordlearnersdictionaries.com" target="_blank" class="text-blue-600">Oxford Dictionary</a>
             </p>
+            <p class="text-xs text-orange-600 mt-1">⚠️ Chú ý: PHẢI có 2 khoảng trắng giữa từ và IPA!</p>
         </div>
         
         <textarea id="assignmentWords" placeholder="Nhập từ vựng (tối đa 20 từ)
 Ví dụ:
-fibre | ˈfaɪ.bə
-protein | ˈproʊ.tiːn
-carbohydrate | ˌkɑːr.boʊˈhaɪ.dreɪt" 
+fibre  ˈfaɪ.bə
+protein  ˈproʊ.tiːn
+carbohydrate  ˌkɑːr.boʊˈhaɪ.dreɪt" 
             rows="12" class="w-full p-3 border rounded-lg mb-4 font-mono"></textarea>
         
         <button onclick="saveAssignment('${classId}')" class="bg-purple-500 text-white px-6 py-3 rounded-lg font-semibold">
@@ -393,12 +393,12 @@ window.saveAssignment = async function(classId) {
     
     if (lines.length === 0) return alert('Vui lòng nhập ít nhất 1 từ');
     
-    // Parse từ và IPA
+    // Parse từ và IPA (ngăn cách bằng 2 khoảng trắng)
     const wordsData = lines.map(line => {
-        // Tách theo dấu |
-        const parts = line.split('|').map(p => p.trim());
-        const word = parts[0];
-        const ipa = parts[1] || null; // IPA là tùy chọn
+        // Tách theo 2 khoảng trắng liên tiếp
+        const parts = line.split(/\s{2,}/); // Regex: 2 hoặc nhiều khoảng trắng
+        const word = parts[0].trim();
+        const ipa = parts[1] ? parts[1].trim() : null;
         
         // Tách syllables từ IPA nếu có
         let syllables = null;
@@ -426,7 +426,7 @@ window.saveAssignment = async function(classId) {
     showLoading(true);
     await addDoc(collection(db, 'assignments'), {
         name,
-        wordsData: wordsData, // Lưu object thay vì array string
+        wordsData: wordsData,
         classId,
         teacherCode: currentUser.code,
         createdAt: new Date()
@@ -1157,5 +1157,6 @@ window.speakSyllablesWithIPA = function(word, syllablesStr, ipa) {
 </script>
 </body>
 </html>
+
 
 
