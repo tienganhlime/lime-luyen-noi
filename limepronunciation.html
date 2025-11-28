@@ -714,7 +714,7 @@ let index = 0;
 const speakNext = () => {
 if (index < wrongSyllables.length) {
 const syllable = wrongSyllables[index];
-alert(🎯 Hãy chú ý nghe âm tiết: "${syllable}");
+alert(`🎯 Hãy chú ý nghe âm tiết: "${syllable}"`);
 const utterance = new SpeechSynthesisUtterance(syllable);
 utterance.rate = 0.5;
 utterance.lang = 'en-US';
@@ -731,7 +731,7 @@ setTimeout(speakNext, 2000);
 speechSynthesis.speak(utterance);
 } else {
 setTimeout(() => {
-alert(✨ Giờ thử nói cả từ: "${word}");
+alert(`✨ Giờ thử nói cả từ: "${word}"`);
 speakWord(word, 0.7);
 }, 1500);
 }
@@ -740,7 +740,11 @@ speakNext();
 }
 // ==================== TEACHER FUNCTIONS ====================
 window.showCreateClass = function() {
-document.getElementById('teacherContent').innerHTML =         <h2 class="text-2xl font-bold mb-4">Tạo lớp mới</h2>         <input type="text" id="className" placeholder="Tên lớp (vd: Lớp 6A)" class="w-full p-3 border rounded-lg mb-4">         <button onclick="createClass()" class="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold">Tạo lớp</button>    ;
+    document.getElementById('teacherContent').innerHTML = `
+        <h2 class="text-2xl font-bold mb-4">Tạo lớp mới</h2>
+        <input type="text" id="className" placeholder="Tên lớp (vd: Lớp 6A)" class="w-full p-3 border rounded-lg mb-4">
+        <button onclick="createClass()" class="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold">Tạo lớp</button>
+    `;
 }
 window.createClass = async function() {
 const name = document.getElementById('className').value.trim();
@@ -1211,4 +1215,5 @@ loadStudentAssignments();
 </script>
 </body>
 </html>
+
 
