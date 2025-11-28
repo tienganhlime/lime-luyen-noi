@@ -674,7 +674,7 @@ if (analysis.wrongSyllables.length > 0) {
     
     html += `
             </div>
-            <button onclick="practiceWrongSyllables('${word}', '${JSON.stringify(analysis.wrongSyllables.map(w => w.text)).replace(/'/g, "&apos;")}')"
+             <button onclick="practiceWrongSyllables('${word.replace(/'/g, "\\'")}', '${encodeURIComponent(JSON.stringify(analysis.wrongSyllables.map(w => w.text)))}')"
                     class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-bold w-full">
                 🎯 Luyện các âm tiết sai
             </button>
@@ -730,13 +730,13 @@ speechSynthesis.speak(utterance);
 speakNext();
 }
 window.practiceWrongSyllables = function(word, wrongSyllablesJSON) {
-    const wrongSyllables = JSON.parse(wrongSyllablesJSON);
+    const wrongSyllables = JSON.parse(decodeURIComponent(wrongSyllablesJSON));
     let index = 0;
     
     const speakNext = () => {
         if (index < wrongSyllables.length) {
             const syllable = wrongSyllables[index];
-            alert(`🎯 Hãy chú ý nghe âm tiết: "${syllable}"`);  // ✅ SỬA
+            alert('🎯 Hãy chú ý nghe âm tiết: "${syllable}"');  // ✅ SỬA
             
             const utterance = new SpeechSynthesisUtterance(syllable);
             utterance.rate = 0.5;
@@ -754,7 +754,7 @@ window.practiceWrongSyllables = function(word, wrongSyllablesJSON) {
             speechSynthesis.speak(utterance);
         } else {
             setTimeout(() => {
-                alert(`✨ Giờ thử nói cả từ: "${word}"`);  // ✅ SỬA
+                alert('✨ Giờ thử nói cả từ: "${word}"');  // ✅ SỬA
                 speakWord(word, 0.7);
             }, 1500);
         }
@@ -1238,6 +1238,7 @@ loadStudentAssignments();
 </script>
 </body>
 </html>
+
 
 
 
