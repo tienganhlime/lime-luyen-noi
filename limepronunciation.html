@@ -730,34 +730,36 @@ speechSynthesis.speak(utterance);
 speakNext();
 }
 window.practiceWrongSyllables = function(word, wrongSyllablesJSON) {
-const wrongSyllables = JSON.parse(wrongSyllablesJSON);
-let index = 0;
-const speakNext = () => {
-if (index < wrongSyllables.length) {
-const syllable = wrongSyllables[index];
-alert(`🎯 Hãy chú ý nghe âm tiết: "${syllable}"`);
-const utterance = new SpeechSynthesisUtterance(syllable);
-utterance.rate = 0.5;
-utterance.lang = 'en-US';
-utterance.onend = () => {
-setTimeout(() => {
-const utterance2 = new SpeechSynthesisUtterance(syllable);
-utterance2.rate = 1;
-utterance2.lang = 'en-US';
-speechSynthesis.speak(utterance2);
-index++;
-setTimeout(speakNext, 2000);
-}, 1000);
-};
-speechSynthesis.speak(utterance);
-} else {
-setTimeout(() => {
-alert(`✨ Giờ thử nói cả từ: "${word}"`);
-speakWord(word, 0.7);
-}, 1500);
-}
-};
-speakNext();
+    const wrongSyllables = JSON.parse(wrongSyllablesJSON);
+    let index = 0;
+    
+    const speakNext = () => {
+        if (index < wrongSyllables.length) {
+            const syllable = wrongSyllables[index];
+            alert(`🎯 Hãy chú ý nghe âm tiết: "${syllable}"`);  // ✅ SỬA
+            
+            const utterance = new SpeechSynthesisUtterance(syllable);
+            utterance.rate = 0.5;
+            utterance.lang = 'en-US';
+            utterance.onend = () => {
+                setTimeout(() => {
+                    const utterance2 = new SpeechSynthesisUtterance(syllable);
+                    utterance2.rate = 1;
+                    utterance2.lang = 'en-US';
+                    speechSynthesis.speak(utterance2);
+                    index++;
+                    setTimeout(speakNext, 2000);
+                }, 1000);
+            };
+            speechSynthesis.speak(utterance);
+        } else {
+            setTimeout(() => {
+                alert(`✨ Giờ thử nói cả từ: "${word}"`);  // ✅ SỬA
+                speakWord(word, 0.7);
+            }, 1500);
+        }
+    };
+    speakNext();
 }
 // ==================== TEACHER FUNCTIONS ====================
 window.showCreateClass = function() {
@@ -1236,6 +1238,7 @@ loadStudentAssignments();
 </script>
 </body>
 </html>
+
 
 
 
