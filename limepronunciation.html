@@ -407,7 +407,6 @@ async function gradeWithWhisper(word, audioBlob, resultDiv) {
         const reader = new FileReader();
         const base64Audio = await new Promise((resolve, reject) => {
             reader.onloadend = () => {
-                // Lấy phần base64 (bỏ "data:audio/webm;base64,")
                 const base64 = reader.result.split(',')[1];
                 resolve(base64);
             };
@@ -415,17 +414,43 @@ async function gradeWithWhisper(word, audioBlob, resultDiv) {
             reader.readAsDataURL(audioBlob);
         });
         
-        // Gọi Google Apps Script proxy
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbznNlh8Pu17U_ggJkOqHa_hU87acomNHkazEDw5-1evMBJbNWrDUaXHC0tLUURkyw6G/exec'; // Thay bằng URL từ bước 1
+        // URL Apps Script của bạn
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec'; // ← THAY ĐỔI
         
         const response = await fetch(APPS_SCRIPT_URL, {
             method: 'POST',
+            mode: 'no-cors', // ← THÊM DÒNG NÀY
             body: new URLSearchParams({
                 audio: base64Audio
             })
         });
         
-        const result = await response.json();
+        // Vì dùng no-cors nên không đọc được response
+        // Phải dùng cách khác: redirect mode
+        const formData = new FormData();
+        formData.append('audio', base64Audio);
+        
+        const response2 = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: formData,
+            redirect: 'follow'
+        });
+        
+        const text = await response2.text();
+        console.log('Raw response:', text);
+        
+        let result;
+        try {
+            result = JSON.parse(text);
+        } catch (e) {
+            // Nếu response có HTML, extract JSON
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                result = JSON.parse(jsonMatch[0]);
+            } else {
+                throw new Error('Không parse được JSON');
+            }
+        }
         
         if (!result.success) {
             throw new Error(result.error || 'Lỗi không xác định');
@@ -439,26 +464,19 @@ async function gradeWithWhisper(word, audioBlob, resultDiv) {
         
         console.log('🤖 Whisper nhận diện:', transcript);
         
-        // Phân tích chi tiết
         const detailedAnalysis = analyzeDetailedPronunciation(word, transcript);
         
-        // Lưu kết quả
-        try {
-            await addDoc(collection(db, 'results'), {
-                studentId: currentUser.id,
-                assignmentId: currentAssignment.id,
-                word,
-                score: detailedAnalysis.score,
-                recognizedText: transcript,
-                syllableAnalysis: detailedAnalysis,
-                method: 'whisper-ai',
-                createdAt: new Date()
-            });
-        } catch (error) {
-            console.error('Lỗi lưu kết quả:', error);
-        }
+        await addDoc(collection(db, 'results'), {
+            studentId: currentUser.id,
+            assignmentId: currentAssignment.id,
+            word,
+            score: detailedAnalysis.score,
+            recognizedText: transcript,
+            syllableAnalysis: detailedAnalysis,
+            method: 'whisper-ai',
+            createdAt: new Date()
+        });
         
-        // Hiển thị kết quả
         displayDetailedResults(word, transcript, detailedAnalysis, resultDiv);
         updateProgress();
         
@@ -468,6 +486,7 @@ async function gradeWithWhisper(word, audioBlob, resultDiv) {
             <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
                 <p class="text-red-600 font-bold">❌ Lỗi kết nối AI</p>
                 <p class="text-sm text-red-500 mt-1">${error.message}</p>
+                <p class="text-xs text-gray-500 mt-2">Debug: Xem Console (F12)</p>
                 <button onclick="recordWord('${word}')" class="mt-3 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold">
                     🔄 Thử lại
                 </button>
@@ -1217,6 +1236,7 @@ loadStudentAssignments();
 </script>
 </body>
 </html>
+
 
 
 
