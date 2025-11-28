@@ -388,10 +388,12 @@ window.speakSyllables = function(word) {
 window.practiceWrongSyllables = function(word, wrongSyllablesJSON) {
     const wrongSyllables = JSON.parse(wrongSyllablesJSON);
     let index = 0;
+    
     const speakNext = () => {
         if (index < wrongSyllables.length) {
             const syllable = wrongSyllables[index];
-            alert(`🎯 Hãy chú ý nghe âm tiết: "${syllable}"`);
+            alert(`🎯 Hãy chú ý nghe âm tiết: "${syllable}"`);  // ✅ SỬA
+            
             const utterance = new SpeechSynthesisUtterance(syllable);
             utterance.rate = 0.5;
             utterance.lang = 'en-US';
@@ -408,7 +410,7 @@ window.practiceWrongSyllables = function(word, wrongSyllablesJSON) {
             speechSynthesis.speak(utterance);
         } else {
             setTimeout(() => {
-                alert(`✨ Giờ thử nói cả từ: "${word}"`);
+                alert(`✨ Giờ thử nói cả từ: "${word}"`);  // ✅ SỬA
                 speakWord(word, 0.7);
             }, 1500);
         }
@@ -1119,4 +1121,5 @@ window.backToStudent = function() {
 }
 </script>
 </body>
+
 </html>
