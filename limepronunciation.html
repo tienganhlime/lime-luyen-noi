@@ -3,478 +3,1211 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lime Phát Âm - Hệ Thống Luyện Phát Âm</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"> <!-- Bootstrap cho UI đẹp -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.0.0/firebase-app-compat.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.0.0/firebase-auth-compat.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.0.0/firebase-firestore-compat.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.0.0/firebase-storage-compat.min.js"></script>
-    <style>
-        body { background: #f0f8ff; }
-        .container { max-width: 800px; margin: auto; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); background: white; }
-        .word { font-size: 24px; font-weight: bold; }
-        .feedback { color: #2196F3; font-style: italic; }
-        .error { color: red; }
-        .success { color: green; }
-        .motivation { background: #FFEB3B; padding: 10px; border-radius: 4px; margin: 10px 0; }
-    </style>
+    <title>Luyện Phát Âm</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <div id="root"></div>
-    <script type="text/babel" data-presets="env,react">
-        const firebaseConfig = {
-            apiKey: "AIzaSyB2VOZ0A5im13MC6FNLa4bEupKedm5iiBo",
-            authDomain: "lime-phat-am.firebaseapp.com",
-            projectId: "lime-phat-am",
-            storageBucket: "lime-phat-am.firebasestorage.app",
-            messagingSenderId: "434295865710",
-            appId: "1:434295865710:web:5f373900f5e8c1d679417f",
-            measurementId: "G-K1PHBV3HMY"
-        };
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore(app);
-        const auth = firebase.auth(app);
-        const storage = firebase.storage(app);
+<body class="bg-gray-100">
+<!-- Loading Spinner -->
+<div id="loading" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-8 rounded-lg">
+        <div class="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+        <p class="mt-4 text-gray-700">Đang xử lý...</p>
+    </div>
+</div>
 
-        const HF_TOKEN = "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";
-        const HF_MODEL = "openai/whisper-large-v3";
+<!-- 1. TRANG ĐĂNG NHẬP -->
+<div id="loginScreen" class="screen min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl p-10 max-w-md w-full">
+        <h1 class="text-4xl font-bold text-center mb-8 text-blue-600">🎙️ Luyện Phát Âm</h1>
+        <div class="space-y-4">
+            <button onclick="selectRole('teacher')" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-lg text-xl font-semibold transition">
+                👨‍🏫 Tôi là Giáo viên
+            </button>
+            <button onclick="selectRole('student')" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-4 rounded-lg text-xl font-semibold transition">
+                👨‍🎓 Tôi là Học sinh
+            </button>
+        </div>
+    </div>
+</div>
 
-        function getSyllables(word) {
-            return word.split(/[^aeiouy]+/i).filter(s => s);
+<!-- 2. ĐĂNG NHẬP HỌC SINH -->
+<div id="studentLoginScreen" class="screen hidden min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+        <button onclick="showScreen('loginScreen')" class="text-gray-600 mb-4">← Quay lại</button>
+        <h2 class="text-3xl font-bold mb-6">Đăng nhập Học sinh</h2>
+        <input type="text" id="studentCode" placeholder="Nhập mã học sinh (vd: HS001)" class="w-full p-3 border rounded-lg mb-4">
+        <button onclick="loginStudent()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold">
+            Đăng nhập
+        </button>
+    </div>
+</div>
+
+<!-- 3. ĐĂNG NHẬP GIÁO VIÊN -->
+<div id="teacherLoginScreen" class="screen hidden min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+        <button onclick="showScreen('loginScreen')" class="text-gray-600 mb-4">← Quay lại</button>
+        <h2 class="text-3xl font-bold mb-6">Đăng nhập Giáo viên</h2>
+        <input type="text" id="teacherCode" placeholder="Nhập mã giáo viên (vd: GV001)" class="w-full p-3 border rounded-lg mb-4">
+        <button onclick="loginTeacher()" class="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold">
+            Đăng nhập
+        </button>
+        <p class="text-sm text-gray-500 mt-4">Lần đầu? Nhập mã bất kỳ để tạo tài khoản mới</p>
+    </div>
+</div>
+
+<!-- 4. DASHBOARD GIÁO VIÊN -->
+<div id="teacherDashboard" class="screen hidden min-h-screen p-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl font-bold">👨‍🏫 Dashboard Giáo viên</h1>
+                <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg">Đăng xuất</button>
+            </div>
+            <p class="text-gray-600 mt-2">Mã GV: <span id="teacherCodeDisplay" class="font-mono font-bold"></span></p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-6 mb-6">
+            <button onclick="showCreateClass()" class="bg-blue-500 hover:bg-blue-600 text-white p-6 rounded-lg text-xl font-semibold">
+                ➕ Tạo lớp mới
+            </button>
+            <button onclick="showMyClasses()" class="bg-green-500 hover:bg-green-600 text-white p-6 rounded-lg text-xl font-semibold">
+                📚 Quản lý lớp
+            </button>
+            <button onclick="showAssignments()" class="bg-purple-500 hover:bg-purple-600 text-white p-6 rounded-lg text-xl font-semibold">
+                📝 Giao bài tập
+            </button>
+        </div>
+        <div id="teacherContent" class="bg-white rounded-lg shadow-lg p-6"></div>
+    </div>
+</div>
+
+<!-- 5. DASHBOARD HỌC SINH -->
+<div id="studentDashboard" class="screen hidden min-h-screen p-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold">👨‍🎓 Lớp học của tôi</h1>
+                    <p class="text-gray-600 mt-2">Học sinh: <span id="studentNameDisplay" class="font-bold"></span></p>
+                </div>
+                <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg">Đăng xuất</button>
+            </div>
+        </div>
+        <div id="studentAssignments" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </div>
+</div>
+
+<!-- 6. MÀN HÌNH LUYỆN TẬP -->
+<div id="practiceScreen" class="screen hidden min-h-screen p-6 bg-gradient-to-br from-indigo-500 to-purple-600">
+    <div class="max-w-6xl mx-auto">
+        <button onclick="backToStudent()" class="text-white mb-4 text-lg">← Quay lại</button>
+        <div class="bg-white rounded-lg shadow-2xl p-6 mb-6">
+            <h2 id="assignmentTitle" class="text-3xl font-bold mb-2"></h2>
+            <div class="flex gap-4 text-sm text-gray-600">
+                <span>Tiến độ: <span id="progressText" class="font-bold">0/0</span></span>
+                <span>Điểm TB: <span id="avgScoreText" class="font-bold">0</span></span>
+            </div>
+        </div>
+        <div id="wordsList" class="grid md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+    </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getFirestore, collection, addDoc, getDocs, query, where, updateDoc, doc, getDoc, setDoc, orderBy, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+const firebaseConfig = {
+    apiKey: "AIzaSyB2VOZ0A5im13MC6FNLa4bEupKedm5iiBo",
+    authDomain: "lime-phat-am.firebaseapp.com",
+    projectId: "lime-phat-am",
+    storageBucket: "lime-phat-am.firebasestorage.app",
+    messagingSenderId: "434295865710",
+    appId: "1:434295865710:web:5f373900f5e8c1d679417f"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let currentUser = null;
+let currentAssignment = null;
+
+// ==================== WHISPER AI CONFIGURATION ====================
+// ⚠️ QUAN TRỌNG: Thay YOUR_API_KEY_HERE bằng API key từ https://huggingface.co/settings/tokens
+const HUGGING_FACE_API_KEY = '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'; 
+const WHISPER_MODEL = 'openai/whisper-large-v3-turbo';
+
+let mediaRecorder;
+let audioChunks = [];
+
+// ==================== UTILITIES ====================
+function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    document.getElementById(screenId).classList.remove('hidden');
+}
+
+function showLoading(show) {
+    document.getElementById('loading').classList.toggle('hidden', !show);
+}
+
+// ==================== AUTHENTICATION ====================
+window.selectRole = function(role) {
+    showScreen(role === 'teacher' ? 'teacherLoginScreen' : 'studentLoginScreen');
+}
+
+window.loginTeacher = async function() {
+    const code = document.getElementById('teacherCode').value.trim();
+    if (!code) return alert('Vui lòng nhập mã giáo viên');
+   
+    showLoading(true);
+    try {
+        const teacherRef = doc(db, 'teachers', code);
+        const teacherSnap = await getDoc(teacherRef);
+       
+        if (!teacherSnap.exists()) {
+            await setDoc(teacherRef, { code, createdAt: new Date() });
         }
+       
+        currentUser = { role: 'teacher', code };
+        document.getElementById('teacherCodeDisplay').textContent = code;
+        showScreen('teacherDashboard');
+    } catch (error) {
+        alert('Lỗi đăng nhập: ' + error.message);
+    }
+    showLoading(false);
+}
 
-        async function analyzePronunciation(audioBlob, targetText) {
-            const formData = new FormData();
-            formData.append("file", audioBlob, "audio.wav");
-            const response = await fetch(`https://api-inference.huggingface.co/models/${HF_MODEL}`, {
-                method: "POST",
-                headers: { "Authorization": `Bearer ${HF_TOKEN}` },
-                body: formData
+window.loginStudent = async function() {
+    const code = document.getElementById('studentCode').value.trim();
+    if (!code) return alert('Vui lòng nhập mã học sinh');
+   
+    showLoading(true);
+    try {
+        const studentsRef = collection(db, 'students');
+        const q = query(studentsRef, where('code', '==', code));
+        const snap = await getDocs(q);
+       
+        if (snap.empty) {
+            showLoading(false);
+            return alert('Mã học sinh không tồn tại. Liên hệ giáo viên!');
+        }
+       
+        const studentData = snap.docs[0].data();
+        currentUser = { role: 'student', code, id: snap.docs[0].id, ...studentData };
+        document.getElementById('studentNameDisplay').textContent = studentData.name;
+        await loadStudentAssignments();
+        showScreen('studentDashboard');
+    } catch (error) {
+        alert('Lỗi đăng nhập: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.logout = function() {
+    currentUser = null;
+    showScreen('loginScreen');
+}
+
+// ==================== SYLLABLE ANALYSIS ====================
+const syllableDB = {
+    'carbohydrate': ['car', 'bo', 'hy', 'drate'],
+    'fibre': ['fi', 'bre'],
+    'fiber': ['fi', 'ber'],
+    'diet': ['di', 'et'],
+    'protein': ['pro', 'tein'],
+    'vitamin': ['vi', 'ta', 'min'],
+    'ship': ['ship'],
+    'cat': ['cat'],
+    'dog': ['dog'],
+    'apple': ['ap', 'ple'],
+    'banana': ['ba', 'na', 'na'],
+    'orange': ['or', 'ange'],
+    'exercise': ['ex', 'er', 'cise'],
+    'healthy': ['heal', 'thy'],
+    'water': ['wa', 'ter'],
+    'something': ['some', 'thing'],
+    'weight': ['weight'],
+    'stomach': ['stom', 'ach'],
+    'upset': ['up', 'set'],
+    'casualty': ['cas', 'u', 'al', 'ty'],
+    'department': ['de', 'part', 'ment']
+};
+
+function splitIntoSyllables(word) {
+    const original = word;
+    word = word.toLowerCase().trim();
+   
+    if (syllableDB[word]) return syllableDB[word];
+   
+    if (word.includes(' ')) {
+        const words = word.split(' ').filter(w => w.length > 0);
+        let allSyllables = [];
+        words.forEach(w => {
+            const syls = splitIntoSyllables(w);
+            allSyllables = allSyllables.concat(syls);
+        });
+        return allSyllables;
+    }
+   
+    if (word.length <= 3) return [word];
+   
+    const vowels = 'aeiouy';
+    const syllables = [];
+    let start = 0;
+   
+    for (let i = 1; i < word.length; i++) {
+        const prevIsVowel = vowels.includes(word[i - 1]);
+        const currIsVowel = vowels.includes(word[i]);
+       
+        if (prevIsVowel && !currIsVowel && i < word.length - 1) {
+            syllables.push(word.substring(start, i + 1));
+            start = i + 1;
+        }
+    }
+   
+    if (start < word.length) {
+        if (syllables.length > 0) {
+            const remaining = word.substring(start);
+            if (remaining.length <= 2) {
+                syllables[syllables.length - 1] += remaining;
+            } else {
+                syllables.push(remaining);
+            }
+        } else {
+            syllables.push(word.substring(start));
+        }
+    }
+   
+    return syllables.length > 0 ? syllables : [word];
+}
+
+function similarity(s1, s2) {
+    if (!s1 || !s2) return 0;
+    let longer = s1.length > s2.length ? s1 : s2;
+    let shorter = s1.length > s2.length ? s2 : s1;
+    if (longer.length === 0) return 1.0;
+    return (longer.length - editDistance(longer, shorter)) / longer.length;
+}
+
+function editDistance(s1, s2) {
+    s1 = s1.toLowerCase();
+    s2 = s2.toLowerCase();
+    const costs = [];
+    for (let i = 0; i <= s1.length; i++) {
+        let lastValue = i;
+        for (let j = 0; j <= s2.length; j++) {
+            if (i === 0) costs[j] = j;
+            else if (j > 0) {
+                let newValue = costs[j - 1];
+                if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
+                    newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                }
+                costs[j - 1] = lastValue;
+                lastValue = newValue;
+            }
+        }
+        if (i > 0) costs[s2.length] = lastValue;
+    }
+    return costs[s2.length];
+}
+
+// ==================== WHISPER AI GRADING (PHẦN MỚI) ====================
+window.recordWord = async function(word) {
+    const resultDiv = document.getElementById(`result-${word}`);
+    
+    // Kiểm tra API key
+    if (HUGGING_FACE_API_KEY === 'YOUR_API_KEY_HERE') {
+        resultDiv.innerHTML = `
+            <div class="p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
+                <p class="text-yellow-800 font-bold">⚠️ Chưa cấu hình API Key</p>
+                <p class="text-sm text-yellow-700 mt-2">Vui lòng:</p>
+                <ol class="text-sm text-yellow-700 mt-2 ml-4 list-decimal">
+                    <li>Truy cập: <a href="https://huggingface.co/settings/tokens" target="_blank" class="text-blue-600 underline">huggingface.co/settings/tokens</a></li>
+                    <li>Tạo token mới (New token)</li>
+                    <li>Copy token và thay vào dòng 137 trong code</li>
+                </ol>
+            </div>
+        `;
+        return;
+    }
+    
+    // Kiểm tra quyền microphone
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        resultDiv.innerHTML = `
+            <div class="p-6 bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-xl text-center">
+                <div class="animate-bounce inline-block w-16 h-16 bg-gradient-to-br from-green-500 to-blue-500 rounded-full mb-4 flex items-center justify-center">
+                    <span class="text-2xl">🎤</span>
+                </div>
+                <p class="text-green-700 font-bold text-xl mb-1">🎙️ ĐANG THU ÂM...</p>
+                <p class="text-sm text-green-600 mt-1">Nói rõ từ: <strong class="text-lg font-mono">${word}</strong></p>
+                <div class="mt-4 flex justify-center space-x-2">
+                    <div class="w-4 h-4 bg-green-500 rounded-full animate-bounce"></div>
+                    <div class="w-4 h-4 bg-green-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                    <div class="w-4 h-4 bg-green-500 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                </div>
+                <button onclick="stopRecording('${word}')" class="mt-4 bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-bold">
+                    ⏹️ DỪNG & CHẤM ĐIỂM
+                </button>
+                <p class="text-xs text-gray-500 mt-2">Hoặc tự động sau 5 giây</p>
+            </div>
+        `;
+        
+        // Bắt đầu thu âm
+        audioChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+        
+        mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+        };
+        
+        mediaRecorder.onstop = async () => {
+            stream.getTracks().forEach(track => track.stop());
+            
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            
+            // Gửi lên Whisper AI để chấm điểm
+            await gradeWithWhisper(word, audioBlob, resultDiv);
+        };
+        
+        mediaRecorder.start();
+        
+        // Tự động dừng sau 5 giây
+        setTimeout(() => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                stopRecording(word);
+            }
+        }, 5000);
+        
+    } catch (err) {
+        resultDiv.innerHTML = `
+            <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-red-600 font-bold">❌ Không có quyền truy cập microphone</p>
+                <p class="text-sm text-red-500 mt-1">Vui lòng cho phép microphone trong trình duyệt</p>
+            </div>
+        `;
+    }
+}
+
+window.stopRecording = function(word) {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+    }
+}
+
+async function gradeWithWhisper(word, audioBlob, resultDiv) {
+    resultDiv.innerHTML = `
+        <div class="p-6 bg-purple-50 border-2 border-purple-200 rounded-xl text-center">
+            <div class="animate-spin inline-block w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full mb-4"></div>
+            <p class="text-purple-700 font-bold text-xl">🤖 AI đang chấm điểm...</p>
+            <p class="text-sm text-purple-600 mt-1">Whisper AI đang phân tích phát âm của bạn</p>
+        </div>
+    `;
+    
+    try {
+        // Gọi Whisper API
+        const response = await fetch(
+            `https://api-inference.huggingface.co/models/${WHISPER_MODEL}`,
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${HUGGING_FACE_API_KEY}`
+                },
+                body: audioBlob
+            }
+        );
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`API Error ${response.status}: ${errorText}`);
+        }
+        
+        const result = await response.json();
+        const transcript = result.text ? result.text.trim() : '';
+        
+        if (!transcript) {
+            throw new Error('Không nhận diện được giọng nói');
+        }
+        
+        console.log('🤖 Whisper nhận diện:', transcript);
+        
+        // Phân tích chi tiết từng âm tiết
+        const detailedAnalysis = analyzeDetailedPronunciation(word, transcript);
+        
+        // Lưu kết quả vào Firestore
+        try {
+            await addDoc(collection(db, 'results'), {
+                studentId: currentUser.id,
+                assignmentId: currentAssignment.id,
+                word,
+                score: detailedAnalysis.score,
+                recognizedText: transcript,
+                syllableAnalysis: detailedAnalysis,
+                method: 'whisper-ai',
+                createdAt: new Date()
             });
-            const result = await response.json();
-            const transcript = result.text || "";
-            const distance = levenshteinDistance(transcript.toLowerCase(), targetText.toLowerCase());
-            const score = Math.max(0, 100 - (distance / targetText.length) * 100);
-            const targetSyls = getSyllables(targetText);
-            const transSyls = getSyllables(transcript);
-            const wrongSyls = targetSyls.map((syl, i) => transSyls[i] !== syl ? syl : null).filter(Boolean);
-            return { transcript, score, wrongSyls };
+        } catch (error) {
+            console.error('Lỗi lưu kết quả:', error);
         }
+        
+        // Hiển thị kết quả chi tiết
+        displayDetailedResults(word, transcript, detailedAnalysis, resultDiv);
+        updateProgress();
+        
+    } catch (error) {
+        console.error('Whisper API Error:', error);
+        resultDiv.innerHTML = `
+            <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-red-600 font-bold">❌ Lỗi kết nối AI</p>
+                <p class="text-sm text-red-500 mt-1">${error.message}</p>
+                <p class="text-xs text-gray-500 mt-2">Kiểm tra:</p>
+                <ul class="text-xs text-gray-500 mt-1 ml-4 list-disc">
+                    <li>API key đã đúng chưa?</li>
+                    <li>Có kết nối internet không?</li>
+                    <li>Đã nói gì chưa?</li>
+                </ul>
+                <button onclick="recordWord('${word}')" class="mt-3 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold">
+                    🔄 Thử lại
+                </button>
+            </div>
+        `;
+    }
+}
 
-        function levenshteinDistance(s, t) {
-            if (!s.length) return t.length;
-            if (!t.length) return s.length;
-            const arr = [];
-            for (let i = 0; i <= t.length; i++) {
-                arr[i] = [i];
-                for (let j = 1; j <= s.length; j++) {
-                    arr[i][j] = i === 0 ? j : Math.min(
-                        arr[i - 1][j] + 1,
-                        arr[i][j - 1] + 1,
-                        arr[i - 1][j - 1] + (s[j - 1] === t[i - 1] ? 0 : 1)
+function analyzeDetailedPronunciation(correctWord, spokenText) {
+    correctWord = correctWord.toLowerCase().trim();
+    spokenText = spokenText.toLowerCase().trim();
+    
+    const correctSyllables = splitIntoSyllables(correctWord);
+    const spokenWords = spokenText.split(' ');
+    
+    // Tìm từ khớp nhất trong câu nói
+    let bestMatch = spokenText;
+    let bestSimilarity = similarity(correctWord, spokenText);
+    
+    for (const spokenWord of spokenWords) {
+        const sim = similarity(correctWord, spokenWord);
+        if (sim > bestSimilarity) {
+            bestSimilarity = sim;
+            bestMatch = spokenWord;
+        }
+    }
+    
+    const spokenSyllables = splitIntoSyllables(bestMatch);
+    
+    const analysis = {
+        syllables: [],
+        wrongSyllables: [],
+        correctSyllables: [],
+        score: 0,
+        totalSyllables: correctSyllables.length,
+        matchedWord: bestMatch,
+        overallSimilarity: bestSimilarity
+    };
+    
+    // So sánh từng âm tiết
+    correctSyllables.forEach((syllable, index) => {
+        const spokenSyllable = spokenSyllables[index] || '';
+        const syllableSimilarity = similarity(syllable, spokenSyllable);
+        const isCorrect = syllableSimilarity > 0.75;
+        
+        analysis.syllables.push({
+            text: syllable,
+            spoken: spokenSyllable,
+            correct: isCorrect,
+            similarity: Math.round(syllableSimilarity * 100),
+            index: index
+        });
+        
+        if (isCorrect) {
+            analysis.correctSyllables.push(syllable);
+        } else {
+            analysis.wrongSyllables.push({
+                text: syllable,
+                spoken: spokenSyllable,
+                similarity: Math.round(syllableSimilarity * 100)
+            });
+        }
+    });
+    
+    // Tính điểm chi tiết
+    const syllableScore = (analysis.correctSyllables.length / analysis.totalSyllables) * 100;
+    const similarityScore = bestSimilarity * 100;
+    
+    // Bonus cho khớp hoàn toàn
+    let bonus = 0;
+    if (bestMatch === correctWord) {
+        bonus = 15;
+    } else if (bestSimilarity > 0.9) {
+        bonus = 10;
+    }
+    
+    // Penalty cho sai quá nhiều
+    let penalty = 0;
+    if (analysis.wrongSyllables.length > analysis.totalSyllables / 2) {
+        penalty = 10;
+    }
+    
+    // Điểm cuối cùng
+    analysis.score = Math.round(
+        Math.min(100, Math.max(0, 
+            (syllableScore * 0.6 + similarityScore * 0.4) + bonus - penalty
+        ))
+    );
+    
+    return analysis;
+}
+
+function displayDetailedResults(word, transcript, analysis, resultDiv) {
+    const score = analysis.score;
+    const emoji = score >= 80 ? '🎉' : score >= 60 ? '👍' : '💪';
+    const message = score >= 80 ? 'Xuất sắc! Phát âm rất chuẩn!' : 
+                   score >= 60 ? 'Tốt lắm! Còn một vài âm tiết cần cải thiện' : 
+                   'Cố lên! Hãy nghe kỹ và thử lại nhé!';
+    
+    let html = `
+        <div class="p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="inline-block w-24 h-24 bg-gradient-to-br ${
+                    score >= 80 ? 'from-green-400 via-green-500 to-green-600' :
+                    score >= 60 ? 'from-yellow-400 via-yellow-500 to-yellow-600' : 
+                    'from-red-400 via-red-500 to-red-600'
+                } rounded-full flex items-center justify-center mb-4 shadow-xl">
+                    <span class="text-5xl">${emoji}</span>
+                </div>
+                
+                <h3 class="text-5xl font-bold text-gray-800 mb-2">
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">${score}</span>
+                </h3>
+                <p class="text-xl font-semibold text-gray-700 mb-3">${message}</p>
+                
+                <div class="flex justify-center gap-4 text-sm">
+                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full font-semibold">
+                        ✅ ${analysis.correctSyllables.length}/${analysis.totalSyllables} âm tiết đúng
+                    </span>
+                    <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">
+                        🎯 ${Math.round(analysis.overallSimilarity * 100)}% độ chính xác
+                    </span>
+                </div>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-white rounded-lg p-4 border-2 border-gray-200">
+                    <p class="text-sm text-gray-600 mb-2">🎯 Từ đúng:</p>
+                    <p class="text-2xl fontKContinue-bold text-blue-700">${word}</p>
+</div>
+<div class="bg-white rounded-lg p-4 border-2 border-purple-200">
+<p class="text-sm text-gray-600 mb-2">🎤 AI nghe được:</p>
+<p class="text-2xl font-bold text-purple-700">${transcript}</p>
+</div>
+</div>
+        <div class="bg-white rounded-lg p-5 mb-6 border-2 border-blue-200">
+            <h4 class="font-bold text-lg mb-4 text-gray-800">📊 Phân tích từng âm tiết:</h4>
+            <div class="space-y-3">
+`;
+
+analysis.syllables.forEach((syl, idx) => {
+    const bgColor = syl.correct ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300';
+    const textColor = syl.correct ? 'text-green-700' : 'text-red-700';
+    const icon = syl.correct ? '✅' : '❌';
+    
+    html += `
+        <div class="${bgColor} border-2 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xl font-bold ${textColor}">${icon} Âm tiết ${idx + 1}</span>
+                <span class="text-sm font-semibold ${textColor}">${syl.similarity}% khớp</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                    <p class="text-gray-600 mb-1">Đúng:</p>
+                    <p class="font-bold text-blue-700 text-lg">${syl.text}</p>
+                </div>
+                <div>
+                    <p class="text-gray-600 mb-1">Bạn nói:</p>
+                    <p class="font-bold ${textColor} text-lg">${syl.spoken || '(không có)'}</p>
+                </div>
+            </div>
+        </div>
+    `;
+});
+
+html += `
+            </div>
+        </div>
+`;
+
+// Gợi ý luyện tập
+if (analysis.wrongSyllables.length > 0) {
+    html += `
+        <div class="bg-orange-50 border-2 border-orange-300 rounded-lg p-5 mb-6">
+            <h4 class="font-bold text-lg mb-3 text-orange-800">💡 Cần luyện thêm:</h4>
+            <div class="flex flex-wrap gap-2 mb-4">
+    `;
+    
+    analysis.wrongSyllables.forEach(wrong => {
+        html += `
+            <span class="bg-orange-200 text-orange-800 px-4 py-2 rounded-full font-bold">
+                ${wrong.text} (${wrong.similarity}% khớp)
+            </span>
+        `;
+    });
+    
+    html += `
+            </div>
+            <button onclick="practiceWrongSyllables('${word}', '${JSON.stringify(analysis.wrongSyllables.map(w => w.text)).replace(/'/g, "&apos;")}')"
+                    class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-bold w-full">
+                🎯 Luyện các âm tiết sai
+            </button>
+        </div>
+    `;
+} else {
+    html += `
+        <div class="bg-green-50 border-2 border-green-300 rounded-lg p-5 mb-6 text-center">
+            <p class="text-green-700 font-bold text-xl">🎊 Hoàn hảo! Tất cả âm tiết đều chuẩn!</p>
+        </div>
+    `;
+}
+
+html += `
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="speakSyllables('${word}')" class="bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-bold">
+                🔊 Nghe từng âm tiết
+            </button>
+            <button onclick="recordWord('${word}')" class="bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-bold">
+                🎤 Thử lại
+            </button>
+        </div>
+    </div>
+`;
+
+resultDiv.innerHTML = html;
+}
+// ==================== SPEECH FUNCTIONS ====================
+window.speakWord = function(word, rate) {
+const utterance = new SpeechSynthesisUtterance(word);
+utterance.rate = rate;
+utterance.lang = 'en-US';
+utterance.volume = 1;
+utterance.pitch = 1;
+speechSynthesis.speak(utterance);
+}
+window.speakSyllables = function(word) {
+const syllables = splitIntoSyllables(word);
+let index = 0;
+const speakNext = () => {
+if (index < syllables.length) {
+const syllable = syllables[index];
+const utterance = new SpeechSynthesisUtterance(syllable);
+utterance.rate = 0.5;
+utterance.lang = 'en-US';
+utterance.onend = () => {
+index++;
+setTimeout(speakNext, 1200);
+};
+speechSynthesis.speak(utterance);
+}
+};
+speakNext();
+}
+window.practiceWrongSyllables = function(word, wrongSyllablesJSON) {
+const wrongSyllables = JSON.parse(wrongSyllablesJSON);
+let index = 0;
+const speakNext = () => {
+if (index < wrongSyllables.length) {
+const syllable = wrongSyllables[index];
+alert(🎯 Hãy chú ý nghe âm tiết: "${syllable}");
+const utterance = new SpeechSynthesisUtterance(syllable);
+utterance.rate = 0.5;
+utterance.lang = 'en-US';
+utterance.onend = () => {
+setTimeout(() => {
+const utterance2 = new SpeechSynthesisUtterance(syllable);
+utterance2.rate = 1;
+utterance2.lang = 'en-US';
+speechSynthesis.speak(utterance2);
+index++;
+setTimeout(speakNext, 2000);
+}, 1000);
+};
+speechSynthesis.speak(utterance);
+} else {
+setTimeout(() => {
+alert(✨ Giờ thử nói cả từ: "${word}");
+speakWord(word, 0.7);
+}, 1500);
+}
+};
+speakNext();
+}
+// ==================== TEACHER FUNCTIONS ====================
+window.showCreateClass = function() {
+document.getElementById('teacherContent').innerHTML =         <h2 class="text-2xl font-bold mb-4">Tạo lớp mới</h2>         <input type="text" id="className" placeholder="Tên lớp (vd: Lớp 6A)" class="w-full p-3 border rounded-lg mb-4">         <button onclick="createClass()" class="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold">Tạo lớp</button>    ;
+}
+window.createClass = async function() {
+const name = document.getElementById('className').value.trim();
+if (!name) return alert('Vui lòng nhập tên lớp');
+showLoading(true);
+try {
+    await addDoc(collection(db, 'classes'), {
+        name,
+        teacherCode: currentUser.code,
+        createdAt: new Date(),
+        students: []
+    });
+    alert('Tạo lớp thành công!');
+    showMyClasses();
+} catch (error) {
+    alert('Lỗi tạo lớp: ' + error.message);
+}
+showLoading(false);
+}
+window.showMyClasses = async function() {
+showLoading(true);
+try {
+const classesRef = collection(db, 'classes');
+const q = query(classesRef, where('teacherCode', '==', currentUser.code));
+const snap = await getDocs(q);
+    let html = '<h2 class="text-2xl font-bold mb-4">Danh sách lớp</h2><div class="space-y-4">';
+   
+    snap.forEach(doc => {
+        const data = doc.data();
+        html += `
+            <div class="border rounded-lg p-4 hover:shadow-lg transition">
+                <h3 class="text-xl font-bold">${data.name}</h3>
+                <p class="text-gray-600">Số học sinh: ${data.students?.length || 0}</p>
+                <div class="mt-3 flex gap-2">
+                    <button onclick="manageStudents('${doc.id}', '${data.name}')" class="bg-green-500 text-white px-4 py-2 rounded">Quản lý HS</button>
+                    <button onclick="viewStats('${doc.id}', '${data.name}')" class="bg-purple-500 text-white px-4 py-2 rounded">Xem thống kê</button>
+                </div>
+            </div>
+        `;
+    });
+   
+    html += '</div>';
+    document.getElementById('teacherContent').innerHTML = html;
+} catch (error) {
+    alert('Lỗi tải danh sách lớp: ' + error.message);
+}
+showLoading(false);
+}
+window.manageStudents = async function(classId, className) {
+showLoading(true);
+try {
+const classDoc = await getDoc(doc(db, 'classes', classId));
+const students = classDoc.data().students || [];
+    let html = `
+        <h2 class="text-2xl font-bold mb-4">Quản lý học sinh - ${className}</h2>
+        <button onclick="showMyClasses()" class="text-blue-600 mb-4">← Quay lại</button>
+       
+        <div class="bg-gray-50 p-4 rounded-lg mb-6">
+            <h3 class="font-bold mb-2">Thêm học sinh mới</h3>
+            <div class="flex gap-2">
+                <input type="text" id="newStudentName" placeholder="Tên học sinh" class="flex-1 p-2 border rounded">
+                <input type="text" id="newStudentCode" placeholder="Mã (vd: HS001)" class="w-32 p-2 border rounded">
+                <button onclick="addStudent('${classId}')" class="bg-green-500 text-white px-4 py-2 rounded">Thêm</button>
+            </div>
+        </div>
+       
+        <h3 class="font-bold mb-2">Danh sách học sinh (${students.length})</h3>
+        <div class="space-y-2">
+    `;
+   
+    for (const stId of students) {
+        try {
+            const stDoc = await getDoc(doc(db, 'students', stId));
+            if (stDoc.exists()) {
+                const st = stDoc.data();
+                html += `
+                    <div class="border p-3 rounded flex justify-between items-center">
+                        <div>
+                            <span class="font-bold">${st.name}</span>
+                            <span class="text-gray-600 ml-2">(${st.code})</span>
+                        </div>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Lỗi tải học sinh:', error);
+        }
+    }
+   
+    html += '</div>';
+    document.getElementById('teacherContent').innerHTML = html;
+} catch (error) {
+    alert('Lỗi tải danh sách học sinh: ' + error.message);
+}
+showLoading(false);
+}
+window.addStudent = async function(classId) {
+const name = document.getElementById('newStudentName').value.trim();
+const code = document.getElementById('newStudentCode').value.trim();
+if (!name || !code) return alert('Vui lòng điền đầy đủ thông tin');
+
+showLoading(true);
+try {
+    const studentRef = await addDoc(collection(db, 'students'), {
+        name,
+        code,
+        classId,
+        createdAt: new Date()
+    });
+   
+    const classRef = doc(db, 'classes', classId);
+    await updateDoc(classRef, {
+        students: arrayUnion(studentRef.id)
+    });
+   
+    alert(`Đã thêm học sinh ${name} (${code})`);
+   
+    const classDoc = await getDoc(classRef);
+    manageStudents(classId, classDoc.data().name);
+} catch (error) {
+    alert('Lỗi thêm học sinh: ' + error.message);
+}
+showLoading(false);
+}
+window.showAssignments = async function() {
+showLoading(true);
+try {
+const classesRef = collection(db, 'classes');
+const q = query(classesRef, where('teacherCode', '==', currentUser.code));
+const snap = await getDocs(q);
+    let html = '<h2 class="text-2xl font-bold mb-4">Giao bài tập</h2><div class="space-y-4">';
+   
+    snap.forEach(doc => {
+        const data = doc.data();
+        html += `
+            <div class="border rounded-lg p-4">
+                <h3 class="text-xl font-bold mb-2">${data.name}</h3>
+                <button onclick="createAssignment('${doc.id}', '${data.name}')" class="bg-purple-500 text-white px-4 py-2 rounded">
+                    ➕ Tạo bài tập mới
+                </button>
+            </div>
+        `;
+    });
+   
+    html += '</div>';
+    document.getElementById('teacherContent').innerHTML = html;
+} catch (error) {
+    alert('Lỗi tải danh sách lớp: ' + error.message);
+}
+showLoading(false);
+}
+window.createAssignment = function(classId, className) {
+document.getElementById('teacherContent').innerHTML = `
+<h2 class="text-2xl font-bold mb-4">Tạo bài tập cho ${className}</h2>
+<button onclick="showAssignments()" class="text-blue-600 mb-4">← Quay lại</button>
+    <input type="text" id="assignmentName" placeholder="Tên bài (vd: Week 1 - Unit 1)" class="w-full p-3 border rounded-lg mb-4">
+   
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+        <h3 class="font-bold mb-2">📝 Hướng dẫn nhập từ vựng:</h3>
+        <p class="text-sm text-gray-700 mb-2">Mỗi dòng 1 từ (tối đa 20 từ):</p>
+        <div class="bg-white p-3 rounded font-mono text-sm space-y-1">
+            <div>fibre</div>
+            <div>carbohydrate</div>
+            <div>protein</div>
+            <div>vitamin</div>
+        </div>
+        <p class="text-xs text-gray-500 mt-2">
+            💡 Chỉ cần gõ từ tiếng Anh, hệ thống sẽ tự động phát âm!
+        </p>
+    </div>
+   
+    <textarea id="assignmentWords" placeholder="Nhập từ vựng (tối đa 20 từ)
+Ví dụ:
+fibre
+protein
+carbohydrate
+vitamin
+healthy
+exercise"
+rows="12" class="w-full p-3 border rounded-lg mb-4 font-mono"></textarea>
+    <button onclick="saveAssignment('${classId}')" class="bg-purple-500 text-white px-6 py-3 rounded-lg font-semibold w-full">
+        Lưu và giao bài
+    </button>
+`;
+}
+window.saveAssignment = async function(classId) {
+const name = document.getElementById('assignmentName').value.trim();
+const wordsText = document.getElementById('assignmentWords').value.trim();
+if (!name || !wordsText) return alert('Vui lòng điền đầy đủ thông tin');
+
+const lines = wordsText.split('\n')
+    .map(w => w.trim())
+    .filter(Boolean)
+    .slice(0, 20);
+
+if (lines.length === 0) return alert('Vui lòng nhập ít nhất 1 từ');
+
+const wordsData = lines.map(word => ({
+    word: word,
+    syllables: null
+}));
+
+showLoading(true);
+try {
+    await addDoc(collection(db, 'assignments'), {
+        name,
+        wordsData: wordsData,
+        classId,
+        teacherCode: currentUser.code,
+        createdAt: new Date()
+    });
+   
+    alert(`Đã giao bài "${name}" với ${wordsData.length} từ!`);
+    showAssignments();
+} catch (error) {
+    alert('Lỗi lưu bài tập: ' + error.message);
+}
+showLoading(false);
+}
+window.viewStats = async function(classId, className) {
+showLoading(true);
+try {
+    const assignmentsRef = collection(db, 'assignments');
+    const qAssign = query(assignmentsRef, where('classId', '==', classId));
+    const assignSnap = await getDocs(qAssign);
+   
+    const classDoc = await getDoc(doc(db, 'classes', classId));
+    const studentIds = classDoc.data().students || [];
+   
+    let html = `
+        <h2 class="text-2xl font-bold mb-4">Thống kê lớp ${className}</h2>
+        <button onclick="showMyClasses()" class="text-blue-600 mb-4">← Quay lại</button>
+    `;
+   
+    if (assignSnap.empty) {
+        html += '<p class="text-gray-600">Chưa có bài tập nào được giao.</p>';
+    } else {
+        for (const assignDoc of assignSnap.docs) {
+            const assign = assignDoc.data();
+           
+            const wordCount = assign.wordsData ? assign.wordsData.length : (assign.words || []).length;
+           
+            html += `<div class="border rounded-lg p-4 mb-4">
+                <h3 class="text-xl font-bold mb-2">${assign.name}</h3>
+                <p class="text-gray-600 mb-3">Số từ: ${wordCount}</p>
+                <div class="space-y-2">
+            `;
+           
+            for (const stId of studentIds) {
+                try {
+                    const stDoc = await getDoc(doc(db, 'students', stId));
+                    if (!stDoc.exists()) continue;
+                   
+                    const student = stDoc.data();
+                   
+                    const resultsRef = collection(db, 'results');
+                    const qResults = query(resultsRef,
+                        where('studentId', '==', stId),
+                        where('assignmentId', '==', assignDoc.id)
                     );
-                }
-            }
-            return arr[t.length][s.length];
-        }
-
-        const motivations = [
-            "Cố lên! Bạn đã cải thiện rồi đấy!",
-            "Gần đúng lắm! Thử lại xem sao.",
-            "Tuyệt vời! Điểm số đang tăng lên.",
-            "Bạn thật kiên trì! Tiếp tục nhé.",
-            "Đã tốt hơn lần trước 10% rồi!"
-        ];
-
-        class App extends React.Component {
-            constructor(props) {
-                super(props);
-                this.state = {
-                    userType: null,
-                    userId: '',
-                    password: '',
-                    classId: '',
-                    classes: [],
-                    students: [],
-                    assignments: [],
-                    currentAssignment: [],
-                    stats: {},
-                    progress: [],
-                    recording: false,
-                    audio: null,
-                    score: null,
-                    feedback: '',
-                    motivation: '',
-                    attempts: 0,
-                    bestScore: 0,
-                    slowMode: false,
-                    voice: 'en-US',
-                    error: '',
-                    loading: false // Thêm loading state
-                };
-                this.recorder = null;
-            }
-
-            componentDidMount() {
-                auth.onAuthStateChanged(user => {
-                    if (user) {
-                        this.setState({ userType: 'teacher', userId: user.uid });
-                        this.loadClasses(user.uid);
-                    }
-                });
-            }
-
-            login = async (type) => {
-                this.setState({ loading: true, error: '' });
-                const { userId, password } = this.state;
-                try {
-                    if (type === 'teacher') {
-                        if (!userId || !password) {
-                            throw new Error('Vui lòng nhập email và mật khẩu');
-                        }
-                        await auth.signInWithEmailAndPassword(userId, password);
-                    } else {
-                        const studentRef = db.collection('students').where('code', '==', userId);
-                        const snapshot = await studentRef.get();
-                        const student = snapshot.docs[0]?.data();
-                        if (student) {
-                            this.setState({ userType: 'student', userId: student.code, classId: student.classId });
-                            await this.loadAssignments(student.classId);
-                            await this.loadProgress(student.code);
-                        } else {
-                            throw new Error('Mã học sinh không tồn tại');
-                        }
-                    }
-                } catch (err) {
-                    this.setState({ error: 'Đăng nhập thất bại: ' + err.message });
-                } finally {
-                    this.setState({ loading: false });
-                }
-            }
-
-            logout = () => {
-                auth.signOut();
-                this.setState({ userType: null, userId: '', password: '', classId: '', classes: [], students: [], assignments: [], currentAssignment: [], stats: {}, progress: [], loading: false });
-            }
-
-            loadClasses = async (teacherId) => {
-                this.setState({ loading: true });
-                const classesRef = db.collection('classes').where('teacherId', '==', teacherId);
-                const snapshot = await classesRef.get();
-                const classes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                this.setState({ classes, loading: false });
-            }
-
-            createClass = async (name) => {
-                this.setState({ loading: true });
-                await db.collection('classes').add({ name, teacherId: this.state.userId, students: [] });
-                this.loadClasses(this.state.userId);
-                this.setState({ loading: false });
-            }
-
-            addStudent = async (classId, name, code) => {
-                this.setState({ loading: true });
-                await db.collection('students').add({ name, code, classId });
-                await db.collection('classes').doc(classId).update({
-                    students: firebase.firestore.FieldValue.arrayUnion({ name, code })
-                });
-                this.loadStudents(classId);
-                this.setState({ loading: false });
-            }
-
-            loadStudents = async (classId) => {
-                this.setState({ loading: true });
-                const classDoc = await db.collection('classes').doc(classId).get();
-                this.setState({ students: classDoc.data().students || [], loading: false });
-            }
-
-            assignWords = async (classId, words) => {
-                this.setState({ loading: true });
-                await db.collection('assignments').add({ classId, words: words.split(','), week: new Date().toISOString().slice(0,10) });
-                this.loadAssignments(classId);
-                this.setState({ loading: false });
-            }
-
-            loadAssignments = async (classId) => {
-                this.setState({ loading: true });
-                const assignsRef = db.collection('assignments').where('classId', '==', classId);
-                const snapshot = await assignsRef.get();
-                const assignments = snapshot.docs.map(doc => doc.data().words);
-                this.setState({ assignments, currentAssignment: assignments[assignments.length - 1] || [], loading: false });
-            }
-
-            loadProgress = async (studentId) => {
-                this.setState({ loading: true });
-                const progressRef = db.collection('progress').where('studentId', '==', studentId);
-                const snapshot = await progressRef.get();
-                const progress = snapshot.docs.map(doc => doc.data());
-                this.setState({ progress });
-                this.calculateStats();
-                this.setState({ loading: false });
-            }
-
-            startRecording = async () => {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    this.recorder = new MediaRecorder(stream);
-                    this.recorder.start();
-                    this.setState({ recording: true });
-                    this.recorder.ondataavailable = e => this.setState({ audio: e.data });
-                } catch (err) {
-                    this.setState({ error: 'Không thể ghi âm: ' + err.message });
-                }
-            }
-
-            stopRecording = (word) => {
-                this.recorder.stop();
-                this.setState({ recording: false });
-                setTimeout(() => this.processAudio(word), 500);
-            }
-
-            processAudio = async (word) => {
-                const { audio, attempts, bestScore } = this.state;
-                if (audio) {
-                    const analysis = await analyzePronunciation(audio, word);
-                    const newScore = analysis.score;
-                    const newBest = Math.max(bestScore, newScore);
-                    const motivation = motivations[Math.floor(Math.random() * motivations.length)] + 
-                        (newScore > bestScore ? ` Điểm tăng ${newScore - bestScore}%!` : '');
-                    const wrongSyls = analysis.wrongSyls.join(', ');
-                    const feedback = wrongSyls ? `Sai ở syllables: ${wrongSyls}. Thử luyện lại!` : 'Hoàn hảo!';
-
-                    await db.collection('progress').add({
-                        studentId: this.state.userId,
-                        word,
-                        score: newBest,
-                        attempts: attempts + 1,
-                        timestamp: new Date()
+                    const resultsSnap = await getDocs(qResults);
+                   
+                    let completed = 0;
+                    let totalScore = 0;
+                    let attempts = 0;
+                   
+                    resultsSnap.forEach(rDoc => {
+                        const r = rDoc.data();
+                        if (r.score >= 60) completed++;
+                        totalScore += r.score;
+                        attempts++;
                     });
-
-                    this.setState({
-                        score: newScore,
-                        bestScore: newBest,
-                        feedback,
-                        motivation,
-                        attempts: attempts + 1
-                    });
-                    this.loadProgress(this.state.userId);
-                }
-            }
-
-            playAudio = (text, slow = false) => {
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = this.state.voice;
-                utterance.rate = slow ? 0.6 : 1.0;
-                speechSynthesis.speak(utterance);
-            }
-
-            calculateStats = () => {
-                const { progress, currentAssignment } = this.state;
-                const progressLength = progress.length;
-                const assignmentLength = currentAssignment.length;
-                const completed = assignmentLength > 0 ? (progressLength / assignmentLength * 100).toFixed(2) + '%' : '0%';
-
-                const avgScore = progressLength > 0 ? (progress.reduce((sum, p) => sum + p.score, 0) / progressLength).toFixed(2) : 0;
-
-                const attemptsPerWord = {};
-                progress.forEach(p => attemptsPerWord[p.word] = (attemptsPerWord[p.word] || 0) + 1);
-                const attemptsKeysLength = Object.keys(attemptsPerWord).length;
-                const attempts = attemptsKeysLength > 0 ? (Object.values(attemptsPerWord).reduce((a, b) => a + b, 0) / attemptsKeysLength).toFixed(1) : 0;
-
-                const worstWord = progress.filter(p => p.score < 60).map(p => p.word)[0] || 'Không có';
-
-                const thisWeek = progress.filter(p => new Date(p.timestamp).getWeek() === new Date().getWeek());
-                const lastWeek = progress.filter(p => new Date(p.timestamp).getWeek() === new Date().getWeek() - 1);
-                const thisAvg = thisWeek.length > 0 ? thisWeek.reduce((sum, p) => sum + p.score, 0) / thisWeek.length : 0;
-                const lastAvg = lastWeek.length > 0 ? lastWeek.reduce((sum, p) => sum + p.score, 0) / lastWeek.length : 0;
-                const progressDiff = (thisAvg - lastAvg).toFixed(2);
-
-                this.setState({
-                    stats: {
-                        completed,
-                        avgScore,
-                        attempts,
-                        worstWord,
-                        progressDiff: isNaN(progressDiff) ? 0 : progressDiff
-                    }
-                });
-            }
-
-            loadClassStats = async (classId) => {
-                this.setState({ loading: true });
-                const students = this.state.students;
-                const progresses = await Promise.all(students.map(async s => {
-                    const progressRef = db.collection('progress').where('studentId', '==', s.code);
-                    const snapshot = await progressRef.get();
-                    return snapshot.docs.map(doc => doc.data());
-                }));
-                const completedPercent = students.length > 0 ? (progresses.filter(p => p.length >= 20).length / students.length * 100).toFixed(2) + '%' : '0%';
-                const classAvg = progresses.length > 0 ? (progresses.reduce((sum, ps) => sum + (ps.length > 0 ? ps.reduce((s, p) => s + p.score, 0) / ps.length : 0), 0) / progresses.length).toFixed(2) : 0;
-                const top5 = students.map(s => {
-                    const ps = progresses.find((p, i) => students[i].code === s.code) || [];
-                    const avg = ps.length > 0 ? ps.reduce((sum, p) => sum + p.score, 0) / ps.length : 0;
-                    return { ...s, avg };
-                }).sort((a, b) => b.avg - a.avg).slice(0,5).map(s => s.name);
-                const commonWorst = {};
-                progresses.forEach(ps => ps.filter(p => p.score < 60).forEach(p => commonWorst[p.word] = (commonWorst[p.word] || 0) + 1));
-                const worstWords = Object.keys(commonWorst).sort((a,b) => commonWorst[b] - commonWorst[a]).slice(0,5);
-
-                this.setState({
-                    stats: {
-                        classCompleted: completedPercent,
-                        classAvg,
-                        top5,
-                        worstWords
-                    },
-                    loading: false
-                });
-            }
-
-            renderLogin() {
-                const { userType, userId, password, error, loading } = this.state;
-                if (loading) return <div className="container text-center"><p>Đang đăng nhập...</p></div>;
-                return (
-                    <div className="container">
-                        <h1 className="text-center">Đăng Nhập Lime Phát Âm</h1>
-                        {error && <p className="error text-center">{error}</p>}
-                        <select className="form-select" onChange={e => this.setState({ userType: e.target.value })}>
-                            <option>Chọn vai trò</option>
-                            <option value="teacher">Giáo viên</option>
-                            <option value="student">Học sinh</option>
-                        </select>
-                        <input className="form-control" placeholder={userType === 'teacher' ? "Email GV (ví dụ: teacher1@example.com)" : "Mã HS"} onChange={e => this.setState({ userId: e.target.value })} />
-                        {userType === 'teacher' && (
-                            <input className="form-control" type="password" placeholder="Mật khẩu" onChange={e => this.setState({ password: e.target.value })} />
-                        )}
-                        <button className="btn btn-primary w-100" onClick={() => this.login(userType)}>Đăng nhập</button>
-                    </div>
-                );
-            }
-
-            renderTeacher() {
-                const { classes, students, classId, assignments, stats, loading } = this.state;
-                if (loading) return <div className="container text-center"><p>Đang tải dữ liệu...</p></div>;
-                return (
-                    <div className="container">
-                        <h1 className="text-center">Trang Giáo Viên</h1>
-                        <button className="btn btn-danger" onClick={this.logout}>Đăng xuất</button>
-                        <h2>Tạo Lớp</h2>
-                        <input className="form-control" id="className" placeholder="Tên lớp (ví dụ: Lớp 6A)" />
-                        <button className="btn btn-success" onClick={() => this.createClass(document.getElementById('className').value)}>Tạo</button>
-                        
-                        <h2>Lớp Học</h2>
-                        <select className="form-select" onChange={e => { this.setState({ classId: e.target.value }); this.loadStudents(e.target.value); this.loadAssignments(e.target.value); this.loadClassStats(e.target.value); }}>
-                            <option>Chọn lớp</option>
-                            {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                        </select>
-                        
-                        {classId && (
-                            <>
-                                <h2>Thêm Học Sinh</h2>
-                                <input className="form-control" id="studentName" placeholder="Tên HS" />
-                                <input className="form-control" id="studentCode" placeholder="Mã HS (ví dụ: HS001)" />
-                                <button className="btn btn-success" onClick={() => this.addStudent(classId, document.getElementById('studentName').value, document.getElementById('studentCode').value)}>Thêm</button>
-                                
-                                <h2>Danh Sách HS</h2>
-                                <ul className="list-group">
-                                    {students.map(s => <li key={s.code} className="list-group-item">{s.name} ({s.code})</li>)}
-                                </ul>
-                                
-                                <h2>Giao Bài Tập (20 từ, cách nhau dấu phẩy)</h2>
-                                <input className="form-control" id="words" placeholder="apple,banana,invitation,..." />
-                                <button className="btn btn-success" onClick={() => this.assignWords(classId, document.getElementById('words').value)}>Giao</button>
-                                
-                                <h2>Bài Tập Đã Giao</h2>
-                                <ul className="list-group">
-                                    {assignments.map((a, i) => <li key={i} className="list-group-item">{a.join(', ')}</li>)}
-                                </ul>
-                                
-                                <h2>Thống Kê Lớp</h2>
-                                <table className="table table-striped">
-                                    <tbody>
-                                        <tr><th>% Hoàn Thành</th><td>{stats.classCompleted || '0%'}</td></tr>
-                                        <tr><th>Điểm TB Lớp</th><td>{stats.classAvg || 0}</td></tr>
-                                        <tr><th>Top 5 HS</th><td>{stats.top5?.join(', ') || 'Chưa có'}</td></tr>
-                                        <tr><th>Từ Kém Chung</th><td>{stats.worstWords?.join(', ') || 'Chưa có'}</td></tr>
-                                    </tbody>
-                                </table>
-                            </>
-                        )}
-                    </div>
-                );
-            }
-
-            renderStudent() {
-                const { currentAssignment, recording, score, feedback, motivation, attempts, bestScore, stats, voice, loading } = this.state;
-                if (loading) return <div className="container text-center"><p>Đang tải tiến độ...</p></div>;
-                return (
-                    <div className="container">
-                        <h1 className="text-center">Trang Học Sinh</h1>
-                        <button className="btn btn-danger" onClick={this.logout}>Đăng xuất</button>
-                        <h2>Bài Tập Tuần Này (20 từ)</h2>
-                        {currentAssignment.map(word => (
-                            <div key={word} className="card mb-3">
-                                <div className="card-body">
-                                    <p className="word">{word}</p>
-                                    <select className="form-select d-inline-block w-auto" onChange={e => this.setState({ voice: e.target.value })}>
-                                        <option value="en-US">Giọng Mỹ</option>
-                                        <option value="en-GB">Giọng Anh</option>
-                                    </select>
-                                    <button className="btn btn-info ms-2" onClick={() => this.playAudio(word, false)}>Nghe Bình Thường</button>
-                                    <button className="btn btn-info ms-2" onClick={() => this.playAudio(word, true)}>Nghe Chậm</button>
-                                    {!recording ? (
-                                        <button className="btn btn-primary ms-2" onClick={this.startRecording}>Ghi Âm</button>
-                                    ) : (
-                                        <button className="btn btn-warning ms-2" onClick={() => this.stopRecording(word)}>Dừng & Chấm</button>
-                                    )}
-                                    {score !== null && (
-                                        <div className="mt-3">
-                                            <p className="feedback">Điểm: {score} (Tốt nhất: {bestScore})</p>
-                                            <p>{feedback}</p>
-                                            <p className="motivation">{motivation}</p>
-                                            <p>Số lần luyện: {attempts}</p>
-                                        </div>
-                                    )}
-                                </div>
+                   
+                    const avgScore = attempts > 0 ? Math.round(totalScore / attempts) : 0;
+                    const progress = wordCount > 0 ? Math.round((completed / wordCount) * 100) : 0;
+                   
+                    html += `
+                        <div class="bg-gray-50 p-3 rounded flex justify-between items-center">
+                            <span class="font-semibold">${student.name}</span>
+                            <div class="text-sm text-gray-600">
+                                <span class="mr-3">Tiến độ: ${progress}%</span>
+                                <span class="mr-3">Điểm TB: ${avgScore}</span>
+                                <span>Đã luyện: ${attempts} lần</span>
                             </div>
-                        ))}
-                        
-                        <h2>Tiến Độ Cá Nhân</h2>
-                        <table className="table table-striped">
-                            <tbody>
-                                <tr><th>% Hoàn Thành</th><td>{stats.completed || '0%'}</td></tr>
-                                <tr><th>Điểm TB</th><td>{stats.avgScore || 0}</td></tr>
-                                <tr><th>Số Lần Luyện/Từ</th><td>{stats.attempts || 0}</td></tr>
-                                <tr><th>Từ Kém Nhất</th><td>{stats.worstWord || 'Chưa có'}</td></tr>
-                                <tr><th>Tiến Độ (vs tuần trước)</th><td>{stats.progressDiff > 0 ? '+' : ''}{stats.progressDiff || 0}%</td></tr>
-                            </tbody>
-                        </table>
-                        
-                        <p className="motivation text-center">Kích thích luyện ở nhà: Luyện >5 lần/tuần để nhận badge "Siêu Chăm Chỉ"! Coin: {attempts * 10}</p>
-                    </div>
-                );
+                        </div>
+                    `;
+                } catch (error) {
+                    console.error('Lỗi tải thống kê:', error);
+                }
             }
-
-            render() {
-                const { userType } = this.state;
-                if (!userType) return this.renderLogin();
-                if (userType === 'teacher') return this.renderTeacher();
-                return this.renderStudent();
-            }
+           
+            html += '</div></div>';
         }
-
-        Date.prototype.getWeek = function() {
-            const date = new Date(this.getTime());
-            date.setHours(0, 0, 0, 0);
-            date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-            const week1 = new Date(date.getFullYear(), 0, 4);
-            return 1 + Math.round(((date - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-        };
-
-        ReactDOM.render(<App />, document.getElementById('root'));
-    </script>
+    }
+   
+    document.getElementById('teacherContent').innerHTML = html;
+} catch (error) {
+    alert('Lỗi tải thống kê: ' + error.message);
+}
+showLoading(false);
+}
+// ==================== STUDENT FUNCTIONS ====================
+window.loadStudentAssignments = async function() {
+showLoading(true);
+try {
+    const student = currentUser;
+    const classId = student.classId;
+   
+    const assignmentsRef = collection(db, 'assignments');
+    const q = query(assignmentsRef, where('classId', '==', classId));
+    const snap = await getDocs(q);
+   
+    let html = '';
+   
+    if (snap.empty) {
+        html = '<p class="text-gray-600 text-center py-12 text-lg">Chưa có bài tập nào được giao.</p>';
+    } else {
+        for (const doc of snap.docs) {
+            const assign = doc.data();
+            const wordCount = assign.wordsData ? assign.wordsData.length : (assign.words || []).length;
+           
+            const resultsRef = collection(db, 'results');
+            const qResults = query(resultsRef,
+                where('studentId', '==', student.id),
+                where('assignmentId', '==', doc.id)
+            );
+            const resultsSnap = await getDocs(qResults);
+           
+            let completed = 0;
+            let totalScore = 0;
+           
+            resultsSnap.forEach(rDoc => {
+                const r = rDoc.data();
+                if (r.score >= 60) completed++;
+                totalScore += r.score;
+            });
+           
+            const progress = wordCount > 0 ? Math.round((completed / wordCount) * 100) : 0;
+            const avgScore = resultsSnap.size > 0 ? Math.round(totalScore / resultsSnap.size) : 0;
+           
+            html += `
+                <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-2xl transition cursor-pointer" onclick="startPractice('${doc.id}')">
+                    <h3 class="text-2xl font-bold mb-3">${assign.name}</h3>
+                    <div class="space-y-2 text-gray-600">
+                        <p>📝 Số từ: ${wordCount}</p>
+                        <p>✅ Hoàn thành: ${progress}%</p>
+                        <p>⭐ Điểm TB: ${avgScore}</p>
+                    </div>
+                    <button class="mt-4 w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition">
+                        🚀 Bắt đầu luyện tập
+                    </button>
+                </div>
+            `;
+        }
+    }
+   
+    document.getElementById('studentAssignments').innerHTML = html;
+} catch (error) {
+    alert('Lỗi tải bài tập: ' + error.message);
+    document.getElementById('studentAssignments').innerHTML = '<p class="text-red-600 text-center py-12">Lỗi tải bài tập</p>';
+}
+showLoading(false);
+}
+window.startPractice = async function(assignmentId) {
+showLoading(true);
+try {
+    const assignDoc = await getDoc(doc(db, 'assignments', assignmentId));
+    const assign = assignDoc.data();
+   
+    currentAssignment = { id: assignmentId, ...assign };
+   
+    document.getElementById('assignmentTitle').textContent = assign.name;
+   
+    let wordsData = [];
+    if (assign.wordsData) {
+        wordsData = assign.wordsData;
+    } else if (assign.words) {
+        wordsData = assign.words.map(w => ({
+            word: w,
+            syllables: null
+        }));
+    }
+   
+    let html = '';
+    for (const data of wordsData) {
+        const word = data.word;
+        const syllables = data.syllables || splitIntoSyllables(word);
+       
+        const syllableDisplay = syllables.map((s, idx) => {
+            return `<span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full mx-1 font-mono font-bold">
+                ${s}
+            </span>`;
+        }).join('');
+       
+        html += `
+            <div class="bg-white rounded-2xl shadow-2xl p-8 text-center border-2 border-gray-200 hover:border-blue-400 transition">
+                <h3 class="text-5xl font-bold mb-4 text-gray-800">${word}</h3>
+               
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <p class="text-sm text-gray-600 mb-3">🔍 Âm tiết:</p>
+                    <div class="flex flex-wrap justify-center gap-2">
+                        ${syllableDisplay}
+                    </div>
+                </div>
+               
+                <div class="flex gap-2 mb-6 justify-center">
+                    <button onclick="speakWord('${word}', 0.3)" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 font-semibold flex items-center gap-2">
+                        🐢 Rất chậm
+                    </button>
+                    <button onclick="speakWord('${word}', 0.6)" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 font-semibold flex items-center gap-2">
+                        🐌 Chậm
+                    </button>
+                    <button onclick="speakWord('${word}', 1)" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 font-semibold flex items-center gap-2">
+                        ▶️ Bình thường
+                    </button>
+                </div>
+               
+                <button onclick="recordWord('${word}')" class="bg-gradient-to-r from-red-500 via-pink-500 to-purple-600 hover:from-red-600 hover:via-pink-600 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-bold text-lg w-full shadow-lg transform hover:scale-105 transition-all duration-200">
+                    🎤 BẮT ĐẦU THU ÂM
+                </button>
+               
+                <div id="result-${word}" class="mt-6"></div>
+            </div>
+        `;
+    }
+   
+    document.getElementById('wordsList').innerHTML = html;
+    updateProgress();
+    showScreen('practiceScreen');
+} catch (error) {
+    alert('Lỗi tải bài tập: ' + error.message);
+}
+showLoading(false);
+}
+window.updateProgress = async function() {
+if (!currentAssignment) return;
+try {
+    const resultsRef = collection(db, 'results');
+    const q = query(resultsRef,
+        where('studentId', '==', currentUser.id),
+        where('assignmentId', '==', currentAssignment.id)
+    );
+    const snap = await getDocs(q);
+    
+    let completed = 0;
+    let totalScore = 0;
+    
+    snap.forEach(doc => {
+        const r = doc.data();
+        if (r.score >= 60) completed++;
+        totalScore += r.score;
+    });
+    
+    const avgScore = snap.size > 0 ? Math.round(totalScore / snap.size) : 0;
+    const totalWords = currentAssignment.wordsData ? currentAssignment.wordsData.length : (currentAssignment.words || []).length;
+    
+    document.getElementById('progressText').textContent = `${completed}/${totalWords}`;
+    document.getElementById('avgScoreText').textContent = avgScore;
+} catch (error) {
+    console.error('Lỗi cập nhật tiến độ:', error);
+}
+}
+window.backToStudent = function() {
+currentAssignment = null;
+showScreen('studentDashboard');
+loadStudentAssignments();
+}
+</script>
 </body>
 </html>
