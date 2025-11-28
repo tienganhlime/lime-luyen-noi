@@ -9,6 +9,138 @@
     <script src="https://cdn.jsdelivr.net/npm/hyphen@1.1.1/patterns/en-us.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <!-- ✅ THÊM ĐOẠN NÀY VÀO HEAD -->
+    <script>
+        function selectRole(role) {
+            if (role === 'admin') {
+                showScreen('adminLoginScreen');
+            } else if (role === 'teacher') {
+                showScreen('teacherLoginScreen');
+            } else {
+                showScreen('studentLoginScreen');
+            }
+        }
+        
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+    </script>
+<script>
+        // Global variables
+        let currentUser = null;
+        let currentAssignment = null;
+        let db = null;
+
+        // Initialize Firebase when DOM loads
+        window.addEventListener('DOMContentLoaded', function() {
+            const firebaseConfig = {
+                apiKey: "AIzaSyB2VOZ0A5im13MC6FNLa4bEupKedm5iiBo",
+                authDomain: "lime-phat-am.firebaseapp.com",
+                projectId: "lime-phat-am",
+                storageBucket: "lime-phat-am.firebasestorage.app",
+                messagingSenderId: "434295865710",
+                appId: "1:434295865710:web:5f373900f5e8c1d679417f"
+            };
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore();
+        });
+
+        // Essential functions for inline onclick
+        function selectRole(role) {
+            if (role === 'admin') {
+                showScreen('adminLoginScreen');
+            } else if (role === 'teacher') {
+                showScreen('teacherLoginScreen');
+            } else {
+                showScreen('studentLoginScreen');
+            }
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('hidden', !show);
+        }
+
+        function logout() {
+            currentUser = null;
+            showScreen('loginScreen');
+        }
+
+        async function loginAdmin() {
+            const code = document.getElementById('adminCode').value.trim();
+            const password = document.getElementById('adminPassword').value;
+            if (!code || !password) return alert('Vui lòng nhập đầy đủ');
+            showLoading(true);
+            try {
+                const adminRef = db.collection('admins').doc(code);
+                const adminSnap = await adminRef.get();
+                if (!adminSnap.exists || adminSnap.data().password !== password) {
+                    throw new Error('Sai mã hoặc mật khẩu');
+                }
+                currentUser = { role: 'admin', code };
+                document.getElementById('adminCodeDisplay').textContent = code;
+                showScreen('adminDashboard');
+            } catch (error) {
+                alert('Lỗi: ' + error.message);
+            }
+            showLoading(false);
+        }
+
+        async function loginTeacher() {
+            const code = document.getElementById('teacherCode').value.trim();
+            const password = document.getElementById('teacherPassword').value;
+            if (!code || !password) return alert('Vui lòng nhập đầy đủ');
+            showLoading(true);
+            try {
+                const teacherRef = db.collection('teachers').doc(code);
+                const teacherSnap = await teacherRef.get();
+                if (!teacherSnap.exists || teacherSnap.data().password !== password) {
+                    throw new Error('Sai mã hoặc mật khẩu');
+                }
+                currentUser = { role: 'teacher', code, assignedClasses: teacherSnap.data().assignedClasses || [] };
+                document.getElementById('teacherCodeDisplay').textContent = code;
+                showScreen('teacherDashboard');
+            } catch (error) {
+                alert('Lỗi đăng nhập: ' + error.message);
+            }
+            showLoading(false);
+        }
+
+        async function loginStudent() {
+            const code = document.getElementById('studentCode').value.trim();
+            if (!code) return alert('Vui lòng nhập mã học sinh');
+            
+            showLoading(true);
+            try {
+                const studentsRef = db.collection('students');
+                const snap = await studentsRef.where('code', '==', code).get();
+                
+                if (snap.empty) {
+                    showLoading(false);
+                    return alert('Mã học sinh không tồn tại. Liên hệ giáo viên!');
+                }
+                
+                const studentData = snap.docs[0].data();
+                currentUser = { role: 'student', code, id: snap.docs[0].id, ...studentData };
+                document.getElementById('studentNameDisplay').textContent = studentData.name;
+                
+                // Call loadStudentAssignments from main script
+                if (typeof loadStudentAssignments === 'function') {
+                    await loadStudentAssignments();
+                }
+                showScreen('studentDashboard');
+            } catch (error) {
+                alert('Lỗi đăng nhập: ' + error.message);
+            }
+            showLoading(false);
+        }
+    </script>
 </head>
 <body class="bg-gray-100">
 <!-- Loading Spinner -->
@@ -24,13 +156,13 @@
     <div class="bg-white rounded-2xl shadow-2xl p-10 max-w-md w-full">
         <h1 class="text-4xl font-bold text-center mb-8 text-blue-600">🎙️ Luyện Phát Âm</h1>
         <div class="space-y-4">
-          <button id="btnTeacher" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-lg text-xl font-semibold transition">
+          <button onclick="selectRole('teacher')" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-lg text-xl font-semibold transition">
     👨‍🏫 Tôi là Giáo viên
 </button>
-<button id="btnStudent" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-4 rounded-lg text-xl font-semibold transition">
+<button onclick="selectRole('student')" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-4 rounded-lg text-xl font-semibold transition">
     👨‍🎓 Tôi là Học sinh
 </button>
-<button id="btnAdmin" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-4 rounded-lg text-xl font-semibold transition">
+<button onclick="selectRole('admin')" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-4 rounded-lg text-xl font-semibold transition">
     🛡️ Tôi là Admin
 </button>
         </div>
@@ -154,21 +286,6 @@
 </div>
 
 <script>
-// ==================== FIREBASE CONFIG ====================
-const firebaseConfig = {
-    apiKey: "AIzaSyB2VOZ0A5im13MC6FNLa4bEupKedm5iiBo",
-    authDomain: "lime-phat-am.firebaseapp.com",
-    projectId: "lime-phat-am",
-    storageBucket: "lime-phat-am.firebasestorage.app",
-    messagingSenderId: "434295865710",
-    appId: "1:434295865710:web:5f373900f5e8c1d679417f"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-let currentUser = null;
-let currentAssignment = null;
 
 // ==================== WHISPER AI CONFIGURATION ====================
 const HUGGING_FACE_API_KEY = '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'; 
@@ -211,15 +328,6 @@ const PRECISE_SYLLABLE_DB = {
     'department': ['de', 'part', 'ment']
 };
 
-// ==================== UTILITIES ====================
-function showScreen(screenId) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-    document.getElementById(screenId).classList.remove('hidden');
-}
-
-function showLoading(show) {
-    document.getElementById('loading').classList.toggle('hidden', !show);
-}
 
 // ==================== SYLLABLE ANALYSIS ====================
 function splitIntoSyllables(word) {
@@ -307,86 +415,6 @@ function editDistance(s1, s2) {
     return costs[s2.length];
 }
 
-// ==================== AUTHENTICATION ====================
-function selectRole(role) {
-    if (role === 'admin') {
-        showScreen('adminLoginScreen');
-    } else if (role === 'teacher') {
-        showScreen('teacherLoginScreen');
-    } else {
-        showScreen('studentLoginScreen');
-    }
-}
-
-async function loginAdmin() {
-    const code = document.getElementById('adminCode').value.trim();
-    const password = document.getElementById('adminPassword').value;
-    if (!code || !password) return alert('Vui lòng nhập đầy đủ');
-    showLoading(true);
-    try {
-        const adminRef = db.collection('admins').doc(code);
-        const adminSnap = await adminRef.get();
-        if (!adminSnap.exists || adminSnap.data().password !== password) {
-            throw new Error('Sai mã hoặc mật khẩu');
-        }
-        currentUser = { role: 'admin', code };
-        document.getElementById('adminCodeDisplay').textContent = code;
-        showScreen('adminDashboard');
-    } catch (error) {
-        alert('Lỗi: ' + error.message);
-    }
-    showLoading(false);
-}
-
-async function loginTeacher() {
-    const code = document.getElementById('teacherCode').value.trim();
-    const password = document.getElementById('teacherPassword').value;
-    if (!code || !password) return alert('Vui lòng nhập đầy đủ');
-    showLoading(true);
-    try {
-        const teacherRef = db.collection('teachers').doc(code);
-        const teacherSnap = await teacherRef.get();
-        if (!teacherSnap.exists || teacherSnap.data().password !== password) {
-            throw new Error('Sai mã hoặc mật khẩu');
-        }
-        currentUser = { role: 'teacher', code, assignedClasses: teacherSnap.data().assignedClasses || [] };
-        document.getElementById('teacherCodeDisplay').textContent = code;
-        showScreen('teacherDashboard');
-    } catch (error) {
-        alert('Lỗi đăng nhập: ' + error.message);
-    }
-    showLoading(false);
-}
-
-async function loginStudent() {
-    const code = document.getElementById('studentCode').value.trim();
-    if (!code) return alert('Vui lòng nhập mã học sinh');
-   
-    showLoading(true);
-    try {
-        const studentsRef = db.collection('students');
-        const snap = await studentsRef.where('code', '==', code).get();
-       
-        if (snap.empty) {
-            showLoading(false);
-            return alert('Mã học sinh không tồn tại. Liên hệ giáo viên!');
-        }
-       
-        const studentData = snap.docs[0].data();
-        currentUser = { role: 'student', code, id: snap.docs[0].id, ...studentData };
-        document.getElementById('studentNameDisplay').textContent = studentData.name;
-        await loadStudentAssignments();
-        showScreen('studentDashboard');
-    } catch (error) {
-        alert('Lỗi đăng nhập: ' + error.message);
-    }
-    showLoading(false);
-}
-
-function logout() {
-    currentUser = null;
-    showScreen('loginScreen');
-}
 
 // ==================== ADMIN FUNCTIONS - GIÁO VIÊN ====================
 async function showManageTeachers() {
@@ -626,7 +654,6 @@ showLoading(false);
 }
 
 ## PHẦN 7: Admin Functions - Quản lý Học sinh
-```javascript
 // ==================== ADMIN FUNCTIONS - HỌC SINH ====================
 async function showManageStudents() {
     showLoading(true);
@@ -1716,5 +1743,4 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
-
 
