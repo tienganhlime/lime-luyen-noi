@@ -141,150 +141,6 @@
             showLoading(false);
         }
     </script>
-</head>
-<body class="bg-gray-100">
-<!-- Loading Spinner -->
-<div id="loading" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white p-8 rounded-lg">
-        <div class="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
-        <p class="mt-4 text-gray-700">Đang xử lý...</p>
-    </div>
-</div>
-
-<!-- 1. TRANG ĐĂNG NHẬP -->
-<div id="loginScreen" class="screen min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl p-10 max-w-md w-full">
-        <h1 class="text-4xl font-bold text-center mb-8 text-blue-600">🎙️ Luyện Phát Âm</h1>
-        <div class="space-y-4">
-          <button onclick="selectRole('teacher')" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-lg text-xl font-semibold transition">
-    👨‍🏫 Tôi là Giáo viên
-</button>
-<button onclick="selectRole('student')" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-4 rounded-lg text-xl font-semibold transition">
-    👨‍🎓 Tôi là Học sinh
-</button>
-<button onclick="selectRole('admin')" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-4 rounded-lg text-xl font-semibold transition">
-    🛡️ Tôi là Admin
-</button>
-        </div>
-    </div>
-</div>
-
-<!-- 2. ĐĂNG NHẬP HỌC SINH -->
-<div id="studentLoginScreen" class="screen hidden min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
-        <button onclick="showScreen('loginScreen')" class="text-gray-600 mb-4">← Quay lại</button>
-        <h2 class="text-3xl font-bold mb-6">Đăng nhập Học sinh</h2>
-        <input type="text" id="studentCode" placeholder="Nhập mã học sinh (vd: HS001)" class="w-full p-3 border rounded-lg mb-4">
-        <button onclick="loginStudent()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold">
-            Đăng nhập
-        </button>
-    </div>
-</div>
-
-<!-- 3. ĐĂNG NHẬP GIÁO VIÊN -->
-<div id="teacherLoginScreen" class="screen hidden min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
-        <button onclick="showScreen('loginScreen')" class="text-gray-600 mb-4">← Quay lại</button>
-        <h2 class="text-3xl font-bold mb-6">Đăng nhập Giáo viên</h2>
-        <input type="text" id="teacherCode" placeholder="Nhập mã giáo viên (vd: GV001)" class="w-full p-3 border rounded-lg mb-4">
-        <input type="password" id="teacherPassword" placeholder="Mật khẩu" class="w-full p-3 border rounded-lg mb-4">
-        <button onclick="loginTeacher()" class="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold">
-            Đăng nhập
-        </button>
-        <p class="text-sm text-gray-500 mt-4">Liên hệ Admin nếu quên mật khẩu.</p>
-    </div>
-</div>
-
-<!-- ĐĂNG NHẬP ADMIN -->
-<div id="adminLoginScreen" class="screen hidden min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
-        <button onclick="showScreen('loginScreen')" class="text-gray-600 mb-4">← Quay lại</button>
-        <h2 class="text-3xl font-bold mb-6">Đăng nhập Admin</h2>
-        <input type="text" id="adminCode" placeholder="Mã admin (vd: ADMIN001)" class="w-full p-3 border rounded-lg mb-4">
-        <input type="password" id="adminPassword" placeholder="Mật khẩu" class="w-full p-3 border rounded-lg mb-4">
-        <button onclick="loginAdmin()" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold">
-            Đăng nhập
-        </button>
-        <p class="text-sm text-gray-500 mt-4">Liên hệ developer nếu cần.</p>
-    </div>
-</div>
-
-<!-- DASHBOARD ADMIN -->
-<div id="adminDashboard" class="screen hidden min-h-screen p-6">
-    <div class="max-w-6xl mx-auto">
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <div class="flex justify-between items-center">
-                <h1 class="text-3xl font-bold">🛡️ Dashboard Admin</h1>
-                <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg">Đăng xuất</button>
-            </div>
-            <p class="text-gray-600 mt-2">Mã Admin: <span id="adminCodeDisplay" class="font-mono font-bold"></span></p>
-        </div>
-        <div class="grid md:grid-cols-4 gap-6 mb-6">
-            <button onclick="showManageTeachers()" class="bg-blue-500 hover:bg-blue-600 text-white p-6 rounded-lg text-xl font-semibold">👨‍🏫 Quản lý Giáo viên</button>
-            <button onclick="showManageClasses()" class="bg-green-500 hover:bg-green-600 text-white p-6 rounded-lg text-xl font-semibold">📚 Quản lý Lớp</button>
-            <button onclick="showManageStudents()" class="bg-purple-500 hover:bg-purple-600 text-white p-6 rounded-lg text-xl font-semibold">👨‍🎓 Quản lý Học sinh</button>
-            <button onclick="showReports()" class="bg-orange-500 hover:bg-orange-600 text-white p-6 rounded-lg text-xl font-semibold">📊 Báo cáo</button>
-        </div>
-        <div id="adminContent" class="bg-white rounded-lg shadow-lg p-6"></div>
-    </div>
-</div>
-
-<!-- 4. DASHBOARD GIÁO VIÊN -->
-<div id="teacherDashboard" class="screen hidden min-h-screen p-6">
-    <div class="max-w-6xl mx-auto">
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <div class="flex justify-between items-center">
-                <h1 class="text-3xl font-bold">👨‍🏫 Dashboard Giáo viên</h1>
-                <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg">Đăng xuất</button>
-            </div>
-            <p class="text-gray-600 mt-2">Mã GV: <span id="teacherCodeDisplay" class="font-mono font-bold"></span></p>
-        </div>
-        <div class="grid md:grid-cols-3 gap-6 mb-6">
-            <button onclick="showCreateClass()" class="bg-blue-500 hover:bg-blue-600 text-white p-6 rounded-lg text-xl font-semibold">
-                ➕ Tạo lớp mới
-            </button>
-            <button onclick="showMyClasses()" class="bg-green-500 hover:bg-green-600 text-white p-6 rounded-lg text-xl font-semibold">
-                📚 Quản lý lớp
-            </button>
-            <button onclick="showAssignments()" class="bg-purple-500 hover:bg-purple-600 text-white p-6 rounded-lg text-xl font-semibold">
-                📝 Giao bài tập
-            </button>
-        </div>
-        <div id="teacherContent" class="bg-white rounded-lg shadow-lg p-6"></div>
-    </div>
-</div>
-
-<!-- 5. DASHBOARD HỌC SINH -->
-<div id="studentDashboard" class="screen hidden min-h-screen p-6">
-    <div class="max-w-6xl mx-auto">
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-3xl font-bold">👨‍🎓 Lớp học của tôi</h1>
-                    <p class="text-gray-600 mt-2">Học sinh: <span id="studentNameDisplay" class="font-bold"></span></p>
-                </div>
-                <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg">Đăng xuất</button>
-            </div>
-        </div>
-        <div id="studentAssignments" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-    </div>
-</div>
-
-<!-- 6. MÀN HÌNH LUYỆN TẬP -->
-<div id="practiceScreen" class="screen hidden min-h-screen p-6 bg-gradient-to-br from-indigo-500 to-purple-600">
-    <div class="max-w-6xl mx-auto">
-        <button onclick="backToStudent()" class="text-white mb-4 text-lg">← Quay lại</button>
-        <div class="bg-white rounded-lg shadow-2xl p-6 mb-6">
-            <h2 id="assignmentTitle" class="text-3xl font-bold mb-2"></h2>
-            <div class="flex gap-4 text-sm text-gray-600">
-                <span>Tiến độ: <span id="progressText" class="font-bold">0/0</span></span>
-                <span>Điểm TB: <span id="avgScoreText" class="font-bold">0</span></span>
-            </div>
-        </div>
-        <div id="wordsList" class="grid md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
-    </div>
-</div>
-
 <script>
 
 // ==================== WHISPER AI CONFIGURATION ====================
@@ -653,7 +509,6 @@ alert('Lỗi: ' + error.message);
 showLoading(false);
 }
 
-## PHẦN 7: Admin Functions - Quản lý Học sinh
 // ==================== ADMIN FUNCTIONS - HỌC SINH ====================
 async function showManageStudents() {
     showLoading(true);
@@ -1645,8 +1500,7 @@ html += `
 }
 ```
 
-## PHẦN 13: Speech & Practice Functions
-```javascript
+
 // ==================== SPEECH FUNCTIONS ====================
 function speakWord(word, rate) {
     const utterance = new SpeechSynthesisUtterance(word);
@@ -1741,6 +1595,151 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 </script>
+</head>
+<body class="bg-gray-100">
+<!-- Loading Spinner -->
+<div id="loading" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white p-8 rounded-lg">
+        <div class="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
+        <p class="mt-4 text-gray-700">Đang xử lý...</p>
+    </div>
+</div>
+
+<!-- 1. TRANG ĐĂNG NHẬP -->
+<div id="loginScreen" class="screen min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl p-10 max-w-md w-full">
+        <h1 class="text-4xl font-bold text-center mb-8 text-blue-600">🎙️ Luyện Phát Âm</h1>
+        <div class="space-y-4">
+          <button onclick="selectRole('teacher')" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-lg text-xl font-semibold transition">
+    👨‍🏫 Tôi là Giáo viên
+</button>
+<button onclick="selectRole('student')" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-4 rounded-lg text-xl font-semibold transition">
+    👨‍🎓 Tôi là Học sinh
+</button>
+<button onclick="selectRole('admin')" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-4 rounded-lg text-xl font-semibold transition">
+    🛡️ Tôi là Admin
+</button>
+        </div>
+    </div>
+</div>
+
+<!-- 2. ĐĂNG NHẬP HỌC SINH -->
+<div id="studentLoginScreen" class="screen hidden min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+        <button onclick="showScreen('loginScreen')" class="text-gray-600 mb-4">← Quay lại</button>
+        <h2 class="text-3xl font-bold mb-6">Đăng nhập Học sinh</h2>
+        <input type="text" id="studentCode" placeholder="Nhập mã học sinh (vd: HS001)" class="w-full p-3 border rounded-lg mb-4">
+        <button onclick="loginStudent()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold">
+            Đăng nhập
+        </button>
+    </div>
+</div>
+
+<!-- 3. ĐĂNG NHẬP GIÁO VIÊN -->
+<div id="teacherLoginScreen" class="screen hidden min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+        <button onclick="showScreen('loginScreen')" class="text-gray-600 mb-4">← Quay lại</button>
+        <h2 class="text-3xl font-bold mb-6">Đăng nhập Giáo viên</h2>
+        <input type="text" id="teacherCode" placeholder="Nhập mã giáo viên (vd: GV001)" class="w-full p-3 border rounded-lg mb-4">
+        <input type="password" id="teacherPassword" placeholder="Mật khẩu" class="w-full p-3 border rounded-lg mb-4">
+        <button onclick="loginTeacher()" class="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold">
+            Đăng nhập
+        </button>
+        <p class="text-sm text-gray-500 mt-4">Liên hệ Admin nếu quên mật khẩu.</p>
+    </div>
+</div>
+
+<!-- ĐĂNG NHẬP ADMIN -->
+<div id="adminLoginScreen" class="screen hidden min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+        <button onclick="showScreen('loginScreen')" class="text-gray-600 mb-4">← Quay lại</button>
+        <h2 class="text-3xl font-bold mb-6">Đăng nhập Admin</h2>
+        <input type="text" id="adminCode" placeholder="Mã admin (vd: ADMIN001)" class="w-full p-3 border rounded-lg mb-4">
+        <input type="password" id="adminPassword" placeholder="Mật khẩu" class="w-full p-3 border rounded-lg mb-4">
+        <button onclick="loginAdmin()" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-semibold">
+            Đăng nhập
+        </button>
+        <p class="text-sm text-gray-500 mt-4">Liên hệ developer nếu cần.</p>
+    </div>
+</div>
+
+<!-- DASHBOARD ADMIN -->
+<div id="adminDashboard" class="screen hidden min-h-screen p-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl font-bold">🛡️ Dashboard Admin</h1>
+                <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg">Đăng xuất</button>
+            </div>
+            <p class="text-gray-600 mt-2">Mã Admin: <span id="adminCodeDisplay" class="font-mono font-bold"></span></p>
+        </div>
+        <div class="grid md:grid-cols-4 gap-6 mb-6">
+            <button onclick="showManageTeachers()" class="bg-blue-500 hover:bg-blue-600 text-white p-6 rounded-lg text-xl font-semibold">👨‍🏫 Quản lý Giáo viên</button>
+            <button onclick="showManageClasses()" class="bg-green-500 hover:bg-green-600 text-white p-6 rounded-lg text-xl font-semibold">📚 Quản lý Lớp</button>
+            <button onclick="showManageStudents()" class="bg-purple-500 hover:bg-purple-600 text-white p-6 rounded-lg text-xl font-semibold">👨‍🎓 Quản lý Học sinh</button>
+            <button onclick="showReports()" class="bg-orange-500 hover:bg-orange-600 text-white p-6 rounded-lg text-xl font-semibold">📊 Báo cáo</button>
+        </div>
+        <div id="adminContent" class="bg-white rounded-lg shadow-lg p-6"></div>
+    </div>
+</div>
+
+<!-- 4. DASHBOARD GIÁO VIÊN -->
+<div id="teacherDashboard" class="screen hidden min-h-screen p-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl font-bold">👨‍🏫 Dashboard Giáo viên</h1>
+                <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg">Đăng xuất</button>
+            </div>
+            <p class="text-gray-600 mt-2">Mã GV: <span id="teacherCodeDisplay" class="font-mono font-bold"></span></p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-6 mb-6">
+            <button onclick="showCreateClass()" class="bg-blue-500 hover:bg-blue-600 text-white p-6 rounded-lg text-xl font-semibold">
+                ➕ Tạo lớp mới
+            </button>
+            <button onclick="showMyClasses()" class="bg-green-500 hover:bg-green-600 text-white p-6 rounded-lg text-xl font-semibold">
+                📚 Quản lý lớp
+            </button>
+            <button onclick="showAssignments()" class="bg-purple-500 hover:bg-purple-600 text-white p-6 rounded-lg text-xl font-semibold">
+                📝 Giao bài tập
+            </button>
+        </div>
+        <div id="teacherContent" class="bg-white rounded-lg shadow-lg p-6"></div>
+    </div>
+</div>
+
+<!-- 5. DASHBOARD HỌC SINH -->
+<div id="studentDashboard" class="screen hidden min-h-screen p-6">
+    <div class="max-w-6xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold">👨‍🎓 Lớp học của tôi</h1>
+                    <p class="text-gray-600 mt-2">Học sinh: <span id="studentNameDisplay" class="font-bold"></span></p>
+                </div>
+                <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg">Đăng xuất</button>
+            </div>
+        </div>
+        <div id="studentAssignments" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </div>
+</div>
+
+<!-- 6. MÀN HÌNH LUYỆN TẬP -->
+<div id="practiceScreen" class="screen hidden min-h-screen p-6 bg-gradient-to-br from-indigo-500 to-purple-600">
+    <div class="max-w-6xl mx-auto">
+        <button onclick="backToStudent()" class="text-white mb-4 text-lg">← Quay lại</button>
+        <div class="bg-white rounded-lg shadow-2xl p-6 mb-6">
+            <h2 id="assignmentTitle" class="text-3xl font-bold mb-2"></h2>
+            <div class="flex gap-4 text-sm text-gray-600">
+                <span>Tiến độ: <span id="progressText" class="font-bold">0/0</span></span>
+                <span>Điểm TB: <span id="avgScoreText" class="font-bold">0</span></span>
+            </div>
+        </div>
+        <div id="wordsList" class="grid md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+    </div>
+</div>
+
+
 </body>
 </html>
 
