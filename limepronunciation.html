@@ -1061,15 +1061,20 @@ async function viewAssignmentDetails(assignmentId) {
     showLoading(true);
     try {
         const assignDoc = await db.collection('assignments').doc(assignmentId).get();
-        if (!assignDoc.exists) throw new Error('Bài tập không tồn tại');    
-const assignment = assignDoc.data();
-    currentAssignment = { id: assignmentId, ...assignment };    document.getElementById('assignmentTitle').textContent = assignment.name;    await loadAssignmentWords(assignment.wordsData || []);
-    showScreen('practiceScreen');    setTimeout(updateProgress, 1000);} 
-catch (error) {
-    alert('Lỗi tải bài tập: ' + error.message);
+        if (!assignDoc.exists) throw new Error('Bài tập không tồn tại');
+        const assignment = assignDoc.data();
+        currentAssignment = { id: assignmentId, ...assignment };
+        document.getElementById('assignmentTitle').textContent = assignment.name;
+        await loadAssignmentWords(assignment.wordsData || []);
+        showScreen('practiceScreen');
+        setTimeout(updateProgress, 1000);
+    } catch (error) {
+        alert('Lỗi tải bài tập: ' + error.message);
+    }
+    showLoading(false);
 }
-showLoading(false);
-}async function loadAssignmentWords(wordsData) {
+
+async function loadAssignmentWords(wordsData) {
 const container = document.getElementById('wordsList');
 let html = '';// Load scores cho tất cả các từ
 const wordScores = await loadWordScores(wordsData.map(w => w.word), currentAssignment.id, currentUser.id);for (const wordObj of wordsData) {
@@ -1207,7 +1212,8 @@ const resultDiv = document.getElementById(result-${word});if (HUGGING_FACE_API_K
             </button>
             <p class="text-xs text-gray-500 mt-2">Hoặc tự động sau 5 giây</p>
         </div>
-    `;    audioChunks = [];
+    `;    
+audioChunks = [];
     mediaRecorder = new MediaRecorder(stream);    mediaRecorder.ondataavailable = (event) => {
         audioChunks.push(event.data);
     };    mediaRecorder.onstop = async () => {
@@ -1229,8 +1235,15 @@ const resultDiv = document.getElementById(result-${word});if (HUGGING_FACE_API_K
 if (mediaRecorder && mediaRecorder.state === 'recording') {
 mediaRecorder.stop();
 }
-}async function gradeWithWhisper(word, audioBlob, resultDiv) {
-resultDiv.innerHTML =         <div class="p-6 bg-purple-50 border-2 border-purple-200 rounded-xl text-center">             <div class="animate-spin inline-block w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full mb-4"></div>             <p class="text-purple-700 font-bold text-xl">🤖 AI đang chấm điểm...</p>         </div>    ;try {
+}
+async function gradeWithWhisper(word, audioBlob, resultDiv) {
+
+resultDiv.innerHTML = `
+<div class="p-6 bg-purple-50 border-2 border-purple-200 rounded-xl text-center">             
+<div class="animate-spin inline-block w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full mb-4"></div>             
+<p class="text-purple-700 font-bold text-xl">🤖 AI đang chấm điểm...</p>         </div>    
+`;
+try {
     const reader = new FileReader();
     const base64Audio = await new Promise((resolve, reject) => {
         reader.onloadend = () => {
@@ -1587,12 +1600,6 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`${word} →`, splitIntoSyllables(word));
         });
     }, 1000);
-
-    // ✅ THÊM ĐOẠN NÀY:
-    document.getElementById('btnTeacher').addEventListener('click', () => selectRole('teacher'));
-    document.getElementById('btnStudent').addEventListener('click', () => selectRole('student'));
-    document.getElementById('btnAdmin').addEventListener('click', () => selectRole('admin'));
-});
 
 </script>
 </head>
