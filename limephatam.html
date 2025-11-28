@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Luyện Phát Âm - Trung Tâm Tiếng Anh LIME</title>
+    <title>Luyện Phát Âm - LIME</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- ✅ Transformers.js - KHÔNG dùng type="module" -->
     <script src="https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2"></script>
     <style>
         body {
@@ -36,163 +35,141 @@
 
 <!-- Loading Spinner -->
 <div id="loading" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white p-8 rounded-lg">
-        <div class="animate-spin h-12 w-12 border-4 border-green-500 border-t-transparent rounded-full mx-auto"></div>
-        <p class="mt-4 text-gray-700">Đang xử lý...</p>
+    <div class="bg-white p-8 rounded-lg shadow-2xl">
+        <div class="animate-spin h-12 w-12 border-4 border-green-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+        <p class="text-gray-700 font-semibold">Đang xử lý...</p>
     </div>
 </div>
 
 <!-- 1. TRANG CHỦ -->
 <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4 fade-in">
     <div class="bg-white rounded-2xl shadow-2xl p-10 max-w-md w-full">
-        <img src="https://gofirst.pro/images/uploads/62/baseimg/logo_16541442053.png" alt="LIME Logo" class="w-32 h-32 mx-auto mb-4 object-contain">
-        <h1 class="text-4xl font-bold text-center mb-8 text-green-600">🎙️ Luyện Phát Âm</h1>
+        <div class="text-center mb-8">
+            <img src="https://gofirst.pro/images/uploads/62/baseimg/logo_16541442053.png" alt="LIME Logo" class="w-32 h-32 mx-auto mb-6 object-contain">
+            <h1 class="text-4xl font-bold text-green-600 mb-2">🎙️ Luyện Phát Âm</h1>
+            <p class="text-green-700">Trung Tâm Tiếng Anh LIME</p>
+        </div>
         
-        <div class="bg-green-50 border-2 border-green-200 rounded-xl p-6 mb-6">
-            <h3 class="font-bold text-green-800 mb-3">🎯 Hướng dẫn sử dụng:</h3>
+        <div class="bg-green-50 border-2 border-green-200 rounded-xl p-6 mb-8">
+            <h3 class="font-bold text-green-800 mb-4 text-lg">🎯 Hướng dẫn nhanh:</h3>
             <div class="space-y-2 text-sm text-green-700">
-                <p>1. 📝 Giáo viên tạo lớp & giao bài tập</p>
-                <p>2. 👨‍🎓 Học sinh đăng nhập bằng mã</p>
-                <p>3. 🎤 Nói theo từ vựng → AI chấm điểm</p>
-                <p>4. 📊 Xem tiến độ & thống kê realtime</p>
+                <p>• 👨‍🎓 Học sinh: Nhập mã HS001</p>
+                <p>• 👨‍🏫 Giáo viên: Nhập mã GV001</p>
+                <p>• 🎤 Nói theo từ → AI chấm điểm ngay</p>
             </div>
         </div>
 
         <div class="space-y-4">
-            <button onclick="selectRole('teacher')" class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-4 rounded-lg text-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
+            <button onclick="selectRole('teacher')" 
+                    class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-4 rounded-xl text-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-3">
                 👨‍🏫 Tôi là Giáo viên
             </button>
-            <button onclick="selectRole('student')" class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-4 rounded-lg text-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
+            <button onclick="selectRole('student')" 
+                    class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-4 rounded-xl text-xl font-bold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-3">
                 👨‍🎓 Tôi là Học sinh
             </button>
         </div>
         
-        <!-- DEMO MODE -->
         <div class="mt-6 p-4 bg-blue-50 border-2 border-blue-200 rounded-xl">
-            <button onclick="startDemo()" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all">
+            <button onclick="startDemo()" 
+                    class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2">
                 🚀 THỬ NGAY (Demo - Không cần đăng nhập)
             </button>
         </div>
     </div>
 </div>
 
-<!-- 2. GIÁO VIÊN LOGIN -->
+<!-- 2. LOGIN GIÁO VIÊN -->
 <div id="teacherLoginScreen" class="screen hidden min-h-screen flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
-        <button onclick="showScreen('loginScreen')" class="text-green-600 mb-4 font-semibold">← Quay lại</button>
-        <h2 class="text-3xl font-bold text-green-600 mb-6">👨‍🏫 Đăng nhập Giáo viên</h2>
+        <button onclick="showScreen('loginScreen')" class="text-green-600 mb-6 font-semibold flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Quay lại
+        </button>
+        <h2 class="text-3xl font-bold text-green-600 text-center mb-6">👨‍🏫 Đăng nhập Giáo viên</h2>
         <input type="text" id="teacherCode" placeholder="Nhập mã giáo viên (VD: GV001)" 
-               class="w-full p-4 border-2 border-green-200 rounded-xl focus:border-green-500 focus:outline-none text-lg mb-6">
+               class="w-full p-4 border-2 border-green-200 rounded-xl focus:border-green-500 focus:outline-none text-lg mb-6" value="GV001">
         <button onclick="loginTeacher()" 
                 class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all">
-            Đăng nhập
+            🚀 Vào Dashboard
         </button>
-        <p class="text-sm text-gray-500 mt-4 text-center">Lần đầu? Nhập mã bất kỳ để tạo tài khoản</p>
     </div>
 </div>
 
-<!-- 3. HỌC SINH LOGIN -->
+<!-- 3. LOGIN HỌC SINH -->
 <div id="studentLoginScreen" class="screen hidden min-h-screen flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
-        <button onclick="showScreen('loginScreen')" class="text-green-600 mb-4 font-semibold">← Quay lại</button>
-        <h2 class="text-3xl font-bold text-green-600 mb-6">👨‍🎓 Đăng nhập Học sinh</h2>
+        <button onclick="showScreen('loginScreen')" class="text-green-600 mb-6 font-semibold flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Quay lại
+        </button>
+        <h2 class="text-3xl font-bold text-green-600 text-center mb-6">👨‍🎓 Đăng nhập Học sinh</h2>
         <input type="text" id="studentCode" placeholder="Nhập mã học sinh (VD: HS001)" 
-               class="w-full p-4 border-2 border-green-200 rounded-xl focus:border-green-500 focus:outline-none text-lg mb-6">
+               class="w-full p-4 border-2 border-green-200 rounded-xl focus:border-green-500 focus:outline-none text-lg mb-6" value="HS001">
         <button onclick="loginStudent()" 
                 class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all">
-            Đăng nhập
+            🚀 Bắt đầu luyện tập
         </button>
     </div>
 </div>
 
-<!-- 4. DASHBOARD GIÁO VIÊN -->
-<div id="teacherDashboard" class="screen hidden min-h-screen p-6">
+<!-- 4. DASHBOARD HỌC SINH -->
+<div id="studentDashboard" class="screen hidden min-h-screen p-6 bg-gradient-to-br from-emerald-50 to-blue-50">
     <div class="max-w-7xl mx-auto">
+        <!-- Header -->
         <div class="bg-white rounded-2xl shadow-2xl p-8 mb-8">
-            <div class="flex justify-between items-center flex-wrap gap-6">
+            <div class="flex flex-wrap justify-between items-center gap-6">
                 <div class="flex items-center gap-4">
                     <img src="https://gofirst.pro/images/uploads/62/baseimg/logo_16541442053.png" alt="LIME Logo" class="w-16 h-16">
                     <div>
-                        <h1 class="text-4xl font-bold text-green-600">👨‍🏫 Dashboard Giáo viên</h1>
-                        <p class="text-green-600">Mã GV: <span id="teacherCodeDisplay" class="font-mono font-bold bg-green-50 px-3 py-1 rounded-full"></span></p>
+                        <h1 class="text-4xl font-bold text-green-600">👨‍🎓 Bài tập hôm nay</h1>
+                        <p class="text-green-700 font-semibold">Học sinh: <span id="studentNameDisplay"></span></p>
                     </div>
                 </div>
-                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
-                    🚪 Đăng xuất
+                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all">
+                    🚪 Thoát
                 </button>
             </div>
         </div>
 
-        <div class="grid lg:grid-cols-3 gap-8 mb-8">
-            <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-8 rounded-2xl shadow-xl">
-                <h3 class="text-2xl font-bold mb-2">📚 Quản lý lớp học</h3>
-                <p class="text-blue-100">Tạo lớp, thêm học sinh, giao bài tập</p>
-                <button onclick="showCreateClass()" class="mt-4 w-full bg-white text-blue-600 py-3 rounded-xl font-bold hover:bg-gray-50 transition-all">
-                    ➕ Tạo lớp mới
-                </button>
-            </div>
-            <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-8 rounded-2xl shadow-xl">
-                <h3 class="text-2xl font-bold mb-2">📊 Xem thống kê</h3>
-                <p class="text-purple-100">Theo dõi tiến độ từng học sinh</p>
-                <button onclick="showMyClasses()" class="mt-4 w-full bg-white text-purple-600 py-3 rounded-xl font-bold hover:bg-gray-50 transition-all">
-                    📈 Xem thống kê
-                </button>
-            </div>
-            <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white p-8 rounded-2xl shadow-xl">
-                <h3 class="text-2xl font-bold mb-2">📝 Giao bài tập</h3>
-                <p class="text-emerald-100">Tạo bài tập từ vựng mới</p>
-                <button onclick="showAssignments()" class="mt-4 w-full bg-white text-emerald-600 py-3 rounded-xl font-bold hover:bg-gray-50 transition-all">
-                    ➕ Giao bài tập
-                </button>
-            </div>
+        <!-- Assignments -->
+        <div id="studentAssignments" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Bài tập sẽ load ở đây -->
         </div>
-
-        <div id="teacherContent" class="bg-white rounded-2xl shadow-2xl p-8"></div>
     </div>
 </div>
 
-<!-- 5. DASHBOARD HỌC SINH -->
-<div id="studentDashboard" class="screen hidden min-h-screen p-6">
-    <div class="max-w-7xl mx-auto">
-        <div class="bg-white rounded-2xl shadow-2xl p-8 mb-8">
-            <div class="flex justify-between items-center flex-wrap gap-6">
-                <div class="flex items-center gap-4">
-                    <img src="https://gofirst.pro/images/uploads/62/baseimg/logo_16541442053.png" alt="LIME Logo" class="w-16 h-16">
-                    <div>
-                        <h1 class="text-4xl font-bold text-green-600">👨‍🎓 Bài tập của bạn</h1>
-                        <p class="text-green-600">Học sinh: <span id="studentNameDisplay" class="font-bold"></span></p>
-                    </div>
-                </div>
-                <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all">
-                    🚪 Đăng xuất
-                </button>
-            </div>
-        </div>
-        <div id="studentAssignments" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
-    </div>
-</div>
-
-<!-- 6. MÀN HÌNH LUYỆN TẬP -->
+<!-- 5. MÀN HÌNH LUYỆN TẬP -->
 <div id="practiceScreen" class="screen hidden min-h-screen p-6 bg-gradient-to-br from-emerald-50 via-green-50 to-blue-50">
     <div class="max-w-7xl mx-auto">
         <div class="bg-white rounded-2xl shadow-2xl p-8 mb-8">
             <div class="flex flex-wrap gap-6 items-center justify-between">
-                <div>
-                    <button onclick="backToStudent()" class="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-semibold mb-4">
+                <div class="flex items-center gap-6 flex-wrap">
+                    <button onclick="backToStudent()" class="inline-flex items-center gap-2 text-green-600 hover:text-green-700 font-semibold text-lg bg-green-50 px-4 py-2 rounded-xl">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                         </svg>
                         Quay lại
                     </button>
-                    <h2 id="assignmentTitle" class="text-4xl font-bold text-gray-800"></h2>
+                    <div>
+                        <h2 id="assignmentTitle" class="text-4xl font-bold text-gray-800"></h2>
+                        <p class="text-2xl font-semibold text-green-600 mt-2">Luyện phát âm từ vựng</p>
+                    </div>
                 </div>
                 <div class="flex flex-wrap gap-8 text-lg font-semibold text-gray-700">
-                    <span>📊 Tiến độ: <span id="progressText" class="text-green-600">0/0</span></span>
-                    <span>⭐ Điểm TB: <span id="avgScoreText" class="text-blue-600">0</span></span>
+                    <span class="bg-green-50 px-4 py-2 rounded-xl">📊 <span id="progressText">0/10</span></span>
+                    <span class="bg-blue-50 px-4 py-2 rounded-xl">⭐ <span id="avgScoreText">0</span> điểm</span>
                 </div>
             </div>
         </div>
-        <div id="wordsList" class="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"></div>
+        
+        <div id="wordsList" class="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <!-- Từ vựng sẽ render ở đây -->
+        </div>
     </div>
 </div>
 
@@ -201,6 +178,7 @@
 let currentUser = null;
 let currentAssignment = null;
 let whisperPipeline = null;
+let assignments = [];
 
 // ==================== UTILITY FUNCTIONS ====================
 function showScreen(screenId) {
@@ -212,17 +190,114 @@ function showLoading(show) {
     document.getElementById('loading').classList.toggle('hidden', !show);
 }
 
+// ==================== LOGIN FUNCTIONS ====================
+window.selectRole = function(role) {
+    currentUser = { role };
+    showScreen(role === 'teacher' ? 'teacherLoginScreen' : 'studentLoginScreen');
+}
+
+window.loginTeacher = function() {
+    const code = document.getElementById('teacherCode').value.trim();
+    if (!code) {
+        alert('Vui lòng nhập mã giáo viên!');
+        return;
+    }
+    
+    currentUser = { role: 'teacher', code, name: `GV ${code}` };
+    document.getElementById('teacherCodeDisplay').textContent = code;
+    showScreen('teacherDashboard');
+    alert(`🎉 Đăng nhập thành công!\nMã GV: ${code}`);
+}
+
+window.loginStudent = function() {
+    const code = document.getElementById('studentCode').value.trim();
+    if (!code) {
+        alert('Vui lòng nhập mã học sinh!');
+        return;
+    }
+    
+    currentUser = { role: 'student', code, name: `Học sinh ${code}` };
+    document.getElementById('studentNameDisplay').textContent = currentUser.name;
+    
+    // Tạo bài tập demo
+    assignments = [{
+        id: 'nutrition',
+        title: '🍎 Dinh dưỡng học đường',
+        words: ['protein', 'vitamin', 'carbohydrate', 'fibre', 'diet']
+    }];
+    
+    renderStudentAssignments();
+    showScreen('studentDashboard');
+    alert(`🎉 Chào ${currentUser.name}!\nSẵn sàng luyện phát âm!`);
+}
+
+window.logout = function() {
+    currentUser = null;
+    currentAssignment = null;
+    showScreen('loginScreen');
+}
+
+// ==================== STUDENT DASHBOARD ====================
+function renderStudentAssignments() {
+    const container = document.getElementById('studentAssignments');
+    let html = '';
+    
+    assignments.forEach(assignment => {
+        html += `
+            <div class="bg-white rounded-2xl shadow-xl p-8 text-center border-2 border-gray-200 hover:border-green-400 hover:shadow-2xl transition-all duration-300 cursor-pointer" onclick="startAssignment('${assignment.id}')">
+                <div class="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full mx-auto mb-6 flex items-center justify-center">
+                    <span class="text-3xl text-white">📚</span>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">${assignment.title}</h3>
+                <p class="text-green-600 font-semibold">${assignment.words.length} từ vựng</p>
+                <p class="text-sm text-gray-500 mt-2">Nhấn để bắt đầu luyện tập</p>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html || `
+        <div class="col-span-full bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-12 text-center">
+            <div class="mx-auto w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+                <span class="text-4xl">📚</span>
+            </div>
+            <h3 class="text-2xl font-bold text-blue-700 mb-4">Chưa có bài tập</h3>
+            <p class="text-blue-600 mb-6">Liên hệ giáo viên để được giao bài</p>
+            <button onclick="startDemo()" class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-8 py-3 rounded-xl font-bold hover:shadow-xl transition-all">
+                🚀 Thử Demo
+            </button>
+        </div>
+    `;
+}
+
+window.startAssignment = function(assignmentId) {
+    const assignment = assignments.find(a => a.id === assignmentId);
+    if (!assignment) return;
+    
+    currentAssignment = {
+        id: assignment.id,
+        name: assignment.title,
+        wordsData: assignment.words.map(word => ({ word, attempts: 0, bestScore: 0 }))
+    };
+    
+    document.getElementById('assignmentTitle').textContent = currentAssignment.name;
+    renderWordsList();
+    showScreen('practiceScreen');
+}
+
+window.backToStudent = function() {
+    renderStudentAssignments();
+    showScreen('studentDashboard');
+}
+
 // ==================== SYLLABLE ANALYSIS ====================
 const syllableDB = {
-    'carbohydrate': ['car', 'bo', 'hy', 'drate'],
-    'fibre': ['fi', 'bre'],
-    'fiber': ['fi', 'ber'],
-    'diet': ['di', 'et'],
     'protein': ['pro', 'tein'],
     'vitamin': ['vi', 'ta', 'min'],
+    'carbohydrate': ['car', 'bo', 'hy', 'drate'],
+    'fibre': ['fi', 'bre'],
+    'diet': ['di', 'et'],
     'exercise': ['ex', 'er', 'cise'],
-    'healthy': ['heal', 'thy'],
-    'carbohydrates': ['car', 'bo', 'hy', 'drates']
+    'healthy': ['heal', 'thy']
 };
 
 function splitIntoSyllables(word) {
@@ -254,87 +329,36 @@ function splitIntoSyllables(word) {
     return syllables.length > 0 ? syllables : [word];
 }
 
-function editDistance(s1, s2) {
-    s1 = s1.toLowerCase();
-    s2 = s2.toLowerCase();
-    const costs = [];
-    for (let i = 0; i <= s1.length; i++) {
-        let lastValue = i;
-        for (let j = 0; j <= s2.length; j++) {
-            if (i === 0) costs[j] = j;
-            else {
-                if (j > 0) {
-                    let newValue = costs[j - 1];
-                    if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
-                        newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-                    }
-                    costs[j - 1] = lastValue;
-                    lastValue = newValue;
-                }
-            }
-        }
-        if (i > 0) costs[s2.length] = lastValue;
-    }
-    return costs[s2.length];
-}
-
 function similarity(s1, s2) {
     if (!s1 || !s2) return 0;
+    s1 = s1.toLowerCase();
+    s2 = s2.toLowerCase();
     let longer = s1.length > s2.length ? s1 : s2;
     let shorter = s1.length > s2.length ? s2 : s1;
     if (longer.length === 0) return 1.0;
-    return (longer.length - editDistance(longer, shorter)) / longer.length;
+    let distance = 0;
+    for (let i = 0; i < shorter.length; i++) {
+        if (longer[i] !== shorter[i]) distance++;
+    }
+    return (longer.length - distance) / longer.length;
 }
 
-function analyzePronunciation(correctWord, spokenWord) {
+function calculateScore(correctWord, spokenWord) {
     correctWord = correctWord.toLowerCase().trim();
     spokenWord = spokenWord.toLowerCase().trim();
     
-    const correctSyllables = splitIntoSyllables(correctWord);
-    const spokenSyllables = splitIntoSyllables(spokenWord);
+    // Exact match
+    if (spokenWord === correctWord) return 100;
     
-    const analysis = { syllables: [], wrongSyllables: [], score: 0 };
-    
-    correctSyllables.forEach((syllable, index) => {
-        const isCorrect = spokenSyllables[index] &&
-                         (spokenSyllables[index] === syllable ||
-                          similarity(spokenSyllables[index], syllable) > 0.7);
-        
-        analysis.syllables.push({
-            text: syllable,
-            correct: isCorrect,
-            spoken: spokenSyllables[index] || ''
-        });
-        
-        if (!isCorrect) analysis.wrongSyllables.push(syllable);
-    });
-    
-    const correctCount = analysis.syllables.filter(s => s.correct).length;
-    analysis.score = Math.round((correctCount / correctSyllables.length) * 100);
-    
-    return analysis;
-}
-
-function calculateStrictScore(correctWord, spokenWord, confidence) {
-    let score = 0;
-    
-    // Word similarity (50%)
-    const wordSimilarity = similarity(correctWord, spokenWord);
-    score += Math.round(wordSimilarity * 50);
-    
-    // Syllable accuracy (30%)
-    const syllableAnalysis = analyzePronunciation(correctWord, spokenWord);
-    const syllableScore = (syllableAnalysis.syllables.filter(s => s.correct).length / syllableAnalysis.syllables.length) * 100;
-    score += Math.round(syllableScore * 0.3);
+    // Similarity score
+    const sim = similarity(correctWord, spokenWord);
     
     // Length penalty
     const lengthDiff = Math.abs(correctWord.length - spokenWord.length);
-    if (lengthDiff > 2) score -= Math.min(lengthDiff * 5, 15);
+    let score = Math.round(sim * 90);
+    if (lengthDiff > 2) score -= lengthDiff * 5;
     
-    // Exact match bonus
-    if (spokenWord === correctWord.toLowerCase()) score += 10;
-    
-    return Math.max(0, Math.min(100, Math.round(score)));
+    return Math.max(0, Math.min(100, score));
 }
 
 // ==================== SPEECH FUNCTIONS ====================
@@ -349,207 +373,33 @@ window.speakWord = function(word, rate = 1) {
     }
 }
 
-window.speakSyllables = function(word) {
-    const syllables = splitIntoSyllables(word);
-    let index = 0;
-    const speakNext = () => {
-        if (index < syllables.length) {
-            const syllable = syllables[index];
-            const utterance = new SpeechSynthesisUtterance(syllable);
-            utterance.rate = 0.5;
-            utterance.lang = 'en-US';
-            utterance.onend = () => {
-                index++;
-                setTimeout(speakNext, 1000);
-            };
-            speechSynthesis.speak(utterance);
-        }
-    };
-    speakNext();
-}
-
-// ==================== WHISPER SPEECH RECOGNITION ====================
+// ==================== MAIN RECORD FUNCTION ====================
 window.recordWord = async function(word) {
     const resultDiv = document.getElementById(`result-${word}`);
     
-    // Fallback: Nếu Whisper chưa load, dùng Web Speech API
-    if (!window.WhisperPipeline) {
-        return fallbackRecordWord(word, resultDiv);
-    }
-    
-    // Kiểm tra microphone
-    try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch (err) {
-        resultDiv.innerHTML = `
-            <div class="p-6 bg-red-50 border-2 border-red-200 rounded-xl text-center">
-                <div class="mx-auto w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-4">
-                    <span class="text-3xl">🔇</span>
-                </div>
-                <p class="text-red-600 font-bold text-lg">Không có quyền microphone</p>
-                <p class="text-sm text-red-500 mt-2">Vui lòng cho phép trong trình duyệt</p>
-                <button onclick="recordWord('${word}')" class="mt-4 bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-semibold">
-                    🔄 Thử lại
-                </button>
-            </div>
-        `;
-        return;
-    }
-
-    // Load Whisper nếu chưa có
-    if (!whisperPipeline) {
-        resultDiv.innerHTML = `
-            <div class="p-8 bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl text-center">
-                <div class="animate-spin inline-block w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full mx-auto mb-6"></div>
-                <h3 class="text-2xl font-bold text-purple-700 mb-2">🤖 Đang tải AI Whisper...</h3>
-                <p class="text-purple-600">Model: Whisper Small (lần đầu ~30s)</p>
-                <p class="text-sm text-gray-500 mt-4">Sau lần đầu sẽ rất nhanh!</p>
-            </div>
-        `;
-        
-        try {
-            // ✅ DÙNG GLOBAL TRANSFORMERS.JS
-            whisperPipeline = await Xenova.pipeline(
-                'automatic-speech-recognition', 
-                'Xenova/whisper-small', // Model nhỏ hơn, load nhanh
-                { 
-                    progress_callback: (data) => {
-                        console.log(`Loading: ${data.status} ${Math.round(data.progress * 100)}%`);
-                    }
-                }
-            );
-            console.log('✅ Whisper loaded successfully!');
-        } catch (error) {
-            console.error('Whisper load error:', error);
-            resultDiv.innerHTML = `
-                <div class="p-6 bg-yellow-50 border-2 border-yellow-200 rounded-xl text-center">
-                    <div class="mx-auto w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
-                        <span class="text-3xl">⚠️</span>
-                    </div>
-                    <p class="text-yellow-700 font-bold text-lg">Whisper chưa sẵn sàng</p>
-                    <p class="text-sm text-yellow-600 mt-2">Dùng Speech Recognition thông minh</p>
-                    <button onclick="recordWord('${word}')" class="mt-4 bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-lg font-semibold">
-                        🔄 Thử ngay
-                    </button>
-                </div>
-            `;
-            return fallbackRecordWord(word, resultDiv);
-        }
-    }
-
-    // Ghi âm 3 giây
-    resultDiv.innerHTML = `
-        <div class="p-8 bg-gradient-to-r from-emerald-50 to-blue-50 border-2 border-emerald-200 rounded-2xl text-center">
-            <div class="animate-pulse inline-block w-20 h-20 bg-gradient-to-br from-emerald-500 to-blue-500 rounded-full mb-6 flex items-center justify-center">
-                <span class="text-3xl">🎤</span>
-            </div>
-            <h3 class="text-2xl font-bold text-emerald-700 mb-2">ĐANG NGHE...</h3>
-            <p class="text-lg font-mono text-gray-800 mb-6">Nói rõ từ: <strong>${word}</strong></p>
-            <div class="flex justify-center space-x-4">
-                <div class="w-4 h-4 bg-emerald-500 rounded-full animate-bounce"></div>
-                <div class="w-4 h-4 bg-emerald-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-                <div class="w-4 h-4 bg-emerald-500 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
-            </div>
-        </div>
-    `;
-
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const mediaRecorder = new MediaRecorder(stream);
-        const chunks = [];
-        
-        mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
-        mediaRecorder.onstop = async () => {
-            const audioBlob = new Blob(chunks, { type: 'audio/wav' });
-            
-            resultDiv.innerHTML = `
-                <div class="p-8 bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl text-center">
-                    <div class="animate-spin inline-block w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full mx-auto mb-6"></div>
-                    <h3 class="text-2xl font-bold text-purple-700 mb-2">🤖 AI đang phân tích...</h3>
-                    <p class="text-purple-600">Whisper Small - Độ chính xác cao</p>
-                </div>
-            `;
-            
-            try {
-                // ✅ WHISPER TRANSCRIPTION
-                const transcription = await whisperPipeline(audioBlob, {
-                    language: 'english',
-                    task: 'transcribe'
-                });
-                
-                let transcript = transcription.text.trim().toLowerCase();
-                
-                // Clean up transcript
-                if (!transcript || transcript.length < 2) {
-                    throw new Error('No speech detected');
-                }
-                
-                // Limit to single word/phrase
-                const words = transcript.split(/\s+/);
-                transcript = words.slice(0, 3).join(' ');
-                
-                console.log('🎤 Whisper result:', transcript);
-                
-                // Calculate score
-                const confidence = 92;
-                const score = calculateStrictScore(word.toLowerCase(), transcript, confidence);
-                
-                // Display result
-                displayResult(resultDiv, word, transcript, score, confidence);
-                
-            } catch (transcribeError) {
-                console.error('Transcription error:', transcribeError);
-                resultDiv.innerHTML = `
-                    <div class="p-6 bg-red-50 border-2 border-red-200 rounded-xl text-center">
-                        <div class="mx-auto w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-4">
-                            <span class="text-3xl">❌</span>
-                        </div>
-                        <p class="text-red-600 font-bold text-lg">Không nhận diện được</p>
-                        <p class="text-sm text-red-500 mt-2">Hãy nói rõ ràng hơn</p>
-                        <button onclick="recordWord('${word}')" class="mt-4 bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-semibold">
-                            🔄 Thử lại
-                        </button>
-                    </div>
-                `;
-            }
-            
-            stream.getTracks().forEach(track => track.stop());
-        };
-        
-        mediaRecorder.start();
-        setTimeout(() => {
-            mediaRecorder.stop();
-        }, 3500);
-        
-    } catch (error) {
-        console.error('Recording error:', error);
-        fallbackRecordWord(word, resultDiv);
-    }
-}
-
-// ✅ FALLBACK: Web Speech API (khi Whisper lỗi)
-function fallbackRecordWord(word, resultDiv) {
+    // Simple fallback - Web Speech API
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
         resultDiv.innerHTML = `
-            <div class="p-6 bg-gray-50 border-2 border-gray-300 rounded-xl text-center">
-                <p class="text-gray-700 font-bold">Trình duyệt không hỗ trợ Speech Recognition</p>
-                <p class="text-sm text-gray-500 mt-2">Dùng Chrome/Edge để có trải nghiệm tốt nhất</p>
+            <div class="p-6 bg-gray-50 border-2 border-gray-200 rounded-xl text-center">
+                <p class="text-gray-700 font-bold">🎤 Trình duyệt không hỗ trợ nhận diện giọng nói</p>
+                <p class="text-sm text-gray-500 mt-2">Vui lòng dùng Chrome/Edge để có trải nghiệm tốt nhất</p>
             </div>
         `;
         return;
     }
 
+    // Recording UI
     resultDiv.innerHTML = `
-        <div class="p-8 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl text-center">
-            <div class="animate-pulse inline-block w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full mb-6 flex items-center justify-center">
-                <span class="text-3xl">🎤</span>
+        <div class="p-8 bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-200 rounded-2xl text-center animate-pulse">
+            <div class="inline-block w-20 h-20 bg-gradient-to-br from-red-500 to-pink-500 rounded-full mb-6 flex items-center justify-center">
+                <span class="text-3xl text-white">🎤</span>
             </div>
-            <h3 class="text-2xl font-bold text-blue-700 mb-2">Speech Recognition</h3>
+            <h3 class="text-2xl font-bold text-red-700 mb-2">ĐANG NGHE...</h3>
             <p class="text-lg font-mono text-gray-800 mb-6">Nói rõ từ: <strong>${word}</strong></p>
             <div class="flex justify-center space-x-4">
-                <div class="w-4 h-4 bg-blue-500 rounded-full animate-bounce"></div>
-                <div class="w-4 h-4 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-                <div class="w-4 h-4 bg-blue-500 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                <div class="w-4 h-4 bg-red-500 rounded-full animate-bounce"></div>
+                <div class="w-4 h-4 bg-red-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                <div class="w-4 h-4 bg-red-500 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
             </div>
         </div>
     `;
@@ -561,20 +411,33 @@ function fallbackRecordWord(word, resultDiv) {
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
     
-    recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript.trim().toLowerCase();
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript.trim();
         const confidence = Math.round(event.results[0][0].confidence * 100);
         
-        console.log('🎤 Fallback result:', transcript);
+        const score = calculateScore(word, transcript);
         
-        const score = calculateStrictScore(word.toLowerCase(), transcript, confidence);
+        // Update stats
+        const wordData = currentAssignment.wordsData.find(w => w.word === word);
+        if (wordData) {
+            wordData.attempts++;
+            if (score > wordData.bestScore) wordData.bestScore = score;
+        }
+        
+        // Update progress
+        updateProgress();
+        
         displayResult(resultDiv, word, transcript, score, confidence);
     };
     
-    recognition.onerror = () => {
+    recognition.onerror = function() {
         resultDiv.innerHTML = `
             <div class="p-6 bg-red-50 border-2 border-red-200 rounded-xl text-center">
-                <p class="text-red-600 font-bold">Lỗi nhận diện giọng nói</p>
+                <div class="mx-auto w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                    <span class="text-3xl">❌</span>
+                </div>
+                <p class="text-red-600 font-bold text-lg">Không nhận được giọng nói</p>
+                <p class="text-sm text-red-500 mt-2">Hãy nói to và rõ ràng hơn</p>
                 <button onclick="recordWord('${word}')" class="mt-4 bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-semibold">
                     🔄 Thử lại
                 </button>
@@ -585,149 +448,65 @@ function fallbackRecordWord(word, resultDiv) {
     recognition.start();
 }
 
-// ==================== DISPLAY RESULTS ====================
 function displayResult(resultDiv, correctWord, spokenWord, score, confidence) {
     const color = score >= 85 ? 'emerald' : score >= 70 ? 'yellow' : score >= 50 ? 'orange' : 'red';
     const emoji = score >= 85 ? '🎉' : score >= 70 ? '👍' : score >= 50 ? '😐' : '💪';
     
-    const analysis = analyzePronunciation(correctWord.toLowerCase(), spokenWord);
-    
-    let html = `
-        <div class="p-8 bg-gradient-to-br from-${color}-50 via-white to-${color}-100 border-2 border-${color}-200 rounded-2xl shadow-xl text-center">
-            <!-- Score Circle -->
-            <div class="inline-block w-28 h-28 bg-gradient-to-br ${
-                score >= 85 ? 'from-emerald-400 to-emerald-500' :
-                score >= 70 ? 'from-yellow-400 to-yellow-500' :
-                score >= 50 ? 'from-orange-400 to-orange-500' : 'from-red-400 to-red-500'
-            } rounded-full flex items-center justify-center mb-6 shadow-2xl">
-                <span class="text-4xl font-bold text-white">${emoji}</span>
+    resultDiv.innerHTML = `
+        <div class="p-6 bg-gradient-to-br from-${color}-50 to-white border-2 border-${color}-200 rounded-2xl shadow-lg text-center">
+            <!-- Score -->
+            <div class="inline-block w-24 h-24 bg-gradient-to-br ${
+                score >= 85 ? 'from-emerald-500 to-emerald-600' :
+                score >= 70 ? 'from-yellow-500 to-yellow-600' :
+                score >= 50 ? 'from-orange-500 to-orange-600' : 'from-red-500 to-red-600'
+            } rounded-full flex items-center justify-center mb-6 shadow-xl">
+                <span class="text-3xl font-bold text-white">${emoji}</span>
             </div>
             
-            <!-- Score -->
-            <h3 class="text-5xl font-bold text-gray-800 mb-4">
+            <h3 class="text-4xl font-bold text-gray-800 mb-4">
                 <span class="text-${color}-600">${score}</span>
-                <span class="text-3xl">điểm</span>
+                <span class="text-xl">điểm</span>
             </h3>
             
             <!-- Word Comparison -->
-            <div class="grid md:grid-cols-2 gap-6 mb-8">
-                <div class="bg-white rounded-xl p-6 border-2 border-gray-200">
-                    <p class="text-sm font-mono text-gray-600 mb-3">🎯 Từ đúng:</p>
-                    <p class="text-2xl font-bold text-emerald-700 bg-emerald-50 p-4 rounded-lg">${correctWord}</p>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-white rounded-xl p-4 border">
+                    <p class="text-xs font-mono text-gray-600 mb-2">🎯 Từ đúng:</p>
+                    <p class="text-lg font-bold text-emerald-700">${correctWord}</p>
                 </div>
-                <div class="bg-white rounded-xl p-6 border-2 border-gray-200">
-                    <p class="text-sm font-mono text-gray-600 mb-3">🎤 Bạn nói:</p>
-                    <p class="text-2xl font-bold text-purple-700 bg-purple-50 p-4 rounded-lg">${spokenWord}</p>
+                <div class="bg-white rounded-xl p-4 border">
+                    <p class="text-xs font-mono text-gray-600 mb-2">🎤 Bạn nói:</p>
+                    <p class="text-lg font-bold text-purple-700">${spokenWord}</p>
                 </div>
             </div>
             
             <!-- Confidence -->
-            <div class="bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-xl mb-6">
+            <div class="bg-gray-50 p-3 rounded-xl mb-6">
                 <p class="text-sm font-semibold text-gray-700">
-                    🤖 Độ tin cậy AI: <span class="text-blue-600 font-bold">${confidence}%</span>
+                    🤖 Độ chính xác AI: <span class="text-blue-600 font-bold">${confidence}%</span>
                 </p>
             </div>
             
-            <!-- Syllable Analysis -->
-            <div class="bg-white rounded-xl p-6 border-2 border-gray-200 mb-8">
-                <h4 class="font-bold text-lg text-gray-800 mb-4">📊 Phân tích âm tiết:</h4>
-                <div class="flex flex-wrap justify-center gap-3 mb-4">
-    `;
-    
-    analysis.syllables.forEach(syl => {
-        const bgColor = syl.correct ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800';
-        const icon = syl.correct ? '✅' : '❌';
-        html += `
-            <span class="${bgColor} px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2">
-                ${icon} ${syl.text}
-            </span>
-        `;
-    });
-    
-    html += `</div>`;
-    
-    if (analysis.wrongSyllables.length > 0) {
-        html += `
-            <div class="bg-red-50 border-2 border-red-200 rounded-xl p-4">
-                <p class="font-semibold text-red-700 mb-2">🎯 Cần luyện lại:</p>
-                <p class="text-red-600">${analysis.wrongSyllables.join(', ')}</p>
-            </div>
-        `;
-    } else {
-        html += `
-            <div class="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-4">
-                <p class="font-bold text-emerald-700">🎉 Hoàn hảo! Tất cả âm tiết đều đúng!</p>
-            </div>
-        `;
-    }
-    
-    html += `
-            </div>
-            
-            <!-- Action Buttons -->
-            <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                <button onclick="speakWord('${correctWord}', 0.5)" 
-                        class="bg-gradient-to-r from-amber-500 to-orange-500 text-white py-4 rounded-xl font-bold hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2">
+            <!-- Buttons -->
+            <div class="grid grid-cols-3 gap-3">
+                <button onclick="speakWord('${correctWord}', 0.6)" 
+                        class="bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 rounded-xl font-semibold text-sm hover:shadow-lg transition-all">
                     🐌 Nghe chậm
                 </button>
                 <button onclick="speakWord('${correctWord}', 1)" 
-                        class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-4 rounded-xl font-bold hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2">
+                        class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-3 rounded-xl font-semibold text-sm hover:shadow-lg transition-all">
                     ▶️ Nghe chuẩn
                 </button>
                 <button onclick="recordWord('${correctWord}')" 
-                        class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-4 rounded-xl font-bold hover:shadow-xl transition-all duration-300 col-span-1 lg:col-span-1 flex items-center justify-center gap-2">
+                        class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-3 rounded-xl font-semibold text-sm hover:shadow-lg transition-all col-span-1">
                     🎤 Thử lại
                 </button>
             </div>
         </div>
     `;
-    
-    resultDiv.innerHTML = html;
 }
 
-function renderSyllableAnalysis(analysis, word) {
-    let html = '<div class="mt-6 p-6 bg-gray-50 rounded-xl border-2 border-gray-200">';
-    html += '<h4 class="font-bold text-lg text-gray-800 mb-4">📊 Phân tích chi tiết:</h4>';
-    html += '<div class="flex flex-wrap justify-center gap-3 mb-6">';
-    
-    analysis.syllables.forEach(syl => {
-        const bgColor = syl.correct ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800';
-        const icon = syl.correct ? '✅' : '❌';
-        html += `<span class="${bgColor} px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2">${icon} ${syl.text}</span>`;
-    });
-    
-    html += '</div>';
-    
-    if (analysis.wrongSyllables.length > 0) {
-        html += `<div class="bg-red-50 border-2 border-red-200 rounded-xl p-4">
-            <p class="font-semibold text-red-700">🎯 Âm tiết cần luyện:</p>
-            <p class="text-red-600 mt-2">${analysis.wrongSyllables.join(', ')}</p>
-        </div>`;
-    }
-    
-    html += '</div>';
-    return html;
-}
-
-// ==================== UI FUNCTIONS ====================
-window.selectRole = function(role) {
-    showScreen(role === 'teacher' ? 'teacherLoginScreen' : 'studentLoginScreen');
-}
-
-window.startDemo = function() {
-    // Demo words
-    const demoWords = ['protein', 'vitamin', 'carbohydrate', 'exercise', 'healthy'];
-    currentAssignment = { 
-        id: 'demo', 
-        name: '🎮 CHẾ ĐỘ THỬ NGHIỆM', 
-        wordsData: demoWords.map(w => ({ word: w }))
-    };
-    
-    document.getElementById('assignmentTitle').textContent = currentAssignment.name;
-    renderWordsList();
-    showScreen('practiceScreen');
-}
-
+// ==================== RENDER WORDS ====================
 function renderWordsList() {
     let html = '';
     const wordsData = currentAssignment.wordsData || [];
@@ -737,36 +516,35 @@ function renderWordsList() {
         const syllables = splitIntoSyllables(word);
         
         const syllableDisplay = syllables.map(s => 
-            `<span class="inline-block bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full mx-1 font-mono font-bold">${s}</span>`
+            `<span class="inline-block bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full mx-1 font-mono font-bold text-sm">${s}</span>`
         ).join('');
         
         html += `
             <div class="bg-white rounded-2xl shadow-xl p-8 text-center border-2 border-gray-200 hover:border-emerald-400 hover:shadow-2xl transition-all duration-300">
-                <h3 class="text-6xl font-bold mb-6 text-gray-800">${word}</h3>
+                <h3 class="text-5xl font-bold mb-6 text-gray-800">${word}</h3>
                 
                 <div class="bg-gray-50 rounded-xl p-6 mb-8">
                     <p class="text-sm text-gray-600 mb-4 font-medium">📝 Âm tiết:</p>
-                    <div class="flex flex-wrap justify-center gap-3">
+                    <div class="flex flex-wrap justify-center gap-2">
                         ${syllableDisplay}
                     </div>
                 </div>
                 
                 <div class="flex flex-wrap gap-3 justify-center mb-8">
-                    <button onclick="speakWord('${word}', 0.4)" class="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center gap-2">
-                        🐢 Rất chậm
+                    <button onclick="speakWord('${word}', 0.4)" 
+                            class="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2 rounded-xl font-semibold hover:shadow-lg transition-all text-sm flex items-center gap-1">
+                        🐢 Chậm
                     </button>
-                    <button onclick="speakWord('${word}', 0.7)" class="bg-gradient-to-r from-yellow-500 to-amber-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center gap-2">
-                        🐌 Chậm
-                    </button>
-                    <button onclick="speakWord('${word}', 1)" class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center gap-2">
+                    <button onclick="speakWord('${word}', 1)" 
+                            class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2 rounded-xl font-semibold hover:shadow-lg transition-all text-sm flex items-center gap-1">
                         ▶️ Chuẩn
                     </button>
                 </div>
                 
                 <button onclick="recordWord('${word}')" 
-                        class="w-full bg-gradient-to-r from-emerald-500 via-green-600 to-teal-600 text-white py-5 rounded-2xl font-bold text-xl shadow-xl hover:shadow-2xl hover:scale-105 transform transition-all duration-300 flex items-center justify-center gap-3">
+                        class="w-full bg-gradient-to-r from-emerald-500 via-green-600 to-teal-600 text-white py-4 rounded-2xl font-bold text-xl shadow-xl hover:shadow-2xl hover:scale-105 transform transition-all duration-300 flex items-center justify-center gap-3">
                     <span class="text-2xl">🎤</span>
-                    <span>BẮT ĐẦU THU ÂM</span>
+                    <span>THU ÂM NGAY</span>
                 </button>
                 
                 <div id="result-${word}" class="mt-8"></div>
@@ -775,33 +553,65 @@ function renderWordsList() {
     });
     
     document.getElementById('wordsList').innerHTML = html;
+    updateProgress();
+}
+
+function updateProgress() {
+    const wordsData = currentAssignment.wordsData || [];
+    const total = wordsData.length;
+    const completed = wordsData.filter(w => w.attempts > 0).length;
+    const avgScore = wordsData.length > 0 ? 
+        Math.round(wordsData.reduce((sum, w) => sum + w.bestScore, 0) / wordsData.length) : 0;
+    
+    document.getElementById('progressText').textContent = `${completed}/${total}`;
+    document.getElementById('avgScoreText').textContent = avgScore;
+}
+
+// ==================== DEMO MODE ====================
+window.startDemo = function() {
+    currentUser = { role: 'demo', name: 'Khách' };
+    currentAssignment = { 
+        id: 'demo', 
+        name: '🚀 CHẾ ĐỘ THỬ NGHIỆM', 
+        wordsData: [
+            { word: 'protein', attempts: 0, bestScore: 0 },
+            { word: 'vitamin', attempts: 0, bestScore: 0 },
+            { word: 'carbohydrate', attempts: 0, bestScore: 0 },
+            { word: 'exercise', attempts: 0, bestScore: 0 },
+            { word: 'healthy', attempts: 0, bestScore: 0 }
+        ]
+    };
+    
+    document.getElementById('assignmentTitle').textContent = currentAssignment.name;
+    renderWordsList();
+    showScreen('practiceScreen');
 }
 
 // ==================== INIT ====================
 window.addEventListener('load', function() {
-    // Check if Transformers.js loaded
-    if (typeof Xenova !== 'undefined') {
-        console.log('✅ Transformers.js loaded successfully');
-    } else {
-        console.log('⚠️ Transformers.js not loaded, using fallback');
-    }
+    console.log('✅ LIME Speech App loaded successfully!');
+    console.log('🎤 Web Speech API:', 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window ? '✅ Available' : '❌ Not available');
     
-    // Demo mode auto-start after 2s
+    // Auto demo after 2 seconds
     setTimeout(() => {
-        if (document.getElementById('loginScreen').classList.contains('hidden') === false) {
+        if (!currentUser) {
             startDemo();
         }
     }, 2000);
 });
 
-// Export global functions
+// Make functions global
 window.showScreen = showScreen;
-window.selectRole = selectRole;
+window.loginStudent = loginStudent;
+window.loginTeacher = loginTeacher;
 window.startDemo = startDemo;
 window.recordWord = recordWord;
 window.speakWord = speakWord;
-window.speakSyllables = speakSyllables;
-</script>
+window.selectRole = selectRole;
+window.backToStudent = backToStudent;
+window.startAssignment = startAssignment;
+window.logout = logout;
 
+</script>
 </body>
 </html>
