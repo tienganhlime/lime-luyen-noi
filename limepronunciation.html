@@ -24,15 +24,15 @@
     <div class="bg-white rounded-2xl shadow-2xl p-10 max-w-md w-full">
         <h1 class="text-4xl font-bold text-center mb-8 text-blue-600">🎙️ Luyện Phát Âm</h1>
         <div class="space-y-4">
-            <button onclick="selectRole('teacher')" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-lg text-xl font-semibold transition">
-                👨‍🏫 Tôi là Giáo viên
-            </button>
-            <button onclick="selectRole('student')" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-4 rounded-lg text-xl font-semibold transition">
-                👨‍🎓 Tôi là Học sinh
-            </button>
-            <button onclick="selectRole('admin')" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-4 rounded-lg text-xl font-semibold transition">
-                🛡️ Tôi là Admin
-            </button>
+          <button id="btnTeacher" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-lg text-xl font-semibold transition">
+    👨‍🏫 Tôi là Giáo viên
+</button>
+<button id="btnStudent" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-4 rounded-lg text-xl font-semibold transition">
+    👨‍🎓 Tôi là Học sinh
+</button>
+<button id="btnAdmin" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-4 rounded-lg text-xl font-semibold transition">
+    🛡️ Tôi là Admin
+</button>
         </div>
     </div>
 </div>
@@ -1706,9 +1706,15 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`${word} →`, splitIntoSyllables(word));
         });
     }, 1000);
+
+    // ✅ THÊM ĐOẠN NÀY:
+    document.getElementById('btnTeacher').addEventListener('click', () => selectRole('teacher'));
+    document.getElementById('btnStudent').addEventListener('click', () => selectRole('student'));
+    document.getElementById('btnAdmin').addEventListener('click', () => selectRole('admin'));
 });
 
 </script>
 </body>
 </html>
+
 
