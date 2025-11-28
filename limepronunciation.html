@@ -593,25 +593,25 @@ html += '</div>';
 
 }
 async function removeTeacherFromClass(classId, teacherCode) {
-if (!confirm('Xóa giáo viên ${teacherCode} khỏi lớp?')) 
-return;
-showLoading(true);
-try {
-    await db.collection('classes').doc(classId).update({
-        teacherIds: firebase.firestore.FieldValue.arrayRemove(teacherCode)
-    });
-    
-    await db.collection('teachers').doc(teacherCode).update({
-        assignedClasses: firebase.firestore.FieldValue.arrayRemove(classId)
-    });
-    
-    alert('Xóa thành công!');
-    viewClassTeachers(classId);
-} catch (error) {
-    alert('Lỗi: ' + error.message);
+    if (!confirm(`Xóa giáo viên ${teacherCode} khỏi lớp?`)) return;
+    showLoading(true);
+    try {
+        await db.collection('classes').doc(classId).update({
+            teacherIds: firebase.firestore.FieldValue.arrayRemove(teacherCode)
+        });
+        
+        await db.collection('teachers').doc(teacherCode).update({
+            assignedClasses: firebase.firestore.FieldValue.arrayRemove(classId)
+        });
+        
+        alert('Xóa thành công!');
+        viewClassTeachers(classId);
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
 }
-showLoading(false);
-}
+
 async function deleteClass(classId) {
 if (!confirm('Xác nhận xóa?')) return;
 showLoading(true);
