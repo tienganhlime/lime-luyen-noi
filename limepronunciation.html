@@ -1823,22 +1823,7 @@ function editDistance(s1, s2) {
 window.recordWord = async function(word) {
     const resultDiv = document.getElementById(`result-${word}`);
     
-    // Kiểm tra API key
-    if (HUGGING_FACE_API_KEY === 'YOUR_API_KEY_HERE') {
-        resultDiv.innerHTML = `
-            <div class="p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
-                <p class="text-yellow-800 font-bold">⚠️ Chưa cấu hình API Key</p>
-                <p class="text-sm text-yellow-700 mt-2">Vui lòng:</p>
-                <ol class="text-sm text-yellow-700 mt-2 ml-4 list-decimal">
-                    <li>Truy cập: <a href="https://huggingface.co/settings/tokens" target="_blank" class="text-blue-600 underline">huggingface.co/settings/tokens</a></li>
-                    <li>Tạo token mới (New token)</li>
-                    <li>Copy token và thay vào dòng 137 trong code</li>
-                </ol>
-            </div>
-        `;
-        return;
-    }
-    
+     
     // Kiểm tra quyền microphone
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
