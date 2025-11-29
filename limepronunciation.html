@@ -243,8 +243,8 @@
             <span class="text-2xl font-bold">LIME Luyện Phát Âm</span>
         </div>
         <div class="text-right">
-            <p class="font-semibold">📞 Hotline: 1900-xxxx</p>
-            <p class="text-sm">Email: support@lime.edu.vn</p>
+            <p class="font-semibold">📞 Hotline: 0976 222 792</p>
+            <p class="text-sm">Email: fb.com/tienganhtreemlimen</p>
         </div>
     </div>
 </div>    
@@ -286,8 +286,8 @@
             <span class="text-2xl font-bold">LIME Luyện Phát Âm</span>
         </div>
         <div class="text-right">
-            <p class="font-semibold">📞 Hotline: 1900-xxxx</p>
-            <p class="text-sm">Email: support@lime.edu.vn</p>
+            <p class="font-semibold">📞 Hotline: 0976 222 792</p>
+            <p class="text-sm">Email: fb.com/tienganhtreemlime</p>
         </div>
     </div>
 </div>    
@@ -319,8 +319,8 @@
             <span class="text-2xl font-bold">LIME Luyện Phát Âm</span>
         </div>
         <div class="text-right">
-            <p class="font-semibold">📞 Hotline: 1900-xxxx</p>
-            <p class="text-sm">Email: support@lime.edu.vn</p>
+            <p class="font-semibold">📞 Hotline: 0976 222 792</p>
+            <p class="text-sm">Email: fb.com/tienganhtreemlime</p>
         </div>
     </div>
 </div>
@@ -1366,15 +1366,144 @@ window.adminViewReports = async function() {
                             <p class="text-2xl font-bold text-green-600">${avgScore}</p>
                         </div>
                     </div>
-                    <button onclick="viewDetailedClassReport('${classDoc.id}', '${classData.name}')" 
-                            class="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg text-sm">
-                        📊 Xem chi tiết
-                    </button>
+<div class="flex gap-2 mt-4">
+    <button onclick="viewDetailedClassReport('${classDoc.id}', '${classData.name}')" 
+            class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">
+        📊 Xem chi tiết học sinh
+    </button>
+    <button onclick="viewWordStats('${classDoc.id}', '${classData.name}')" 
+            class="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm">
+        📈 Thống kê từng từ
+    </button>
+</div>                    
                 </div>
             `;
         }
         
         html += '</div>';
+        document.getElementById('adminContent').innerHTML = html;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.viewWordStats = async function(classId, className) {
+    showLoading(true);
+    try {
+        const assignmentsRef = collection(db, 'assignments');
+        const qAssign = query(assignmentsRef, where('classId', '==', classId));
+        const assignSnap = await getDocs(qAssign);
+        
+        let html = `
+            <button onclick="adminViewReports()" class="text-blue-600 hover:underline mb-4 flex items-center gap-2">
+                <span>←</span> Quay lại báo cáo tổng quan
+            </button>
+            
+            <h2 class="text-2xl font-bold mb-6">📈 Thống kê từng từ - ${className}</h2>
+            <p class="text-gray-600 mb-6">Xem từ nào học sinh hay sai để dạy lại trên lớp</p>
+        `;
+        
+        if (assignSnap.empty) {
+            html += '<p class="text-gray-500">Chưa có bài tập nào.</p>';
+        } else {
+            for (const assignDoc of assignSnap.docs) {
+                const assign = assignDoc.data();
+                const wordsData = assign.wordsData || assign.words.map(w => ({word: w}));
+                
+                html += `
+                    <div class="bg-white border rounded-lg p-6 mb-6 shadow">
+                        <h3 class="text-xl font-bold mb-4">📝 ${assign.name}</h3>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-blue-600 text-white">
+                                    <tr>
+                                        <th class="p-3 text-left">Từ</th>
+                                        <th class="p-3 text-center">Lượt làm</th>
+                                        <th class="p-3 text-center">Điểm TB</th>
+                                        <th class="p-3 text-center">Tỷ lệ đạt (≥60đ)</th>
+                                        <th class="p-3 text-center">Độ khó</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                // Mảng để sort theo điểm TB
+                let wordStats = [];
+                
+                for (const wordData of wordsData) {
+                    const word = wordData.word;
+                    const resultsRef = collection(db, 'results');
+                    const qResults = query(resultsRef,
+                        where('assignmentId', '==', assignDoc.id),
+                        where('word', '==', word)
+                    );
+                    const resultsSnap = await getDocs(qResults);
+                    
+                    let totalScore = 0;
+                    let passCount = 0;
+                    
+                    resultsSnap.forEach(rDoc => {
+                        const score = rDoc.data().score;
+                        totalScore += score;
+                        if (score >= 60) passCount++;
+                    });
+                    
+                    const avgScore = resultsSnap.size > 0 ? Math.round(totalScore / resultsSnap.size) : 0;
+                    const passRate = resultsSnap.size > 0 ? Math.round((passCount / resultsSnap.size) * 100) : 0;
+                    
+                    wordStats.push({
+                        word,
+                        attempts: resultsSnap.size,
+                        avgScore,
+                        passRate
+                    });
+                }
+                
+                // Sort: Từ khó nhất (điểm thấp) lên đầu
+                wordStats.sort((a, b) => a.avgScore - b.avgScore);
+                
+                wordStats.forEach(stat => {
+                    let scoreColor, difficultyLabel, difficultyColor;
+                    if (stat.avgScore >= 80) {
+                        scoreColor = 'text-green-600';
+                        difficultyLabel = '✅ Dễ';
+                        difficultyColor = 'bg-green-100 text-green-800';
+                    } else if (stat.avgScore >= 60) {
+                        scoreColor = 'text-yellow-600';
+                        difficultyLabel = '⚠️ Trung bình';
+                        difficultyColor = 'bg-yellow-100 text-yellow-800';
+                    } else {
+                        scoreColor = 'text-red-600';
+                        difficultyLabel = '🔥 KHÓ - Cần dạy lại';
+                        difficultyColor = 'bg-red-100 text-red-800';
+                    }
+                    
+                    html += `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-3 font-bold text-lg">${stat.word}</td>
+                            <td class="p-3 text-center">${stat.attempts}</td>
+                            <td class="p-3 text-center font-bold text-xl ${scoreColor}">${stat.avgScore}</td>
+                            <td class="p-3 text-center">${stat.passRate}%</td>
+                            <td class="p-3 text-center">
+                                <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold ${difficultyColor}">
+                                    ${difficultyLabel}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
         document.getElementById('adminContent').innerHTML = html;
     } catch (error) {
         alert('Lỗi: ' + error.message);
@@ -1404,6 +1533,7 @@ window.viewDetailedClassReport = async function(classId, className) {
                             <th class="p-3 text-center">Điểm TB</th>
                             <th class="p-3 text-center">Cao nhất</th>
                             <th class="p-3 text-center">Thấp nhất</th>
+<th class="p-3 text-center">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1435,16 +1565,22 @@ window.viewDetailedClassReport = async function(classId, className) {
             const attempts = resultsSnap.size;
             
 html += `
-            <tr class="border-b hover:bg-gray-50">
-                    <td class="p-3 font-semibold">${student.name}</td>
-                    <td class="p-3 text-center">${attempts}</td>
-                    <td class="p-3 text-center font-bold ${avgScore >= 80 ? 'text-green-600' : avgScore >= 60 ? 'text-yellow-600' : 'text-red-600'}">
-                        ${avgScore}
-                    </td>
-                    <td class="p-3 text-center text-green-600 font-bold">${maxScore}</td>
-                    <td class="p-3 text-center text-red-600 font-bold">${minScore === 100 ? '-' : minScore}</td>
-                </tr>
-            `;
+    <tr class="border-b hover:bg-gray-50">
+        <td class="p-3 font-semibold">${student.name}</td>
+        <td class="p-3 text-center">${attempts}</td>
+        <td class="p-3 text-center font-bold ${avgScore >= 80 ? 'text-green-600' : avgScore >= 60 ? 'text-yellow-600' : 'text-red-600'}">
+            ${avgScore}
+        </td>
+        <td class="p-3 text-center text-green-600 font-bold">${maxScore}</td>
+        <td class="p-3 text-center text-red-600 font-bold">${minScore === 100 ? '-' : minScore}</td>
+        <td class="p-3 text-center">
+            <button onclick="viewStudentDetail('${stId}', '${student.name}', '${classId}')" 
+                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">
+                📊 Xem chi tiết
+            </button>
+        </td>
+    </tr>
+`;
         }
         
         html += `
@@ -1452,6 +1588,122 @@ html += `
                 </table>
             </div>
         `;
+        
+        document.getElementById('adminContent').innerHTML = html;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.viewStudentDetail = async function(studentId, studentName, classId) {
+    showLoading(true);
+    try {
+        // Lấy tên lớp
+        const classDoc = await getDoc(doc(db, 'classes', classId));
+        const className = classDoc.data().name;
+        
+        // Lấy tất cả assignments của lớp
+        const assignmentsRef = collection(db, 'assignments');
+        const qAssign = query(assignmentsRef, where('classId', '==', classId));
+        const assignSnap = await getDocs(qAssign);
+        
+        let html = `
+            <button onclick="viewDetailedClassReport('${classId}', '${className}')" 
+                    class="text-blue-600 hover:underline mb-4 flex items-center gap-2">
+                <span>←</span> Quay lại báo cáo lớp
+            </button>
+            
+            <h2 class="text-2xl font-bold mb-6">📊 Chi tiết học sinh: ${studentName}</h2>
+        `;
+        
+        if (assignSnap.empty) {
+            html += '<p class="text-gray-500">Chưa có bài tập nào.</p>';
+        } else {
+            for (const assignDoc of assignSnap.docs) {
+                const assign = assignDoc.data();
+                const wordsData = assign.wordsData || assign.words.map(w => ({word: w}));
+                
+                html += `
+                    <div class="bg-white border-2 border-blue-200 rounded-lg p-6 mb-6 shadow">
+                        <h3 class="text-xl font-bold mb-4 text-blue-700">📝 ${assign.name}</h3>
+                        <div class="space-y-3">
+                `;
+                
+                // Duyệt từng từ
+                for (const wordData of wordsData) {
+                    const word = wordData.word;
+                    
+                    // Lấy kết quả của từ này
+                    const resultsRef = collection(db, 'results');
+                    const qResults = query(resultsRef,
+                        where('studentId', '==', studentId),
+                        where('assignmentId', '==', assignDoc.id),
+                        where('word', '==', word)
+                    );
+                    const resultsSnap = await getDocs(qResults);
+                    
+                    let scores = [];
+                    let bestScore = 0;
+                    let attempts = 0;
+                    
+                    resultsSnap.forEach(rDoc => {
+                        const score = rDoc.data().score;
+                        scores.push(score);
+                        if (score > bestScore) bestScore = score;
+                        attempts++;
+                    });
+                    
+                    const avgScore = attempts > 0 ? Math.round(scores.reduce((a,b) => a+b, 0) / attempts) : 0;
+                    
+                    let bgColor, borderColor, textColor;
+                    if (avgScore >= 80) {
+                        bgColor = 'bg-green-50';
+                        borderColor = 'border-green-300';
+                        textColor = 'text-green-700';
+                    } else if (avgScore >= 60) {
+                        bgColor = 'bg-yellow-50';
+                        borderColor = 'border-yellow-300';
+                        textColor = 'text-yellow-700';
+                    } else {
+                        bgColor = 'bg-red-50';
+                        borderColor = 'border-red-300';
+                        textColor = 'text-red-700';
+                    }
+                    
+                    html += `
+                        <div class="${bgColor} border-2 ${borderColor} rounded-lg p-4">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-lg">${word}</span>
+                                <div class="text-sm ${textColor}">
+                                    <span class="mr-4">🎯 Làm: <strong>${attempts}</strong> lần</span>
+                                    <span class="mr-4">📊 TB: <strong>${avgScore}</strong></span>
+                                    <span>⭐ Cao nhất: <strong>${bestScore}</strong></span>
+                                </div>
+                            </div>
+                            ${attempts > 0 ? `
+                                <div class="mt-3 pt-3 border-t ${borderColor}">
+                                    <p class="text-xs text-gray-600 mb-1">Lịch sử các lần làm:</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${scores.map((s, idx) => `
+                                            <span class="inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                                                s >= 80 ? 'bg-green-200 text-green-800' :
+                                                s >= 60 ? 'bg-yellow-200 text-yellow-800' :
+                                                'bg-red-200 text-red-800'
+                                            }">
+                                                Lần ${idx + 1}: ${s}đ
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : '<p class="text-gray-500 text-sm mt-2">Chưa làm từ này</p>'}
+                        </div>
+                    `;
+                }
+                
+                html += '</div></div>';
+            }
+        }
         
         document.getElementById('adminContent').innerHTML = html;
     } catch (error) {
@@ -1791,7 +2043,7 @@ function analyzeDetailedPronunciation(correctWord, spokenText) {
         const syllableSimilarity = similarity(syllable, spokenSyllable);
         
         // TĂNG NGƯỠNG từ 0.75 → 0.85
-        const isCorrect = syllableSimilarity > 0.85;
+        const isCorrect = syllableSimilarity > 0.9;
         
         analysis.syllables.push({
             text: syllable,
@@ -1831,14 +2083,14 @@ function analyzeDetailedPronunciation(correctWord, spokenText) {
     }
     
     // Penalty thêm nếu similarity thấp
-    if (bestSimilarity < 0.8) {
-        penalty += 15;
+    if (bestSimilarity < 0.85) {
+        penalty += 20;
     }
     
     // Công thức mới: Ưu tiên syllable hơn (0.7 thay vì 0.6)
     analysis.score = Math.round(
         Math.min(100, Math.max(0, 
-            (syllableScore * 0.7 + similarityScore * 0.3) + bonus - penalty
+            (syllableScore * 0.8 + similarityScore * 0.2) + bonus - penalty
         ))
     );
     
@@ -2068,13 +2320,23 @@ const students = classDoc.data().students || [];
             if (stDoc.exists()) {
                 const st = stDoc.data();
                 html += `
-                    <div class="border p-3 rounded flex justify-between items-center">
-                        <div>
-                            <span class="font-bold">${st.name}</span>
-                            <span class="text-gray-600 ml-2">(${st.code})</span>
-                        </div>
-                    </div>
-                `;
+    <div class="border p-3 rounded flex justify-between items-center hover:bg-gray-50">
+        <div>
+            <span class="font-bold text-lg">${st.name}</span>
+            <span class="text-gray-600 ml-2 font-mono">(${st.code})</span>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="editStudentTeacher('${stId}', '${classId}')" 
+                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+                ✏️ Sửa tên
+            </button>
+            <button onclick="deleteStudentTeacher('${stId}', '${st.name}', '${classId}')" 
+                    class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+                🗑️ Xóa
+            </button>
+        </div>
+    </div>
+`;
             }
         } catch (error) {
             console.error('Lỗi tải học sinh:', error);
@@ -2089,9 +2351,70 @@ const students = classDoc.data().students || [];
 showLoading(false);
 }
 
+window.editStudentTeacher = async function(studentId, classId) {
+    showLoading(true);
+    try {
+        const studentDoc = await getDoc(doc(db, 'students', studentId));
+        const student = studentDoc.data();
+        
+        const newName = prompt(`Nhập tên mới cho học sinh:\n(Mã: ${student.code})`, student.name);
+        
+        if (newName && newName.trim() && newName.trim() !== student.name) {
+            await updateDoc(doc(db, 'students', studentId), {
+                name: newName.trim()
+            });
+            alert('✅ Đã cập nhật tên học sinh!');
+            
+            // Reload danh sách
+            const classDoc = await getDoc(doc(db, 'classes', classId));
+            manageStudents(classId, classDoc.data().name);
+        } else {
+            showLoading(false);
+        }
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+        showLoading(false);
+    }
+}
+
+window.deleteStudentTeacher = async function(studentId, studentName, classId) {
+    if (!confirm(`⚠️ XÓA HỌC SINH "${studentName}"?\n\n- Tất cả kết quả bài tập sẽ BỊ XÓA\n- Không thể hoàn tác!\n\nBạn có chắc chắn?`)) return;
+    
+    showLoading(true);
+    try {
+        // 1. Xóa khỏi class
+        const classDoc = await getDoc(doc(db, 'classes', classId));
+        const students = classDoc.data().students || [];
+        await updateDoc(doc(db, 'classes', classId), {
+            students: students.filter(id => id !== studentId)
+        });
+        
+        // 2. Xóa tất cả results
+        const resultsRef = collection(db, 'results');
+        const q = query(resultsRef, where('studentId', '==', studentId));
+        const resultsSnap = await getDocs(q);
+        
+        const deletePromises = [];
+        resultsSnap.forEach((docSnapshot) => {
+            deletePromises.push(deleteDoc(docSnapshot.ref));
+        });
+        await Promise.all(deletePromises);
+        
+        // 3. Xóa student
+        await deleteDoc(doc(db, 'students', studentId));
+        
+        alert('✅ Đã xóa học sinh và tất cả kết quả!');
+        manageStudents(classId, classDoc.data().name);
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+        showLoading(false);
+    }
+}
+
 window.teacherViewReports = async function() {
     showLoading(true);
     try {
+        // Lấy danh sách lớp của giáo viên
         const classesRef = collection(db, 'classes');
         const allClassesSnap = await getDocs(classesRef);
         
@@ -2100,9 +2423,14 @@ window.teacherViewReports = async function() {
             <div class="space-y-4">
         `;
         
+        let hasClass = false;
+        
         for (const classDoc of allClassesSnap.docs) {
             const classData = classDoc.data();
+            
+            // Chỉ hiển thị lớp mà giáo viên này phụ trách
             if (classData.teacherIds && classData.teacherIds.includes(currentUser.id)) {
+                hasClass = true;
                 const studentIds = classData.students || [];
                 
                 // Tính điểm TB lớp
@@ -2135,16 +2463,320 @@ window.teacherViewReports = async function() {
                                 <p class="text-sm text-gray-600">Điểm TB</p>
                             </div>
                         </div>
-                        <button onclick="viewStats('${classDoc.id}', '${classData.name}')" 
-                                class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-lg w-full font-semibold">
-                            📊 Xem chi tiết
-                        </button>
+                        
+                        <div class="flex gap-2">
+                            <button onclick="viewDetailedClassReportTeacher('${classDoc.id}', '${classData.name}')" 
+                                    class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+                                📊 Xem chi tiết học sinh
+                            </button>
+                            <button onclick="viewWordStatsTeacher('${classDoc.id}', '${classData.name}')" 
+                                    class="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+                                📈 Thống kê từng từ
+                            </button>
+                        </div>
                     </div>
                 `;
             }
         }
         
+        if (!hasClass) {
+            html += '<p class="text-gray-600 bg-gray-50 p-6 rounded-lg text-center">Bạn chưa được phân công lớp nào. Liên hệ Admin!</p>';
+        }
+        
         html += '</div>';
+        document.getElementById('teacherContent').innerHTML = html;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+// HÀM 1: Xem chi tiết học sinh (giống Admin)
+window.viewDetailedClassReportTeacher = async function(classId, className) {
+    showLoading(true);
+    try {
+        const classDoc = await getDoc(doc(db, 'classes', classId));
+        const studentIds = classDoc.data().students || [];
+        
+        let html = `
+            <button onclick="teacherViewReports()" class="text-blue-600 hover:underline mb-4 flex items-center gap-2">
+                <span>←</span> Quay lại báo cáo tổng quan
+            </button>
+            
+            <h2 class="text-2xl font-bold mb-6">📊 Báo cáo chi tiết: ${className}</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full bg-white rounded-lg overflow-hidden shadow">
+                    <thead class="bg-blue-600 text-white">
+                        <tr>
+                            <th class="p-3 text-left">Học sinh</th>
+                            <th class="p-3 text-center">Số bài làm</th>
+                            <th class="p-3 text-center">Điểm TB</th>
+                            <th class="p-3 text-center">Cao nhất</th>
+                            <th class="p-3 text-center">Thấp nhất</th>
+                            <th class="p-3 text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        for (const stId of studentIds) {
+            const stDoc = await getDoc(doc(db, 'students', stId));
+            if (!stDoc.exists()) continue;
+            
+            const student = stDoc.data();
+            
+            const resultsRef = collection(db, 'results');
+            const qResults = query(resultsRef, where('studentId', '==', stId));
+            const resultsSnap = await getDocs(qResults);
+            
+            let totalScore = 0, maxScore = 0, minScore = 100;
+            
+            resultsSnap.forEach(rDoc => {
+                const score = rDoc.data().score;
+                totalScore += score;
+                if (score > maxScore) maxScore = score;
+                if (score < minScore) minScore = score;
+            });
+            
+            const avgScore = resultsSnap.size > 0 ? Math.round(totalScore / resultsSnap.size) : 0;
+            
+            html += `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-3 font-semibold">${student.name}</td>
+                    <td class="p-3 text-center">${resultsSnap.size}</td>
+                    <td class="p-3 text-center font-bold ${avgScore >= 80 ? 'text-green-600' : avgScore >= 60 ? 'text-yellow-600' : 'text-red-600'}">
+                        ${avgScore}
+                    </td>
+                    <td class="p-3 text-center text-green-600 font-bold">${maxScore}</td>
+                    <td class="p-3 text-center text-red-600 font-bold">${minScore === 100 ? '-' : minScore}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="viewStudentDetailTeacher('${stId}', '${student.name}', '${classId}')" 
+                                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">
+                            📊 Xem chi tiết
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        html += '</tbody></table></div>';
+        document.getElementById('teacherContent').innerHTML = html;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+// HÀM 2: Xem chi tiết 1 học sinh (giống Admin)
+window.viewStudentDetailTeacher = async function(studentId, studentName, classId) {
+    showLoading(true);
+    try {
+        const classDoc = await getDoc(doc(db, 'classes', classId));
+        const className = classDoc.data().name;
+        
+        const assignmentsRef = collection(db, 'assignments');
+        const qAssign = query(assignmentsRef, where('classId', '==', classId));
+        const assignSnap = await getDocs(qAssign);
+        
+        let html = `
+            <button onclick="viewDetailedClassReportTeacher('${classId}', '${className}')" 
+                    class="text-blue-600 hover:underline mb-4 flex items-center gap-2">
+                <span>←</span> Quay lại báo cáo lớp
+            </button>
+            
+            <h2 class="text-2xl font-bold mb-6">📊 Chi tiết học sinh: ${studentName}</h2>
+        `;
+        
+        if (assignSnap.empty) {
+            html += '<p class="text-gray-500">Chưa có bài tập nào.</p>';
+        } else {
+            for (const assignDoc of assignSnap.docs) {
+                const assign = assignDoc.data();
+                const wordsData = assign.wordsData || assign.words.map(w => ({word: w}));
+                
+                html += `
+                    <div class="bg-white border-2 border-blue-200 rounded-lg p-6 mb-6 shadow">
+                        <h3 class="text-xl font-bold mb-4 text-blue-700">📝 ${assign.name}</h3>
+                        <div class="space-y-3">
+                `;
+                
+                for (const wordData of wordsData) {
+                    const word = wordData.word;
+                    
+                    const resultsRef = collection(db, 'results');
+                    const qResults = query(resultsRef,
+                        where('studentId', '==', studentId),
+                        where('assignmentId', '==', assignDoc.id),
+                        where('word', '==', word)
+                    );
+                    const resultsSnap = await getDocs(qResults);
+                    
+                    let scores = [];
+                    let bestScore = 0;
+                    
+                    resultsSnap.forEach(rDoc => {
+                        const score = rDoc.data().score;
+                        scores.push(score);
+                        if (score > bestScore) bestScore = score;
+                    });
+                    
+                    const avgScore = scores.length > 0 ? Math.round(scores.reduce((a,b) => a+b, 0) / scores.length) : 0;
+                    
+                    let bgColor, borderColor, textColor;
+                    if (avgScore >= 80) {
+                        bgColor = 'bg-green-50'; borderColor = 'border-green-300'; textColor = 'text-green-700';
+                    } else if (avgScore >= 60) {
+                        bgColor = 'bg-yellow-50'; borderColor = 'border-yellow-300'; textColor = 'text-yellow-700';
+                    } else {
+                        bgColor = 'bg-red-50'; borderColor = 'border-red-300'; textColor = 'text-red-700';
+                    }
+                    
+                    html += `
+                        <div class="${bgColor} border-2 ${borderColor} rounded-lg p-4">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-lg">${word}</span>
+                                <div class="text-sm ${textColor}">
+                                    <span class="mr-4">🎯 Làm: <strong>${scores.length}</strong> lần</span>
+                                    <span class="mr-4">📊 TB: <strong>${avgScore}</strong></span>
+                                    <span>⭐ Cao nhất: <strong>${bestScore}</strong></span>
+                                </div>
+                            </div>
+                            ${scores.length > 0 ? `
+                                <div class="mt-3 pt-3 border-t ${borderColor}">
+                                    <p class="text-xs text-gray-600 mb-1">Lịch sử các lần làm:</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${scores.map((s, idx) => `
+                                            <span class="inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                                                s >= 80 ? 'bg-green-200 text-green-800' :
+                                                s >= 60 ? 'bg-yellow-200 text-yellow-800' :
+                                                'bg-red-200 text-red-800'
+                                            }">
+                                                Lần ${idx + 1}: ${s}đ
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : '<p class="text-gray-500 text-sm mt-2">Chưa làm từ này</p>'}
+                        </div>
+                    `;
+                }
+                
+                html += '</div></div>';
+            }
+        }
+        
+        document.getElementById('teacherContent').innerHTML = html;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+// HÀM 3: Thống kê từng từ (giống Admin)
+window.viewWordStatsTeacher = async function(classId, className) {
+    showLoading(true);
+    try {
+        const assignmentsRef = collection(db, 'assignments');
+        const qAssign = query(assignmentsRef, where('classId', '==', classId));
+        const assignSnap = await getDocs(qAssign);
+        
+        let html = `
+            <button onclick="teacherViewReports()" class="text-blue-600 hover:underline mb-4 flex items-center gap-2">
+                <span>←</span> Quay lại báo cáo tổng quan
+            </button>
+            
+            <h2 class="text-2xl font-bold mb-6">📈 Thống kê từng từ - ${className}</h2>
+            <p class="text-gray-600 mb-6">Xem từ nào học sinh hay sai để dạy lại trên lớp</p>
+        `;
+        
+        if (assignSnap.empty) {
+            html += '<p class="text-gray-500">Chưa có bài tập nào.</p>';
+        } else {
+            for (const assignDoc of assignSnap.docs) {
+                const assign = assignDoc.data();
+                const wordsData = assign.wordsData || assign.words.map(w => ({word: w}));
+                
+                html += `
+                    <div class="bg-white border rounded-lg p-6 mb-6 shadow">
+                        <h3 class="text-xl font-bold mb-4">📝 ${assign.name}</h3>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-green-600 text-white">
+                                    <tr>
+                                        <th class="p-3 text-left">Từ</th>
+                                        <th class="p-3 text-center">Lượt làm</th>
+                                        <th class="p-3 text-center">Điểm TB</th>
+                                        <th class="p-3 text-center">Tỷ lệ đạt (≥60đ)</th>
+                                        <th class="p-3 text-center">Độ khó</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                let wordStats = [];
+                
+                for (const wordData of wordsData) {
+                    const word = wordData.word;
+                    const resultsRef = collection(db, 'results');
+                    const qResults = query(resultsRef,
+                        where('assignmentId', '==', assignDoc.id),
+                        where('word', '==', word)
+                    );
+                    const resultsSnap = await getDocs(qResults);
+                    
+                    let totalScore = 0, passCount = 0;
+                    
+                    resultsSnap.forEach(rDoc => {
+                        const score = rDoc.data().score;
+                        totalScore += score;
+                        if (score >= 60) passCount++;
+                    });
+                    
+                    const avgScore = resultsSnap.size > 0 ? Math.round(totalScore / resultsSnap.size) : 0;
+                    const passRate = resultsSnap.size > 0 ? Math.round((passCount / resultsSnap.size) * 100) : 0;
+                    
+                    wordStats.push({ word, attempts: resultsSnap.size, avgScore, passRate });
+                }
+                
+                wordStats.sort((a, b) => a.avgScore - b.avgScore);
+                
+                wordStats.forEach(stat => {
+                    let scoreColor, difficultyLabel, difficultyColor;
+                    if (stat.avgScore >= 80) {
+                        scoreColor = 'text-green-600';
+                        difficultyLabel = '✅ Dễ';
+                        difficultyColor = 'bg-green-100 text-green-800';
+                    } else if (stat.avgScore >= 60) {
+                        scoreColor = 'text-yellow-600';
+                        difficultyLabel = '⚠️ Trung bình';
+                        difficultyColor = 'bg-yellow-100 text-yellow-800';
+                    } else {
+                        scoreColor = 'text-red-600';
+                        difficultyLabel = '🔥 KHÓ - Cần dạy lại';
+                        difficultyColor = 'bg-red-100 text-red-800';
+                    }
+                    
+                    html += `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-3 font-bold text-lg">${stat.word}</td>
+                            <td class="p-3 text-center">${stat.attempts}</td>
+                            <td class="p-3 text-center font-bold text-xl ${scoreColor}">${stat.avgScore}</td>
+                            <td class="p-3 text-center">${stat.passRate}%</td>
+                            <td class="p-3 text-center">
+                                <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold ${difficultyColor}">
+                                    ${difficultyLabel}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table></div></div>';
+            }
+        }
+        
         document.getElementById('teacherContent').innerHTML = html;
     } catch (error) {
         alert('Lỗi: ' + error.message);
@@ -2728,7 +3360,18 @@ try {
         }));
     }
    
-    let html = '';
+    let html = `
+    <div class="flex items-center gap-3 mb-6">
+        <button onclick="backToStudent()" class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl transition-all shadow-lg font-bold">
+            <span class="text-2xl">←</span>
+            <span>Quay lại danh sách bài</span>
+        </button>
+        <div class="text-gray-600">
+            <span class="font-semibold">Bài:</span> ${currentAssignment.name}
+        </div>
+    </div>
+`;
+
     for (const data of wordsData) {
         const word = data.word;
         const syllables = data.syllables || splitIntoSyllables(word);
