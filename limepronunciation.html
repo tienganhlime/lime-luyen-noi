@@ -759,7 +759,7 @@ try {
     await addDoc(collection(db, 'teachers'), {
         name,
         username,
-        password: simpleHash(password),
+        password: password,
         email,
         assignedClasses: [],
         createdAt: new Date()
@@ -851,7 +851,7 @@ window.saveEditTeacher = async function(teacherId) {
         
         // Chỉ update password nếu có nhập mới
         if (password) {
-            updateData.password = simpleHash(password);
+            updateData.password = password;
         }
         
         await updateDoc(doc(db, 'teachers', teacherId), updateData);
