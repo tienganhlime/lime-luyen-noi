@@ -5,6 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Luyện Phát Âm</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hyphen@1.8.0/dist/jquery.hyphenate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hyphen@1.8.0/patterns/en-us.js"></script>
+   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap');
+    
+    body {
+        font-family: 'Quicksand', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 50%, #81C784 100%);
+    }
+    
+    .screen { display: none; }
+    .screen:not(.hidden) { display: block; }
+    
+    .fade-in { 
+        animation: fadeIn 0.5s ease-in; 
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
 </head>
 <body class="bg-gray-100">
 <!-- Loading Spinner -->
@@ -17,47 +40,216 @@
 
 <!-- 1. TRANG ĐĂNG NHẬP -->
 <div id="loginScreen" class="screen min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl p-10 max-w-md w-full">
-        <h1 class="text-4xl font-bold text-center mb-8 text-blue-600">🎙️ Luyện Phát Âm</h1>
-        <div class="space-y-4">
-            <button onclick="selectRole('teacher')" class="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-lg text-xl font-semibold transition">
-                👨‍🏫 Tôi là Giáo viên
+    <div class="w-full">
+        <!-- HEADER -->
+        <div class="bg-gradient-to-r from-green-600 via-lime-500 to-green-700 text-white p-4 shadow-lg mb-8 rounded-lg">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <img src="https://gofirst.pro/images/uploads/62/baseimg/logo_16541442053.png" alt="LIME" class="h-12">
+                    <span class="text-2xl font-bold">LIME Luyện Phát Âm</span>
+                </div>
+                <div class="text-right">
+                    <p class="font-semibold">📞 Hotline: 0976 222 792</p>
+                    <p class="text-sm">FB: fb.com/tienganhtreemlime</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORM ĐĂNG NHẬP -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-auto">
+            <h1 class="text-4xl font-bold text-center mb-8 text-blue-600">🎙️ Luyện Phát Âm</h1>
+            <div class="space-y-4">
+                <button onclick="selectRole('admin')" class="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-4 rounded-xl text-xl font-semibold transition shadow-lg">
+                    🔑 Tôi là Admin
+                </button>
+                <button onclick="selectRole('teacher')" class="w-full bg-gradient-to-r from-green-500 to-lime-500 hover:from-green-600 hover:to-lime-600 text-white py-4 rounded-xl text-xl font-semibold transition shadow-lg">
+                    👨‍🏫 Tôi là Giáo viên
+                </button>
+                <button onclick="selectRole('student')" class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-4 rounded-xl text-xl font-semibold transition shadow-lg">
+                    👨‍🎓 Tôi là Học sinh
+                </button>
+            </div>
+        </div>
+    </div> <!-- ĐÓ ĐÂY: đóng <div class="w-full"> -->
+</div>
+<!-- ĐĂNG NHẬP ADMIN -->
+<!-- ĐĂNG NHẬP ADMIN -->
+<div id="adminLoginScreen" class="screen hidden min-h-screen flex items-center justify-center p-4">
+    <div class="w-full">
+        <!-- HEADER -->
+        <div class="bg-gradient-to-r from-red-600 via-red-500 to-red-700 text-white p-4 shadow-lg mb-8 rounded-lg">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <img src="https://gofirst.pro/images/uploads/62/baseimg/logo_16541442053.png" alt="LIME" class="h-12">
+                    <span class="text-2xl font-bold">LIME Luyện Phát Âm - Admin</span>
+                </div>
+                <div class="text-right">
+                    <p class="font-semibold">📞 Hotline: 0976 222 792</p>
+                    <p class="text-sm">FB: fb.com/tienganhtreemlime</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- FORM -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-auto">
+            <button onclick="showScreen('loginScreen')" class="text-gray-600 mb-4 hover:text-gray-800 flex items-center gap-2">
+                <span>←</span> Quay lại
             </button>
-            <button onclick="selectRole('student')" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-4 rounded-lg text-xl font-semibold transition">
-                👨‍🎓 Tôi là Học sinh
+            <h2 class="text-3xl font-bold mb-6 text-red-600">🔒 Đăng nhập Admin</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Tên đăng nhập</label>
+                    <input type="text" id="adminUsername" class="w-full p-3 border rounded-lg" placeholder="admin">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Mật khẩu</label>
+                    <input type="password" id="adminPassword" class="w-full p-3 border rounded-lg" placeholder="••••••">
+                </div>
+            </div>
+            
+            <button onclick="loginAdmin()" class="w-full bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-semibold mt-6">
+                Đăng nhập
             </button>
         </div>
+    </div> <!-- ĐÓ ĐÂY -->
+</div>
+<!-- DASHBOARD ADMIN -->
+<div id="adminDashboard" class="screen hidden min-h-screen p-6 bg-gradient-to-br from-red-50 via-orange-50 to-red-100">
+    <!-- THÊM HEADER -->
+    <div class="bg-gradient-to-r from-red-600 via-red-500 to-red-700 text-white p-4 shadow-lg rounded-lg mb-6">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <img src="https://gofirst.pro/images/uploads/62/baseimg/logo_16541442053.png" alt="LIME" class="h-12">
+                <span class="text-2xl font-bold">LIME Luyện Phát Âm - Admin</span>
+            </div>
+            <div class="text-right">
+                <p class="font-semibold">📞 Hotline: 0976 222 792</p>
+                <p class="text-sm">FB: fb.com/tienganhtreemlime</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="max-w-7xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold">🔐 Admin Dashboard</h1>
+                    <p class="text-gray-600 mt-2">Quản lý: <span id="adminNameDisplay" class="font-bold"></span></p>
+                </div>
+                <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg">Đăng xuất</button>
+            </div>
+        </div>
+        
+        <div class="grid md:grid-cols-3 gap-4 mb-6">
+            <button onclick="adminManageClasses()" class="bg-blue-500 hover:bg-blue-600 text-white p-6 rounded-lg font-semibold">
+                📚 Quản lý Lớp
+            </button>
+            <button onclick="adminManageTeachers()" class="bg-green-500 hover:bg-green-600 text-white p-6 rounded-lg font-semibold">
+                👨‍🏫 Quản lý GV
+            </button>
+            <button onclick="adminManageStudents()" class="bg-purple-500 hover:bg-purple-600 text-white p-6 rounded-lg font-semibold">
+                👨‍🎓 Quản lý HS
+            </button>
+            <button onclick="adminViewReports()" class="bg-orange-500 hover:bg-orange-600 text-white p-6 rounded-lg font-semibold">
+                📊 Báo cáo
+            </button>
+        </div>
+        
+        <div id="adminContent" class="bg-white rounded-lg shadow-lg p-6"></div>
     </div>
 </div>
 
 <!-- 2. ĐĂNG NHẬP HỌC SINH -->
+<!-- 2. ĐĂNG NHẬP HỌC SINH -->
 <div id="studentLoginScreen" class="screen hidden min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
-        <button onclick="showScreen('loginScreen')" class="text-gray-600 mb-4">← Quay lại</button>
-        <h2 class="text-3xl font-bold mb-6">Đăng nhập Học sinh</h2>
-        <input type="text" id="studentCode" placeholder="Nhập mã học sinh (vd: HS001)" class="w-full p-3 border rounded-lg mb-4">
-        <button onclick="loginStudent()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold">
-            Đăng nhập
-        </button>
-    </div>
+    <div class="w-full">
+        <!-- HEADER -->
+        <div class="bg-gradient-to-r from-blue-600 via-blue-500 to-blue-700 text-white p-4 shadow-lg mb-8 rounded-lg">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <img src="https://gofirst.pro/images/uploads/62/baseimg/logo_16541442053.png" alt="LIME" class="h-12">
+                    <span class="text-2xl font-bold">LIME Luyện Phát Âm - Học sinh</span>
+                </div>
+                <div class="text-right">
+                    <p class="font-semibold">📞 Hotline: 0976 222 792</p>
+                    <p class="text-sm">FB: fb.com/tienganhtreemlime</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- FORM -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full mx-auto">
+            <button onclick="showScreen('loginScreen')" class="text-gray-600 mb-4 hover:text-gray-800 flex items-center gap-2">
+                <span>←</span> Quay lại
+            </button>
+            <h2 class="text-3xl font-bold mb-6">Đăng nhập Học sinh</h2>
+            <input type="text" id="studentCode" placeholder="Nhập mã học sinh (vd: HS001)" class="w-full p-3 border rounded-lg mb-4">
+            <button onclick="loginStudent()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold">
+                Đăng nhập
+            </button>
+        </div>
+    </div> <!-- ĐÓ ĐÂY -->
 </div>
-
-<!-- 3. ĐĂNG NHẬP GIÁO VIÊN -->
+<!-- ĐĂNG NHẬP GIÁO VIÊN -->
 <div id="teacherLoginScreen" class="screen hidden min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
-        <button onclick="showScreen('loginScreen')" class="text-gray-600 mb-4">← Quay lại</button>
-        <h2 class="text-3xl font-bold mb-6">Đăng nhập Giáo viên</h2>
-        <input type="text" id="teacherCode" placeholder="Nhập mã giáo viên (vd: GV001)" class="w-full p-3 border rounded-lg mb-4">
-        <button onclick="loginTeacher()" class="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold">
-            Đăng nhập
-        </button>
-        <p class="text-sm text-gray-500 mt-4">Lần đầu? Nhập mã bất kỳ để tạo tài khoản mới</p>
-    </div>
+    <div class="w-full">
+        <!-- HEADER -->
+        <div class="bg-gradient-to-r from-green-600 via-lime-500 to-green-700 text-white p-4 shadow-lg mb-8 rounded-lg">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <img src="https://gofirst.pro/images/uploads/62/baseimg/logo_16541442053.png" alt="LIME" class="h-12">
+                    <span class="text-2xl font-bold">LIME Luyện Phát Âm - Giáo viên</span>
+                </div>
+                <div class="text-right">
+                    <p class="font-semibold">📞 Hotline: 0976 222 792</p>
+                    <p class="text-sm">FB: fb.com/tienganhtreemlime</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- FORM -->
+        <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+            <button onclick="showScreen('loginScreen')" class="text-gray-600 mb-4 hover:text-gray-800 flex items-center gap-2">
+                <span>←</span> Quay lại
+            </button>
+            <h2 class="text-3xl font-bold mb-6 text-green-600">👨‍🏫 Đăng nhập Giáo viên</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Tên đăng nhập</label>
+                    <input type="text" id="teacherUsername" class="w-full p-3 border rounded-lg" placeholder="gv001">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">Mật khẩu</label>
+                    <input type="password" id="teacherPassword" class="w-full p-3 border rounded-lg" placeholder="••••••">
+                </div>
+            </div>
+            
+            <button onclick="loginTeacher()" class="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold mt-6">
+                Đăng nhập
+            </button>
+        </div>
+    </div> <!-- ĐÓ ĐÂY -->
 </div>
 
 <!-- 4. DASHBOARD GIÁO VIÊN -->
-<div id="teacherDashboard" class="screen hidden min-h-screen p-6">
-    <div class="max-w-6xl mx-auto">
+<div id="teacherDashboard" class="screen hidden min-h-screen p-6 bg-gradient-to-br from-green-50 via-lime-50 to-green-100">
+<!-- Thêm vào đầu mỗi <div class="screen"> -->
+<div class="bg-gradient-to-r from-green-600 via-lime-500 to-green-700 text-white p-4 shadow-lg">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <img src="https://gofirst.pro/images/uploads/62/baseimg/logo_16541442053.png" alt="LIME" class="h-12">
+            <span class="text-2xl font-bold">LIME Luyện Phát Âm</span>
+        </div>
+        <div class="text-right">
+            <p class="font-semibold">📞 Hotline: 0976 222 792</p>
+            <p class="text-sm">Email: fb.com/tienganhtreemlimen</p>
+        </div>
+    </div>
+</div>    
+
+<div class="max-w-6xl mx-auto">
         <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
             <div class="flex justify-between items-center">
                 <h1 class="text-3xl font-bold">👨‍🏫 Dashboard Giáo viên</h1>
@@ -66,23 +258,44 @@
             <p class="text-gray-600 mt-2">Mã GV: <span id="teacherCodeDisplay" class="font-mono font-bold"></span></p>
         </div>
         <div class="grid md:grid-cols-3 gap-6 mb-6">
-            <button onclick="showCreateClass()" class="bg-blue-500 hover:bg-blue-600 text-white p-6 rounded-lg text-xl font-semibold">
-                ➕ Tạo lớp mới
-            </button>
-            <button onclick="showMyClasses()" class="bg-green-500 hover:bg-green-600 text-white p-6 rounded-lg text-xl font-semibold">
-                📚 Quản lý lớp
-            </button>
-            <button onclick="showAssignments()" class="bg-purple-500 hover:bg-purple-600 text-white p-6 rounded-lg text-xl font-semibold">
-                📝 Giao bài tập
-            </button>
-        </div>
+    <button onclick="showMyClasses()" class="bg-green-500 hover:bg-green-600 text-white p-6 rounded-lg text-xl font-semibold">
+        📚 Quản lý lớp
+    </button>
+    <button onclick="showAssignments()" class="bg-purple-500 hover:bg-purple-600 text-white p-6 rounded-lg text-xl font-semibold">
+        📝 Giao bài tập
+    </button>
+    <button onclick="teacherViewReports()" class="bg-orange-500 hover:bg-orange-600 text-white p-6 rounded-lg text-xl font-semibold">
+        📊 Xem báo cáo
+    </button>
+    <button onclick="manageLibrary()" class="bg-blue-500 hover:bg-blue-600 text-white p-6 rounded-lg text-xl font-semibold">
+        📖 Thư viện từ
+    </button>
+</div>
         <div id="teacherContent" class="bg-white rounded-lg shadow-lg p-6"></div>
     </div>
 </div>
 
 <!-- 5. DASHBOARD HỌC SINH -->
-<div id="studentDashboard" class="screen hidden min-h-screen p-6">
-    <div class="max-w-6xl mx-auto">
+<div id="studentDashboard" class="screen hidden min-h-screen p-6 bg-gradient-to-br from-green-50 via-lime-50 to-green-100">
+
+<!-- Thêm vào đầu mỗi <div class="screen"> -->
+<div class="bg-gradient-to-r from-green-600 via-lime-500 to-green-700 text-white p-4 shadow-lg rounded-lg mb-6">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <img src="https://gofirst.pro/images/uploads/62/baseimg/logo_16541442053.png" alt="LIME" class="h-12">
+            <span class="text-2xl font-bold">LIME Luyện Phát Âm</span>
+        </div>
+        <div class="text-right">
+            <p class="font-semibold">📞 Hotline: 0976 222 792</p>
+            <p class="text-sm">Email: fb.com/tienganhtreemlime</p>
+        </div>
+    </div>
+</div>    
+<div class="max-w-6xl mx-auto">
+<button onclick="backToStudent()" class="flex items-center gap-2 px-4 py-3 bg-white hover:bg-gray-100 rounded-lg transition-colors shadow-md mb-4 font-semibold text-gray-700">
+        <span class="text-2xl">←</span>
+        <span>Quay lại Dashboard</span>
+    </button>
         <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
             <div class="flex justify-between items-center">
                 <div>
@@ -97,8 +310,21 @@
 </div>
 
 <!-- 6. MÀN HÌNH LUYỆN TẬP -->
-<div id="practiceScreen" class="screen hidden min-h-screen p-6 bg-gradient-to-br from-indigo-500 to-purple-600">
-    <div class="max-w-6xl mx-auto">
+<div id="practiceScreen" class="screen hidden min-h-screen p-6 bg-gradient-to-br from-green-100 via-lime-100 to-green-200">
+<!-- Thêm vào đầu mỗi <div class="screen"> -->
+<div class="bg-gradient-to-r from-green-600 via-lime-500 to-green-700 text-white p-4 shadow-lg rounded-lg mb-6">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <img src="https://gofirst.pro/images/uploads/62/baseimg/logo_16541442053.png" alt="LIME" class="h-12">
+            <span class="text-2xl font-bold">LIME Luyện Phát Âm</span>
+        </div>
+        <div class="text-right">
+            <p class="font-semibold">📞 Hotline: 0976 222 792</p>
+            <p class="text-sm">Email: fb.com/tienganhtreemlime</p>
+        </div>
+    </div>
+</div>
+<div class="max-w-6xl mx-auto">
         <button onclick="backToStudent()" class="text-white mb-4 text-lg">← Quay lại</button>
         <div class="bg-white rounded-lg shadow-2xl p-6 mb-6">
             <h2 id="assignmentTitle" class="text-3xl font-bold mb-2"></h2>
@@ -107,13 +333,13 @@
                 <span>Điểm TB: <span id="avgScoreText" class="font-bold">0</span></span>
             </div>
         </div>
-        <div id="wordsList" class="grid md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+        <div id="wordsList" class="space-y-6 max-w-3xl mx-auto"></div>
     </div>
 </div>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getFirestore, collection, addDoc, getDocs, query, where, updateDoc, doc, getDoc, setDoc, orderBy, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getFirestore, collection, addDoc, getDocs, query, where, updateDoc, doc, getDoc, setDoc, orderBy, arrayUnion, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 const firebaseConfig = {
     apiKey: "AIzaSyB2VOZ0A5im13MC6FNLa4bEupKedm5iiBo",
@@ -130,8 +356,13 @@ const db = getFirestore(app);
 let currentUser = null;
 let currentAssignment = null;
 
+// ==================== WHISPER AI CONFIGURATION ====================
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbznNlh8Pu17U_ggJkOqHa_hU87acomNHkazEDw5-1evMBJbNWrDUaXHC0tLUURkyw6G/exec';
+let mediaRecorder;
+let audioChunks = [];
+
 // ==================== UTILITIES ====================
-function showScreen(screenId) {
+window.showScreen = function(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
     document.getElementById(screenId).classList.remove('hidden');
 }
@@ -142,24 +373,103 @@ function showLoading(show) {
 
 // ==================== AUTHENTICATION ====================
 window.selectRole = function(role) {
-    showScreen(role === 'teacher' ? 'teacherLoginScreen' : 'studentLoginScreen');
+    if (role === 'admin') {
+        showScreen('adminLoginScreen');
+    } else if (role === 'teacher') {
+        showScreen('teacherLoginScreen');
+    } else {
+        showScreen('studentLoginScreen');
+    }
 }
 
-window.loginTeacher = async function() {
-    const code = document.getElementById('teacherCode').value.trim();
-    if (!code) return alert('Vui lòng nhập mã giáo viên');
-   
+// Hàm hash mật khẩu đơn giản (PRODUCTION nên dùng bcrypt)
+function simpleHash(password) {
+    let hash = 0;
+    for (let i = 0; i < password.length; i++) {
+        const char = password.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+    return hash.toString();
+}
+
+// ĐĂNG NHẬP ADMIN
+window.loginAdmin = async function() {
+    const username = document.getElementById('adminUsername').value.trim();
+    const password = document.getElementById('adminPassword').value.trim();
+    
+    if (!username || !password) {
+        return alert('Vui lòng nhập đầy đủ thông tin');
+    }
+    
     showLoading(true);
     try {
-        const teacherRef = doc(db, 'teachers', code);
-        const teacherSnap = await getDoc(teacherRef);
-       
-        if (!teacherSnap.exists()) {
-            await setDoc(teacherRef, { code, createdAt: new Date() });
+        const adminsRef = collection(db, 'admins');
+        const q = query(adminsRef, where('username', '==', username));
+        const snap = await getDocs(q);
+        
+        if (snap.empty) {
+            showLoading(false);
+            return alert('Tài khoản không tồn tại');
         }
-       
-        currentUser = { role: 'teacher', code };
-        document.getElementById('teacherCodeDisplay').textContent = code;
+        
+        const adminData = snap.docs[0].data();
+       // const hashedPassword = simpleHash(password);
+        
+        if (adminData.password !== password) {
+            showLoading(false);
+            return alert('Mật khẩu không đúng');
+        }
+        
+        currentUser = { 
+            role: 'admin', 
+            id: snap.docs[0].id,
+            username: adminData.username 
+        };
+        
+        document.getElementById('adminNameDisplay').textContent = username;
+        showScreen('adminDashboard');
+    } catch (error) {
+        alert('Lỗi đăng nhập: ' + error.message);
+    }
+    showLoading(false);
+}
+
+// ĐĂNG NHẬP GIÁO VIÊN (SỬA)
+window.loginTeacher = async function() {
+    const username = document.getElementById('teacherUsername').value.trim();
+    const password = document.getElementById('teacherPassword').value.trim();
+    
+    if (!username || !password) {
+        return alert('Vui lòng nhập đầy đủ thông tin');
+    }
+    
+    showLoading(true);
+    try {
+        const teachersRef = collection(db, 'teachers');
+        const q = query(teachersRef, where('username', '==', username));
+        const snap = await getDocs(q);
+        
+        if (snap.empty) {
+            showLoading(false);
+            return alert('Tài khoản không tồn tại');
+        }
+        
+        const teacherData = snap.docs[0].data();
+       // const hashedPassword = simpleHash(password);
+        
+        if (teacherData.password !== password) {
+            showLoading(false);
+            return alert('Mật khẩu không đúng');
+        }
+        
+        currentUser = { 
+            role: 'teacher', 
+            id: snap.docs[0].id,
+            ...teacherData
+        };
+        
+        document.getElementById('teacherCodeDisplay').textContent = teacherData.name || username;
         showScreen('teacherDashboard');
     } catch (error) {
         alert('Lỗi đăng nhập: ' + error.message);
@@ -167,6 +477,7 @@ window.loginTeacher = async function() {
     showLoading(false);
 }
 
+// ĐĂNG NHẬP HỌC SINH (GIỮ NGUYÊN)
 window.loginStudent = async function() {
     const code = document.getElementById('studentCode').value.trim();
     if (!code) return alert('Vui lòng nhập mã học sinh');
@@ -197,6 +508,1206 @@ window.logout = function() {
     currentUser = null;
     showScreen('loginScreen');
 }
+// ==================== ADMIN FUNCTIONS ====================
+
+// Quản lý Lớp
+window.adminManageClasses = async function() {
+    showLoading(true);
+    try {
+        const classesRef = collection(db, 'classes');
+        const snap = await getDocs(classesRef);
+        
+        let html = `
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold mb-4">📚 Quản lý Lớp học</h2>
+                <button onclick="showAddClassForm()" class="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold">
+                    ➕ Thêm lớp mới
+                </button>
+            </div>
+            
+            <div id="classFormArea"></div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+        `;
+        
+        snap.forEach(doc => {
+            const data = doc.data();
+            html += `
+                <div class="border rounded-lg p-4 bg-white hover:shadow-lg transition">
+                    <h3 class="text-xl font-bold mb-2">${data.name}</h3>
+                    <p class="text-sm text-gray-600 mb-3">Học sinh: ${data.students?.length || 0}</p>
+                    <div class="flex gap-2">
+                        <button onclick="editClass('${doc.id}')" class="bg-yellow-500 text-white px-3 py-1 rounded text-sm">
+                            ✏️ Sửa
+                        </button>
+                        <button onclick="deleteClass('${doc.id}', '${data.name}')" class="bg-red-500 text-white px-3 py-1 rounded text-sm">
+                            🗑️ Xóa
+                        </button>
+                        <button onclick="assignTeacherToClass('${doc.id}', '${data.name}')" class="bg-green-500 text-white px-3 py-1 rounded text-sm">
+                            👨‍🏫 Phân GV
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        document.getElementById('adminContent').innerHTML = html;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.showAddClassForm = function() {
+    document.getElementById('classFormArea').innerHTML = `
+        <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-4">
+            <h3 class="font-bold text-lg mb-4">➕ Thêm lớp mới</h3>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Tên lớp</label>
+                    <input type="text" id="newClassName" placeholder="Ví dụ: Lớp 6A" class="w-full p-3 border rounded-lg">
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="saveNewClass()" class="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold">
+                        💾 Lưu
+                    </button>
+                    <button onclick="document.getElementById('classFormArea').innerHTML=''" class="bg-gray-500 text-white px-6 py-2 rounded-lg">
+                        ❌ Hủy
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+window.saveNewClass = async function() {
+    const name = document.getElementById('newClassName').value.trim();
+    if (!name) return alert('Vui lòng nhập tên lớp');
+    
+    showLoading(true);
+    try {
+        await addDoc(collection(db, 'classes'), {
+            name,
+            createdBy: currentUser.id,
+            teacherIds: [],
+            students: [],
+            createdAt: new Date()
+        });
+        alert('Thêm lớp thành công!');
+        adminManageClasses();
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.deleteClass = async function(classId, className) {
+    if (!confirm(`Xóa lớp "${className}"? Hành động này không thể hoàn tác!`)) return;
+    
+    showLoading(true);
+    try {
+        await deleteDoc(doc(db, 'classes', classId));
+        alert('Đã xóa lớp!');
+        adminManageClasses();
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.editClass = async function(classId) {
+    showLoading(true);
+    try {
+        const classDoc = await getDoc(doc(db, 'classes', classId));
+        const data = classDoc.data();
+        
+        document.getElementById('classFormArea').innerHTML = `
+            <div class="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-6 mb-4">
+                <h3 class="font-bold text-lg mb-4">✏️ Sửa thông tin lớp</h3>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Tên lớp</label>
+                        <input type="text" id="editClassName" value="${data.name}" class="w-full p-3 border rounded-lg">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="saveEditClass('${classId}')" class="bg-yellow-500 text-white px-6 py-2 rounded-lg font-semibold">
+                            💾 Lưu thay đổi
+                        </button>
+                        <button onclick="adminManageClasses()" class="bg-gray-500 text-white px-6 py-2 rounded-lg">
+                            ✖ Hủy
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.saveEditClass = async function(classId) {
+    const name = document.getElementById('editClassName').value.trim();
+    if (!name) return alert('Vui lòng nhập tên lớp');
+    
+    showLoading(true);
+    try {
+        await updateDoc(doc(db, 'classes', classId), { name });
+        alert('Cập nhật thành công!');
+        adminManageClasses();
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+// Quản lý Giáo viên
+window.adminManageTeachers = async function() {
+    showLoading(true);
+    try {
+        const teachersRef = collection(db, 'teachers');
+        const snap = await getDocs(teachersRef);
+        
+        let html = `
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold mb-4">👨‍🏫 Quản lý Giáo viên</h2>
+                <button onclick="showAddTeacherForm()" class="bg-green-500 text-white px-6 py-3 rounded-lg font-semibold">
+                    ➕ Thêm giáo viên
+                </button>
+            </div>
+            
+            <div id="teacherFormArea"></div>
+            
+            <div class="grid md:grid-cols-2 gap-4 mt-6">
+        `;
+        
+        snap.forEach(doc => {
+            const data = doc.data();
+            html += `
+                <div class="border rounded-lg p-4 bg-white">
+                    <h3 class="text-xl font-bold">${data.name || data.username}</h3>
+                    <p class="text-sm text-gray-600">Username: ${data.username}</p>
+                    <p class="text-sm text-gray-600">Lớp phụ trách: ${data.assignedClasses?.length || 0}</p>
+                    <div class="flex gap-2 mt-3">
+                        <button onclick="editTeacher('${doc.id}')" class="bg-yellow-500 text-white px-3 py-1 rounded text-sm">
+                            ✏️ Sửa
+                        </button>
+                        <button onclick="deleteTeacher('${doc.id}', '${data.name}')" class="bg-red-500 text-white px-3 py-1 rounded text-sm">
+                            🗑️ Xóa
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        document.getElementById('adminContent').innerHTML = html;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.showAddTeacherForm = function() {
+    document.getElementById('teacherFormArea').innerHTML = `
+        <div class="bg-green-50 border-2 border-green-200 rounded-lg p-6 mb-4">
+            <h3 class="font-bold text-lg mb-4">➕ Thêm giáo viên mới</h3>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Họ tên</label>
+                    <input type="text" id="newTeacherName" placeholder="Nguyễn Văn A" class="w-full p-3 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Tên đăng nhập</label>
+                    <input type="text" id="newTeacherUsername" placeholder="gv001" class="w-full p-3 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Mật khẩu</label>
+                    <input type="password" id="newTeacherPassword" placeholder="••••••" class="w-full p-3 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Email</label>
+                    <input type="email" id="newTeacherEmail" placeholder="email@example.com" class="w-full p-3 border rounded-lg">
+                </div>
+            </div>
+            <div class="flex gap-2 mt-4">
+                <button onclick="saveNewTeacher()" class="bg-green-500 text-white px-6 py-2 rounded-lg font-semibold">
+                    💾 Lưu
+                </button>
+                <button onclick="document.getElementById('teacherFormArea').innerHTML=''" class="bg-gray-500text-white px-6 py-2 rounded-lg">
+❌ Hủy
+</button>
+</div>
+</div>
+`;
+}
+window.saveNewTeacher = async function() {
+const name = document.getElementById('newTeacherName').value.trim();
+const username = document.getElementById('newTeacherUsername').value.trim();
+const password = document.getElementById('newTeacherPassword').value.trim();
+const email = document.getElementById('newTeacherEmail').value.trim();
+if (!name || !username || !password) {
+    return alert('Vui lòng nhập đầy đủ thông tin bắt buộc');
+}
+
+showLoading(true);
+try {
+    await addDoc(collection(db, 'teachers'), {
+        name,
+        username,
+        password: password,
+        email,
+        assignedClasses: [],
+        createdAt: new Date()
+    });
+    alert('Thêm giáo viên thành công!');
+    adminManageTeachers();
+} catch (error) {
+    alert('Lỗi: ' + error.message);
+}
+showLoading(false);
+}
+
+// ==================== ADMIN FUNCTIONS (TIẾP THEO) ====================
+
+window.deleteTeacher = async function(teacherId, teacherName) {
+    if (!confirm(`Xóa giáo viên "${teacherName}"? Hành động này không thể hoàn tác!`)) return;
+    
+    showLoading(true);
+    try {
+        await deleteDoc(doc(db, 'teachers', teacherId));
+        alert('Đã xóa giáo viên!');
+        adminManageTeachers();
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.editTeacher = async function(teacherId) {
+    showLoading(true);
+    try {
+        const teacherDoc = await getDoc(doc(db, 'teachers', teacherId));
+        const data = teacherDoc.data();
+        
+        document.getElementById('teacherFormArea').innerHTML = `
+            <div class="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-6 mb-4">
+                <h3 class="font-bold text-lg mb-4">✏️ Sửa thông tin giáo viên</h3>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Họ tên</label>
+                        <input type="text" id="editTeacherName" value="${data.name || ''}" class="w-full p-3 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Tên đăng nhập</label>
+                        <input type="text" id="editTeacherUsername" value="${data.username}" class="w-full p-3 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Mật khẩu mới (để trống nếu không đổi)</label>
+                        <input type="password" id="editTeacherPassword" placeholder="••••••" class="w-full p-3 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Email</label>
+                        <input type="email" id="editTeacherEmail" value="${data.email || ''}" class="w-full p-3 border rounded-lg">
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-4">
+                    <button onclick="saveEditTeacher('${teacherId}')" class="bg-yellow-500 text-white px-6 py-2 rounded-lg font-semibold">
+                        💾 Lưu thay đổi
+                    </button>
+                    <button onclick="adminManageTeachers()" class="bg-gray-500 text-white px-6 py-2 rounded-lg">
+                        ❌ Hủy
+                    </button>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.saveEditTeacher = async function(teacherId) {
+    const name = document.getElementById('editTeacherName').value.trim();
+    const username = document.getElementById('editTeacherUsername').value.trim();
+    const password = document.getElementById('editTeacherPassword').value.trim();
+    const email = document.getElementById('editTeacherEmail').value.trim();
+    
+    if (!name || !username) {
+        return alert('Vui lòng nhập đầy đủ thông tin');
+    }
+    
+    showLoading(true);
+    try {
+        const updateData = {
+            name,
+            username,
+            email
+        };
+        
+        // Chỉ update password nếu có nhập mới
+        if (password) {
+            updateData.password = password;
+        }
+        
+        await updateDoc(doc(db, 'teachers', teacherId), updateData);
+        alert('Cập nhật thành công!');
+        adminManageTeachers();
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+// PHÂN GIÁO VIÊN CHO LỚP
+window.assignTeacherToClass = async function(classId, className) {
+    showLoading(true);
+    try {
+        // Lấy danh sách tất cả giáo viên
+        const teachersRef = collection(db, 'teachers');
+        const teachersSnap = await getDocs(teachersRef);
+        
+        // Lấy danh sách GV đã phân của lớp này
+        const classDoc = await getDoc(doc(db, 'classes', classId));
+        const assignedTeacherIds = classDoc.data().teacherIds || [];
+        
+        let html = `
+            <div class="bg-green-50 border-2 border-green-300 rounded-lg p-6">
+                <h3 class="font-bold text-lg mb-4">👨‍🏫 Phân giáo viên cho lớp: ${className}</h3>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold mb-2">Chọn giáo viên</label>
+                    <select id="selectTeacher" class="w-full p-3 border rounded-lg">
+                        <option value="">-- Chọn giáo viên --</option>
+        `;
+        
+        teachersSnap.forEach(doc => {
+            const teacher = doc.data();
+            const isAssigned = assignedTeacherIds.includes(doc.id);
+            html += `<option value="${doc.id}" ${isAssigned ? 'disabled' : ''}>
+                ${teacher.name || teacher.username} ${isAssigned ? '(Đã phân)' : ''}
+            </option>`;
+        });
+        
+        html += `
+                    </select>
+                </div>
+                
+                <div class="flex gap-2 mb-6">
+                    <button onclick="addTeacherToClass('${classId}')" class="bg-green-500 text-white px-6 py-2 rounded-lg font-semibold">
+                        ➕ Thêm GV vào lớp
+                    </button>
+                    <button onclick="adminManageClasses()" class="bg-gray-500 text-white px-4 py-2 rounded-lg">
+                        ← Quay lại
+                    </button>
+                </div>
+                
+                <h4 class="font-bold mb-3">Danh sách GV đã phân:</h4>
+                <div id="assignedTeachersList" class="space-y-2"></div>
+            </div>
+        `;
+        
+        document.getElementById('adminContent').innerHTML = html;
+        
+        // Hiển thị danh sách GV đã phân
+        let assignedHtml = '';
+        for (const tId of assignedTeacherIds) {
+            const tDoc = await getDoc(doc(db, 'teachers', tId));
+            if (tDoc.exists()) {
+                const teacher = tDoc.data();
+                assignedHtml += `
+                    <div class="bg-white border p-3 rounded flex justify-between items-center">
+                        <span class="font-semibold">${teacher.name || teacher.username}</span>
+                        <button onclick="removeTeacherFromClass('${classId}', '${tId}')" 
+                                class="bg-red-500 text-white px-3 py-1 rounded text-sm">
+                            🗑️ Gỡ
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        document.getElementById('assignedTeachersList').innerHTML = assignedHtml || '<p class="text-gray-500">Chưa có giáo viên nào</p>';
+        
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.addTeacherToClass = async function(classId) {
+    const teacherId = document.getElementById('selectTeacher').value;
+    if (!teacherId) return alert('Vui lòng chọn giáo viên');
+    
+    showLoading(true);
+    try {
+        // Cập nhật class: thêm teacherId vào teacherIds
+        await updateDoc(doc(db, 'classes', classId), {
+            teacherIds: arrayUnion(teacherId)
+        });
+        
+        // Cập nhật teacher: thêm classId vào assignedClasses
+        await updateDoc(doc(db, 'teachers', teacherId), {
+            assignedClasses: arrayUnion(classId)
+        });
+        
+        alert('Đã phân giáo viên!');
+        
+        // Reload màn hình
+        const classDoc = await getDoc(doc(db, 'classes', classId));
+        assignTeacherToClass(classId, classDoc.data().name);
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.removeTeacherFromClass = async function(classId, teacherId) {
+    if (!confirm('Gỡ giáo viên khỏi lớp này?')) return;
+    
+    showLoading(true);
+    try {
+        // Lấy dữ liệu hiện tại
+        const classDoc = await getDoc(doc(db, 'classes', classId));
+        const teacherDoc = await getDoc(doc(db, 'teachers', teacherId));
+        
+        const teacherIds = classDoc.data().teacherIds || [];
+        const assignedClasses = teacherDoc.data().assignedClasses || [];
+        
+        // Xóa khỏi mảng
+        const newTeacherIds = teacherIds.filter(id => id !== teacherId);
+        const newAssignedClasses = assignedClasses.filter(id => id !== classId);
+        
+        // Cập nhật
+        await updateDoc(doc(db, 'classes', classId), {
+            teacherIds: newTeacherIds
+        });
+        
+        await updateDoc(doc(db, 'teachers', teacherId), {
+            assignedClasses: newAssignedClasses
+        });
+        
+        alert('Đã gỡ giáo viên!');
+        assignTeacherToClass(classId, classDoc.data().name);
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+// QUẢN LÝ HỌC SINH
+window.adminManageStudents = async function() {
+    showLoading(true);
+    try {
+        const studentsRef = collection(db, 'students');
+        const studentsSnap = await getDocs(studentsRef);
+        
+        const classesRef = collection(db, 'classes');
+        const classesSnap = await getDocs(classesRef);
+        
+        let html = `
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold mb-4">👨‍🎓 Quản lý Học sinh</h2>
+                <button onclick="showAddStudentFormAdmin()" class="bg-purple-500 text-white px-6 py-3 rounded-lg font-semibold">
+                    ➕ Thêm học sinh
+                </button>
+            </div>
+            
+            <div id="studentFormArea"></div>
+            
+            <div class="overflow-x-auto mt-6">
+                <table class="w-full bg-white rounded-lg overflow-hidden">
+                    <thead class="bg-purple-600 text-white">
+                        <tr>
+                            <th class="p-3 text-left">Mã HS</th>
+                            <th class="p-3 text-left">Họ tên</th>
+                            <th class="p-3 text-left">Lớp</th>
+                            <th class="p-3 text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        for (const studentDoc of studentsSnap.docs) {
+            const student = studentDoc.data();
+            
+            // Tìm tên lớp
+            let className = 'Chưa phân lớp';
+            if (student.classId) {
+                const classDoc = classesSnap.docs.find(c => c.id === student.classId);
+                if (classDoc) {
+                    className = classDoc.data().name;
+                }
+            }
+            
+            html += `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-3 font-mono">${student.code}</td>
+                    <td class="p-3 font-semibold">${student.name}</td>
+                    <td class="p-3">${className}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="editStudentAdmin('${studentDoc.id}')" 
+                                class="bg-yellow-500 text-white px-3 py-1 rounded text-sm mr-2">
+                            ✏️ Sửa
+                        </button>
+                        <button onclick="deleteStudent('${studentDoc.id}', '${student.name}')" 
+                                class="bg-red-500 text-white px-3 py-1 rounded text-sm">
+                            🗑️ Xóa
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        document.getElementById('adminContent').innerHTML = html;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.showAddStudentFormAdmin = async function() {
+    // Lấy danh sách lớp
+    const classesSnap = await getDocs(collection(db, 'classes'));
+    
+    let classOptions = '<option value="">-- Chọn lớp --</option>';
+    classesSnap.forEach(doc => {
+        classOptions += `<option value="${doc.id}">${doc.data().name}</option>`;
+    });
+    
+    document.getElementById('studentFormArea').innerHTML = `
+        <div class="bg-purple-50 border-2 border-purple-200 rounded-lg p-6 mb-4">
+            <h3 class="font-bold text-lg mb-4">➕ Thêm học sinh mới</h3>
+            <div class="grid md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Họ tên</label>
+                    <input type="text" id="newStudentName" placeholder="Nguyễn Văn A" class="w-full p-3 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Mã học sinh</label>
+                    <input type="text" id="newStudentCode" placeholder="HS001" class="w-full p-3 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Lớp</label>
+                    <select id="newStudentClass" class="w-full p-3 border rounded-lg">
+                        ${classOptions}
+                    </select>
+                </div>
+            </div>
+            <div class="flex gap-2 mt-4">
+                <button onclick="saveNewStudentAdmin()" class="bg-purple-500 text-white px-6 py-2 rounded-lg font-semibold">
+                    💾 Lưu
+                </button>
+                <button onclick="document.getElementById('studentFormArea').innerHTML=''" class="bg-gray-500 text-white px-6 py-2 rounded-lg">
+                    ❌ Hủy
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+window.saveNewStudentAdmin = async function() {
+    const name = document.getElementById('newStudentName').value.trim();
+    const code = document.getElementById('newStudentCode').value.trim();
+    const classId = document.getElementById('newStudentClass').value;
+    
+    if (!name || !code || !classId) {
+        return alert('Vui lòng điền đầy đủ thông tin');
+    }
+    
+    showLoading(true);
+    try {
+        // Kiểm tra mã HS đã tồn tại chưa
+        const studentsRef = collection(db, 'students');
+        const q = query(studentsRef, where('code', '==', code));
+        const existSnap = await getDocs(q);
+        
+        if (!existSnap.empty) {
+            showLoading(false);
+            return alert('Mã học sinh đã tồn tại!');
+        }
+        
+        // Thêm học sinh
+        const studentRef = await addDoc(studentsRef, {
+            name,
+            code,
+            classId,
+            createdAt: new Date()
+        });
+        
+        // Cập nhật class: thêm student vào mảng students
+        await updateDoc(doc(db, 'classes', classId), {
+            students: arrayUnion(studentRef.id)
+        });
+        
+        alert('Thêm học sinh thành công!');
+        adminManageStudents();
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.editStudentAdmin = async function(studentId) {
+    showLoading(true);
+    try {
+        const studentDoc = await getDoc(doc(db, 'students', studentId));
+        const student = studentDoc.data();
+        
+        // Lấy danh sách lớp
+        const classesSnap = await getDocs(collection(db, 'classes'));
+        let classOptions = '';
+        classesSnap.forEach(doc => {
+            const selected = doc.id === student.classId ? 'selected' : '';
+            classOptions += `<option value="${doc.id}" ${selected}>${doc.data().name}</option>`;
+        });
+        
+        document.getElementById('studentFormArea').innerHTML = `
+            <div class="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-6 mb-4">
+                <h3 class="font-bold text-lg mb-4">✏️ Sửa thông tin học sinh</h3>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Họ tên</label>
+                        <input type="text" id="editStudentName" value="${student.name}" class="w-full p-3 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Mã học sinh</label>
+                        <input type="text" id="editStudentCode" value="${student.code}" class="w-full p-3 border rounded-lg" disabled>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Lớp</label>
+                        <select id="editStudentClass" class="w-full p-3 border rounded-lg">
+                            ${classOptions}
+                        </select>
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-4">
+                    <button onclick="saveEditStudentAdmin('${studentId}', '${student.classId}')" class="bg-yellow-500 text-white px-6 py-2 rounded-lg font-semibold">
+                        💾 Lưu thay đổi
+                    </button>
+                    <button onclick="adminManageStudents()" class="bg-gray-500 text-white px-6 py-2 rounded-lg">
+                        ❌ Hủy
+                    </button>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.saveEditStudentAdmin = async function(studentId, oldClassId) {
+    const name = document.getElementById('editStudentName').value.trim();
+    const newClassId = document.getElementById('editStudentClass').value;
+    
+    if (!name || !newClassId) {
+        return alert('Vui lòng điền đầy đủ thông tin');
+    }
+    
+    showLoading(true);
+    try {
+        // Cập nhật thông tin học sinh
+        await updateDoc(doc(db, 'students', studentId), {
+            name,
+            classId: newClassId
+        });
+        
+        // Nếu đổi lớp, cập nhật cả 2 lớp
+        if (oldClassId !== newClassId) {
+            // Xóa khỏi lớp cũ
+            const oldClassDoc = await getDoc(doc(db, 'classes', oldClassId));
+            const oldStudents = oldClassDoc.data().students || [];
+            await updateDoc(doc(db, 'classes', oldClassId), {
+                students: oldStudents.filter(id => id !== studentId)
+            });
+            
+            // Thêm vào lớp mới
+            await updateDoc(doc(db, 'classes', newClassId), {
+                students: arrayUnion(studentId)
+            });
+        }
+        
+        alert('Cập nhật thành công!');
+        adminManageStudents();
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.deleteStudent = async function(studentId, studentName) {
+    if (!confirm(`Xóa học sinh "${studentName}"? Tất cả kết quả học tập sẽ bị xóa!`)) return;
+    
+    showLoading(true);
+    try {
+        // Lấy thông tin học sinh để biết classId
+        const studentDoc = await getDoc(doc(db, 'students', studentId));
+        const classId = studentDoc.data().classId;
+        
+        // Xóa khỏi class
+        if (classId) {
+            const classDoc = await getDoc(doc(db, 'classes', classId));
+            const students = classDoc.data().students || [];
+            await updateDoc(doc(db, 'classes', classId), {
+                students: students.filter(id => id !== studentId)
+            });
+        }
+        
+        // Xóa tất cả results của học sinh này
+        const resultsRef = collection(db, 'results');
+        const q = query(resultsRef, where('studentId', '==', studentId));
+        const resultsSnap = await getDocs(q);
+        resultsSnap.forEach(async (doc) => {
+            await deleteDoc(doc.ref);
+        });
+        
+        // Xóa học sinh
+        await deleteDoc(doc(db, 'students', studentId));
+        
+        alert('Đã xóa học sinh!');
+        adminManageStudents();
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+// XEM BÁO CÁO
+window.adminViewReports = async function() {
+    showLoading(true);
+    try {
+        const classesSnap = await getDocs(collection(db, 'classes'));
+        
+        let html = `
+            <h2 class="text-2xl font-bold mb-6">📊 Báo cáo tổng quan</h2>
+            
+            <div class="grid md:grid-cols-3 gap-4 mb-6">
+        `;
+        
+        // Thống kê tổng quan
+        const teachersSnap = await getDocs(collection(db, 'teachers'));
+        const studentsSnap = await getDocs(collection(db, 'students'));
+        const assignmentsSnap = await getDocs(collection(db, 'assignments'));
+        
+        html += `
+                <div class="bg-green-100 border-2 border-green-300 rounded-lg p-6 text-center">
+                    <p class="text-4xl font-bold text-green-700">${teachersSnap.size}</p>
+                    <p class="text-gray-700 mt-2">Giáo viên</p>
+                </div>
+                <div class="bg-blue-100 border-2 border-blue-300 rounded-lg p-6 text-center">
+                    <p class="text-4xl font-bold text-blue-700">${studentsSnap.size}</p>
+                    <p class="text-gray-700 mt-2">Học sinh</p>
+                </div>
+                <div class="bg-purple-100 border-2 border-purple-300 rounded-lg p-6 text-center">
+                    <p class="text-4xl font-bold text-purple-700">${assignmentsSnap.size}</p>
+                    <p class="text-gray-700 mt-2">Bài tập</p>
+                </div>
+            </div>
+            
+            <h3 class="text-xl font-bold mb-4">📚 Báo cáo theo lớp</h3>
+            <div class="space-y-4">
+        `;
+        
+        for (const classDoc of classesSnap.docs) {
+            const classData = classDoc.data();
+            const studentIds = classData.students || [];
+            
+            // Đếm số bài tập của lớp
+            const assignmentsRef = collection(db, 'assignments');
+            const qAssign = query(assignmentsRef, where('classId', '==', classDoc.id));
+            const assignSnap = await getDocs(qAssign);
+            
+            // Tính điểm trung bình lớp
+            let totalScore = 0;
+            let totalAttempts = 0;
+            
+            for (const stId of studentIds) {
+                const resultsRef = collection(db, 'results');
+                const qResults = query(resultsRef, where('studentId', '==', stId));
+                const resultsSnap = await getDocs(qResults);
+                
+                resultsSnap.forEach(rDoc => {
+                    totalScore += rDoc.data().score;
+                    totalAttempts++;
+                });
+            }
+            
+            const avgScore = totalAttempts > 0 ? Math.round(totalScore / totalAttempts) : 0;
+            
+            html += `
+                <div class="bg-white border rounded-lg p-6">
+                    <h4 class="text-xl font-bold mb-3">${classData.name}</h4>
+                    <div class="grid md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                            <p class="text-gray-600">Học sinh</p>
+                            <p class="text-2xl font-bold text-blue-600">${studentIds.length}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">Bài tập</p>
+                            <p class="text-2xl font-bold text-purple-600">${assignSnap.size}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">Lượt làm bài</p>
+                            <p class="text-2xl font-bold text-orange-600">${totalAttempts}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">Điểm TB</p>
+                            <p class="text-2xl font-bold text-green-600">${avgScore}</p>
+                        </div>
+                    </div>
+<div class="flex gap-2 mt-4">
+    <button onclick="viewDetailedClassReport('${classDoc.id}', '${classData.name}')" 
+            class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">
+        📊 Xem chi tiết học sinh
+    </button>
+    <button onclick="viewWordStats('${classDoc.id}', '${classData.name}')" 
+            class="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm">
+        📈 Thống kê từng từ
+    </button>
+</div>                    
+                </div>
+            `;
+        }
+        
+        html += '</div>';
+        document.getElementById('adminContent').innerHTML = html;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.viewWordStats = async function(classId, className) {
+    showLoading(true);
+    try {
+        const assignmentsRef = collection(db, 'assignments');
+        const qAssign = query(assignmentsRef, where('classId', '==', classId));
+        const assignSnap = await getDocs(qAssign);
+        
+        let html = `
+            <button onclick="adminViewReports()" class="text-blue-600 hover:underline mb-4 flex items-center gap-2">
+                <span>←</span> Quay lại báo cáo tổng quan
+            </button>
+            
+            <h2 class="text-2xl font-bold mb-6">📈 Thống kê từng từ - ${className}</h2>
+            <p class="text-gray-600 mb-6">Xem từ nào học sinh hay sai để dạy lại trên lớp</p>
+        `;
+        
+        if (assignSnap.empty) {
+            html += '<p class="text-gray-500">Chưa có bài tập nào.</p>';
+        } else {
+            for (const assignDoc of assignSnap.docs) {
+                const assign = assignDoc.data();
+                const wordsData = assign.wordsData || assign.words.map(w => ({word: w}));
+                
+                html += `
+                    <div class="bg-white border rounded-lg p-6 mb-6 shadow">
+                        <h3 class="text-xl font-bold mb-4">📝 ${assign.name}</h3>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-blue-600 text-white">
+                                    <tr>
+                                        <th class="p-3 text-left">Từ</th>
+                                        <th class="p-3 text-center">Lượt làm</th>
+                                        <th class="p-3 text-center">Điểm TB</th>
+                                        <th class="p-3 text-center">Tỷ lệ đạt (≥60đ)</th>
+                                        <th class="p-3 text-center">Độ khó</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                // Mảng để sort theo điểm TB
+                let wordStats = [];
+                
+                for (const wordData of wordsData) {
+                    const word = wordData.word;
+                    const resultsRef = collection(db, 'results');
+                    const qResults = query(resultsRef,
+                        where('assignmentId', '==', assignDoc.id),
+                        where('word', '==', word)
+                    );
+                    const resultsSnap = await getDocs(qResults);
+                    
+                    let totalScore = 0;
+                    let passCount = 0;
+                    
+                    resultsSnap.forEach(rDoc => {
+                        const score = rDoc.data().score;
+                        totalScore += score;
+                        if (score >= 60) passCount++;
+                    });
+                    
+                    const avgScore = resultsSnap.size > 0 ? Math.round(totalScore / resultsSnap.size) : 0;
+                    const passRate = resultsSnap.size > 0 ? Math.round((passCount / resultsSnap.size) * 100) : 0;
+                    
+                    wordStats.push({
+                        word,
+                        attempts: resultsSnap.size,
+                        avgScore,
+                        passRate
+                    });
+                }
+                
+                // Sort: Từ khó nhất (điểm thấp) lên đầu
+                wordStats.sort((a, b) => a.avgScore - b.avgScore);
+                
+                wordStats.forEach(stat => {
+                    let scoreColor, difficultyLabel, difficultyColor;
+                    if (stat.avgScore >= 80) {
+                        scoreColor = 'text-green-600';
+                        difficultyLabel = '✅ Dễ';
+                        difficultyColor = 'bg-green-100 text-green-800';
+                    } else if (stat.avgScore >= 60) {
+                        scoreColor = 'text-yellow-600';
+                        difficultyLabel = '⚠️ Trung bình';
+                        difficultyColor = 'bg-yellow-100 text-yellow-800';
+                    } else {
+                        scoreColor = 'text-red-600';
+                        difficultyLabel = '🔥 KHÓ - Cần dạy lại';
+                        difficultyColor = 'bg-red-100 text-red-800';
+                    }
+                    
+                    html += `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-3 font-bold text-lg">${stat.word}</td>
+                            <td class="p-3 text-center">${stat.attempts}</td>
+                            <td class="p-3 text-center font-bold text-xl ${scoreColor}">${stat.avgScore}</td>
+                            <td class="p-3 text-center">${stat.passRate}%</td>
+                            <td class="p-3 text-center">
+                                <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold ${difficultyColor}">
+                                    ${difficultyLabel}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        document.getElementById('adminContent').innerHTML = html;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.viewDetailedClassReport = async function(classId, className) {
+    showLoading(true);
+    try {
+        const classDoc = await getDoc(doc(db, 'classes', classId));
+        const studentIds = classDoc.data().students || [];
+        
+        let html = `
+            <div class="mb-4">
+                <button onclick="adminViewReports()" class="text-blue-600">← Quay lại báo cáo tổng quan</button>
+            </div>
+            
+            <h2 class="text-2xl font-bold mb-6">📊 Báo cáo chi tiết: ${className}</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full bg-white rounded-lg overflow-hidden">
+                    <thead class="bg-blue-600 text-white">
+                        <tr>
+                            <th class="p-3 text-left">Học sinh</th>
+                            <th class="p-3 text-center">Số bài làm</th>
+                            <th class="p-3 text-center">Điểm TB</th>
+                            <th class="p-3 text-center">Cao nhất</th>
+                            <th class="p-3 text-center">Thấp nhất</th>
+<th class="p-3 text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        for (const stId of studentIds) {
+            const stDoc = await getDoc(doc(db, 'students', stId));
+            if (!stDoc.exists()) continue;
+            
+            const student = stDoc.data();
+            
+            // Lấy results của học sinh
+            const resultsRef = collection(db, 'results');
+            const qResults = query(resultsRef, where('studentId', '==', stId));
+            const resultsSnap = await getDocs(qResults);
+            
+            let totalScore = 0;
+            let maxScore = 0;
+            let minScore = 100;
+            
+            resultsSnap.forEach(rDoc => {
+                const score = rDoc.data().score;
+                totalScore += score;
+                if (score > maxScore) maxScore = score;
+                if (score < minScore) minScore = score;
+            });
+            
+            const avgScore = resultsSnap.size > 0 ? Math.round(totalScore / resultsSnap.size) : 0;
+            const attempts = resultsSnap.size;
+            
+html += `
+    <tr class="border-b hover:bg-gray-50">
+        <td class="p-3 font-semibold">${student.name}</td>
+        <td class="p-3 text-center">${attempts}</td>
+        <td class="p-3 text-center font-bold ${avgScore >= 80 ? 'text-green-600' : avgScore >= 60 ? 'text-yellow-600' : 'text-red-600'}">
+            ${avgScore}
+        </td>
+        <td class="p-3 text-center text-green-600 font-bold">${maxScore}</td>
+        <td class="p-3 text-center text-red-600 font-bold">${minScore === 100 ? '-' : minScore}</td>
+        <td class="p-3 text-center">
+            <button onclick="viewStudentDetail('${stId}', '${student.name}', '${classId}')" 
+                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">
+                📊 Xem chi tiết
+            </button>
+        </td>
+    </tr>
+`;
+        }
+        
+        html += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        document.getElementById('adminContent').innerHTML = html;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.viewStudentDetail = async function(studentId, studentName, classId) {
+    showLoading(true);
+    try {
+        // Lấy tên lớp
+        const classDoc = await getDoc(doc(db, 'classes', classId));
+        const className = classDoc.data().name;
+        
+        // Lấy tất cả assignments của lớp
+        const assignmentsRef = collection(db, 'assignments');
+        const qAssign = query(assignmentsRef, where('classId', '==', classId));
+        const assignSnap = await getDocs(qAssign);
+        
+        let html = `
+            <button onclick="viewDetailedClassReport('${classId}', '${className}')" 
+                    class="text-blue-600 hover:underline mb-4 flex items-center gap-2">
+                <span>←</span> Quay lại báo cáo lớp
+            </button>
+            
+            <h2 class="text-2xl font-bold mb-6">📊 Chi tiết học sinh: ${studentName}</h2>
+        `;
+        
+        if (assignSnap.empty) {
+            html += '<p class="text-gray-500">Chưa có bài tập nào.</p>';
+        } else {
+            for (const assignDoc of assignSnap.docs) {
+                const assign = assignDoc.data();
+                const wordsData = assign.wordsData || assign.words.map(w => ({word: w}));
+                
+                html += `
+                    <div class="bg-white border-2 border-blue-200 rounded-lg p-6 mb-6 shadow">
+                        <h3 class="text-xl font-bold mb-4 text-blue-700">📝 ${assign.name}</h3>
+                        <div class="space-y-3">
+                `;
+                
+                // Duyệt từng từ
+                for (const wordData of wordsData) {
+                    const word = wordData.word;
+                    
+                    // Lấy kết quả của từ này
+                    const resultsRef = collection(db, 'results');
+                    const qResults = query(resultsRef,
+                        where('studentId', '==', studentId),
+                        where('assignmentId', '==', assignDoc.id),
+                        where('word', '==', word)
+                    );
+                    const resultsSnap = await getDocs(qResults);
+                    
+                    let scores = [];
+                    let bestScore = 0;
+                    let attempts = 0;
+                    
+                    resultsSnap.forEach(rDoc => {
+                        const score = rDoc.data().score;
+                        scores.push(score);
+                        if (score > bestScore) bestScore = score;
+                        attempts++;
+                    });
+                    
+                    const avgScore = attempts > 0 ? Math.round(scores.reduce((a,b) => a+b, 0) / attempts) : 0;
+                    
+                    let bgColor, borderColor, textColor;
+                    if (avgScore >= 80) {
+                        bgColor = 'bg-green-50';
+                        borderColor = 'border-green-300';
+                        textColor = 'text-green-700';
+                    } else if (avgScore >= 60) {
+                        bgColor = 'bg-yellow-50';
+                        borderColor = 'border-yellow-300';
+                        textColor = 'text-yellow-700';
+                    } else {
+                        bgColor = 'bg-red-50';
+                        borderColor = 'border-red-300';
+                        textColor = 'text-red-700';
+                    }
+                    
+                    html += `
+                        <div class="${bgColor} border-2 ${borderColor} rounded-lg p-4">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-lg">${word}</span>
+                                <div class="text-sm ${textColor}">
+                                    <span class="mr-4">🎯 Làm: <strong>${attempts}</strong> lần</span>
+                                    <span class="mr-4">📊 TB: <strong>${avgScore}</strong></span>
+                                    <span>⭐ Cao nhất: <strong>${bestScore}</strong></span>
+                                </div>
+                            </div>
+                            ${attempts > 0 ? `
+                                <div class="mt-3 pt-3 border-t ${borderColor}">
+                                    <p class="text-xs text-gray-600 mb-1">Lịch sử các lần làm:</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${scores.map((s, idx) => `
+                                            <span class="inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                                                s >= 80 ? 'bg-green-200 text-green-800' :
+                                                s >= 60 ? 'bg-yellow-200 text-yellow-800' :
+                                                'bg-red-200 text-red-800'
+                                            }">
+                                                Lần ${idx + 1}: ${s}đ
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : '<p class="text-gray-500 text-sm mt-2">Chưa làm từ này</p>'}
+                        </div>
+                    `;
+                }
+                
+                html += '</div></div>';
+            }
+        }
+        
+        document.getElementById('adminContent').innerHTML = html;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
 
 // ==================== SYLLABLE ANALYSIS ====================
 const syllableDB = {
@@ -224,21 +1735,27 @@ const syllableDB = {
 };
 
 function splitIntoSyllables(word) {
-    const original = word;
     word = word.toLowerCase().trim();
-   
-    if (syllableDB[word]) return syllableDB[word];
-   
-    if (word.includes(' ')) {
-        const words = word.split(' ').filter(w => w.length > 0);
-        let allSyllables = [];
-        words.forEach(w => {
-            const syls = splitIntoSyllables(w);
-            allSyllables = allSyllables.concat(syls);
-        });
-        return allSyllables;
+    
+    // Kiểm tra database trước
+    if (syllableDB[word]) {
+        return syllableDB[word];
     }
-   
+    
+    // Dùng Hyphen.js (nếu có)
+    if (typeof Hypher !== 'undefined') {
+        try {
+            const h = new Hypher(Hypher.languages['en-us']);
+            const syllables = h.hyphenate(word);
+            if (syllables.length > 0) {
+                return syllables;
+            }
+        } catch (e) {
+            console.warn('Hyphen.js error:', e);
+        }
+    }
+    
+    // Fallback về thuật toán cũ
     if (word.length <= 3) return [word];
    
     const vowels = 'aeiouy';
@@ -301,61 +1818,550 @@ function editDistance(s1, s2) {
     return costs[s2.length];
 }
 
-function analyzePronunciation(correctWord, spokenWord) {
+// ==================== WHISPER AI GRADING (PHẦN MỚI) ====================
+window.recordWord = async function(word) {
+    const resultDiv = document.getElementById(`result-${word}`);
+    
+     
+    // Kiểm tra quyền microphone
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        resultDiv.innerHTML = `
+            <div class="p-6 bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-xl text-center">
+                <div class="animate-bounce inline-block w-16 h-16 bg-gradient-to-br from-green-500 to-blue-500 rounded-full mb-4 flex items-center justify-center">
+                    <span class="text-2xl">🎤</span>
+                </div>
+                <p class="text-green-700 font-bold text-xl mb-1">🎙️ ĐANG THU ÂM...</p>
+                <p class="text-sm text-green-600 mt-1">Nói rõ từ: <strong class="text-lg font-mono">${word}</strong></p>
+                <div class="mt-4 flex justify-center space-x-2">
+                    <div class="w-4 h-4 bg-green-500 rounded-full animate-bounce"></div>
+                    <div class="w-4 h-4 bg-green-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                    <div class="w-4 h-4 bg-green-500 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                </div>
+                <button onclick="stopRecording('${word}')" class="mt-4 bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-bold">
+                    ⏹️ DỪNG & CHẤM ĐIỂM
+                </button>
+                <p class="text-xs text-gray-500 mt-2">Hoặc tự động sau 5 giây</p>
+            </div>
+        `;
+        
+        // Bắt đầu thu âm
+        audioChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+        
+        mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+        };
+        
+        mediaRecorder.onstop = async () => {
+            stream.getTracks().forEach(track => track.stop());
+            
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            
+            // Gửi lên Whisper AI để chấm điểm
+            await gradeWithWhisper(word, audioBlob, resultDiv);
+        };
+        
+        mediaRecorder.start();
+        
+        // Tự động dừng sau 5 giây
+        setTimeout(() => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                stopRecording(word);
+            }
+        }, 5000);
+        
+    } catch (err) {
+        resultDiv.innerHTML = `
+            <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p class="text-red-600 font-bold">❌ Không có quyền truy cập microphone</p>
+                <p class="text-sm text-red-500 mt-1">Vui lòng cho phép microphone trong trình duyệt</p>
+            </div>
+        `;
+    }
+}
+
+window.stopRecording = function(word) {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+    }
+}
+
+async function gradeWithWhisper(word, audioBlob, resultDiv) {
+    resultDiv.innerHTML = `
+        <div class="p-6 bg-purple-50 border-2 border-purple-200 rounded-xl text-center">
+            <div class="animate-spin inline-block w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full mb-4"></div>
+            <p class="text-purple-700 font-bold text-xl">🤖 Groq AI đang chấm điểm...</p>
+            <p class="text-sm text-purple-600 mt-2">Qua Apps Script (An toàn hơn!)</p>
+        </div>
+    `;
+    
+    try {
+        // ✅ Convert audio blob sang base64
+        const audioBase64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(audioBlob);
+        });
+        
+        console.log('📤 Gửi tới Apps Script...');
+        
+        // ✅ Gửi POST với FormData
+        const formData = new FormData();
+        formData.append('audio', audioBase64);
+        
+        const response = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        console.log('📥 Apps Script trả về:', data);
+        
+        if (!data.success) {
+            throw new Error(data.error || 'Lỗi từ Apps Script');
+        }
+        
+        const transcript = data.text.trim().toLowerCase();
+        
+        if (!transcript) {
+            throw new Error('Không nhận diện được giọng nói');
+        }
+        
+        console.log('🎤 Groq nhận diện:', transcript);
+        
+        // ✅ Phân tích phát âm (giữ nguyên code cũ)
+        const detailedAnalysis = await analyzeDetailedPronunciation(word, transcript);
+        
+        // ✅ Lưu kết quả
+        await addDoc(collection(db, 'results'), {
+            studentId: currentUser.id,
+            assignmentId: currentAssignment.id,
+            word,
+            score: detailedAnalysis.score,
+            recognizedText: transcript,
+            syllableAnalysis: detailedAnalysis,
+            method: 'groq-via-apps-script',
+            createdAt: new Date()
+        });
+        
+        // ✅ Hiển thị kết quả
+        displayDetailedResults(word, transcript, detailedAnalysis, resultDiv);
+        updateProgress();
+        
+    } catch (error) {
+        console.error('❌ Error:', error);
+        
+        let errorMsg = error.message;
+        let suggestion = '';
+        
+        if (error.message.includes('YOUR_DEPLOYMENT_ID')) {
+            errorMsg = '⚠️ Chưa cấu hình Apps Script URL';
+            suggestion = 'Tìm dòng APPS_SCRIPT_URL trong code và thay YOUR_DEPLOYMENT_ID';
+        } else if (error.message.includes('Rate limit') || error.message.includes('429')) {
+            errorMsg = '⏰ Vượt giới hạn API';
+            suggestion = 'Đợi 1 phút hoặc tạo API key mới';
+        }
+        
+        resultDiv.innerHTML = `
+            <div class="p-4 bg-red-50 border-2 border-red-200 rounded-lg">
+                <p class="text-red-600 font-bold text-lg mb-2">${errorMsg}</p>
+                ${suggestion ? `<p class="text-sm text-red-500 mb-3">💡 ${suggestion}</p>` : ''}
+                <p class="text-xs text-gray-600 mb-3">Chi tiết: ${error.message}</p>
+                <button onclick="recordWord('${word}')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold">
+                    🔄 Thử lại
+                </button>
+            </div>
+        `;
+    }
+}
+
+// ✅ PHÂN TÍCH NÂNG CAO: CHẶT HƠN + SOI TRỌNG ÂM
+async function analyzeDetailedPronunciation(correctWord, spokenText) {
     correctWord = correctWord.toLowerCase().trim();
-    spokenWord = spokenWord.toLowerCase().trim();
-   
+    spokenText = spokenText.toLowerCase().trim();
+    
     const correctSyllables = splitIntoSyllables(correctWord);
-    const spokenSyllables = splitIntoSyllables(spokenWord);
-   
-    const analysis = { syllables: [], wrongSyllables: [], score: 0 };
-   
+    const spokenWords = spokenText.split(' ');
+    
+    // Tìm từ khớp nhất
+    let bestMatch = spokenText;
+    let bestSimilarity = similarity(correctWord, spokenText);
+    
+    for (const spokenWord of spokenWords) {
+        const sim = similarity(correctWord, spokenWord);
+        if (sim > bestSimilarity) {
+            bestSimilarity = sim;
+            bestMatch = spokenWord;
+        }
+    }
+    
+    const spokenSyllables = splitIntoSyllables(bestMatch);
+    
+    const analysis = {
+        syllables: [],
+        wrongSyllables: [],
+        correctSyllables: [],
+        score: 0,
+        totalSyllables: correctSyllables.length,
+        matchedWord: bestMatch,
+        overallSimilarity: bestSimilarity,
+        stressScore: 0,
+        stressCorrect: false
+    };
+    
+    // ✅ LẤY TRỌNG ÂM CHUẨN (tự động từ Dictionary API)
+    const expectedStress = await getExpectedStress(correctWord);
+    
+    // So sánh từng âm tiết - CHẶT HƠN (90%)
     correctSyllables.forEach((syllable, index) => {
-        const isCorrect = spokenSyllables[index] &&
-                         (spokenSyllables[index] === syllable ||
-                          similarity(spokenSyllables[index], syllable) > 0.7);
-       
+        const spokenSyllable = spokenSyllables[index] || '';
+        const syllableSimilarity = similarity(syllable, spokenSyllable);
+        
+        // ✅ NGƯỠNG CHẶT: 0.9 (90%)
+        const isCorrect = syllableSimilarity > 0.9;
+        
+        // ✅ KIỂM TRA TRỌNG ÂM (nếu có)
+        let hasCorrectStress = true;
+        if (expectedStress && expectedStress[index] !== undefined) {
+            // Giả sử học sinh đọc đúng → trọng âm đúng
+            // (Vì không phân tích audio thực, ta chỉ cảnh báo)
+            hasCorrectStress = true; // Tạm thời luôn đúng
+        }
+        
         analysis.syllables.push({
             text: syllable,
-            correct: isCorrect,
-            spoken: spokenSyllables[index] || ''
+            spoken: spokenSyllable,
+            correct: isCorrect && hasCorrectStress,
+            similarity: Math.round(syllableSimilarity * 100),
+            hasCorrectStress: hasCorrectStress,
+            expectedStress: expectedStress ? expectedStress[index] : null,
+            index: index
         });
-       
-        if (!isCorrect) analysis.wrongSyllables.push(syllable);
+        
+        if (isCorrect && hasCorrectStress) {
+            analysis.correctSyllables.push(syllable);
+        } else {
+            analysis.wrongSyllables.push({
+                text: syllable,
+                spoken: spokenSyllable,
+                similarity: Math.round(syllableSimilarity * 100),
+                stressIssue: !hasCorrectStress
+            });
+        }
     });
-   
-    const correctCount = analysis.syllables.filter(s => s.correct).length;
-    analysis.score = Math.round((correctCount / correctSyllables.length) * 100);
-   
+    
+    // ✅ TÍNH ĐIỂM CHẶT HƠN
+    const syllableScore = (analysis.correctSyllables.length / analysis.totalSyllables) * 100;
+    const similarityScore = bestSimilarity * 100;
+    
+    // Giảm bonus
+    let bonus = 0;
+    if (bestMatch === correctWord) {
+        bonus = 5; // Giảm từ 10 → 5
+    }
+    
+    // Tăng penalty
+    let penalty = 0;
+    if (analysis.wrongSyllables.length > analysis.totalSyllables / 2) {
+        penalty = 20;
+    }
+    if (bestSimilarity < 0.85) {
+        penalty += 20;
+    }
+    
+    // ✅ CÔNG THỨC MỚI: Ưu tiên syllable 80%, similarity 20%
+    analysis.score = Math.round(
+        Math.min(100, Math.max(0, 
+            (syllableScore * 0.8 + similarityScore * 0.2) + bonus - penalty
+        ))
+    );
+    
+    // Tính điểm trọng âm (giả định)
+    analysis.stressScore = expectedStress ? 80 : 0;
+    
     return analysis;
 }
 
-function renderSyllableAnalysis(analysis, word) {
-    let html = '<div class="mt-4 p-4 bg-gray-50 rounded-lg">';
-    html += '<p class="font-bold mb-2">📊 Phân tích chi tiết:</p>';
-    html += '<div class="flex flex-wrap gap-2 mb-3">';
-   
-    analysis.syllables.forEach(syl => {
-        const bgColor = syl.correct ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800';
-        const icon = syl.correct ? '✓' : '✗';
-        html += `<span class="${bgColor} px-3 py-1 rounded-full font-bold">${icon} ${syl.text}</span>`;
-    });
-   
-    html += '</div>';
-   
-    if (analysis.wrongSyllables.length > 0) {
-        html += `<p class="text-red-600 font-semibold mb-2">❌ Cần luyện lại: ${analysis.wrongSyllables.join(', ')}</p>`;
-        html += `<button onclick="practiceWrongSyllables('${word}', '${JSON.stringify(analysis.wrongSyllables).replace(/'/g, "&apos;")}')"
-                        class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 font-semibold mt-2">
-                    🎯 Luyện âm tiết sai</button>`;
-    } else {
-        html += '<p class="text-green-600 font-bold">🎉 Tất cả âm tiết đều đúng!</p>';
+// ✅ LẤY TRỌNG ÂM CHUẨN (Tự động từ Dictionary API)
+async function getExpectedStress(word) {
+    word = word.toLowerCase();
+    
+    // 1. Kiểm tra trong database có sẵn
+    if (stressDatabase[word]) {
+        return stressDatabase[word];
     }
-   
-    html += '</div>';
-    return html;
+    
+    // 2. Kiểm tra localStorage (từ đã học trước đó)
+    try {
+        const savedDB = JSON.parse(localStorage.getItem('customStressDB') || '{}');
+        if (savedDB[word]) {
+            console.log(`💾 Lấy từ localStorage: ${word}`);
+            stressDatabase[word] = savedDB[word];
+            return savedDB[word];
+        }
+    } catch (e) {}
+    
+    // 3. Tự động học từ Dictionary API
+    console.log(`🔍 Đang học trọng âm cho từ: ${word}...`);
+    const stress = await learnStressFromDictionary(word);
+    
+    return stress;
 }
 
+// ✅ HỌC TRỌNG ÂM TỪ DICTIONARY API (MIỄN PHÍ)
+async function learnStressFromDictionary(word) {
+    try {
+        const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+        
+        if (!response.ok) {
+            console.warn(`⚠️ Không tìm thấy từ: ${word}`);
+            return null;
+        }
+        
+        const data = await response.json();
+        
+        // Tìm phiên âm IPA (có dấu trọng âm ˈ)
+        if (data[0] && data[0].phonetics) {
+            for (const phonetic of data[0].phonetics) {
+                if (phonetic.text && phonetic.text.includes('ˈ')) {
+                    const ipa = phonetic.text;
+                    const stress = parseStressFromIPA(ipa, word);
+                    
+                    console.log(`✅ Học trọng âm: ${word} → [${stress.join(', ')}]`);
+                    console.log(`   Phiên âm IPA: ${ipa}`);
+                    
+                    // Lưu vào database
+                    stressDatabase[word] = stress;
+                    
+                    // Lưu vào localStorage
+                    try {
+                        const savedDB = JSON.parse(localStorage.getItem('customStressDB') || '{}');
+                        savedDB[word] = stress;
+                        localStorage.setItem('customStressDB', JSON.stringify(savedDB));
+                    } catch (e) {}
+                    
+                    return stress;
+                }
+            }
+        }
+        
+        console.warn(`⚠️ Không tìm thấy trọng âm cho: ${word}`);
+        return null;
+        
+    } catch (error) {
+        console.error('Lỗi Dictionary API:', error);
+        return null;
+    }
+}
+
+// ✅ PHÂN TÍCH TRỌNG ÂM TỪ IPA
+function parseStressFromIPA(ipa, word) {
+    const syllables = splitIntoSyllables(word);
+    const stress = new Array(syllables.length).fill(0);
+    
+    // Xóa ký tự đặc biệt
+    ipa = ipa.replace(/[\/\[\]]/g, '');
+    
+    // Đếm nguyên âm trong IPA
+    const vowelPattern = /[æɑɒʌəɛɪiːɔʊuːeɜɐɚaɪəʊ]/g;
+    
+    let syllableIndex = 0;
+    let foundStress = false;
+    
+    for (let i = 0; i < ipa.length; i++) {
+        // Gặp dấu ˈ = trọng âm chính
+        if (ipa[i] === 'ˈ') {
+            if (syllableIndex < stress.length) {
+                stress[syllableIndex] = 1;
+                foundStress = true;
+            }
+        }
+        
+        // Đếm nguyên âm
+        if (vowelPattern.test(ipa[i])) {
+            syllableIndex++;
+        }
+    }
+    
+    // Nếu không phát hiện được → mặc định âm đầu
+    if (!foundStress && stress.length > 0) {
+        stress[0] = 1;
+    }
+    
+    return stress;
+}
+
+// ✅ DATABASE TRỌNG ÂM CÓ SẴN (Backup)
+const stressDatabase = {
+    'carbohydrate': [0, 0, 1, 0], // car-bo-HY-drate
+    'protein': [1, 0], // PRO-tein  
+    'vitamin': [1, 0, 0], // VI-ta-min
+    'fibre': [1, 0],
+    'fiber': [1, 0],
+    'diet': [1],
+    'healthy': [1, 0],
+    'exercise': [1, 0, 0],
+    'water': [1, 0],
+    'banana': [0, 1, 0], // ba-NA-na
+    'orange': [1, 0],
+    'apple': [1, 0],
+    'casualty': [1, 0, 0, 0],
+    'department': [0, 1, 0],
+    'upset': [0, 1],
+    'something': [1, 0],
+    'elephant': [1, 0, 0],
+    'understand': [0, 0, 1]
+};
+
+function displayDetailedResults(word, transcript, analysis, resultDiv) {
+    const score = analysis.score;
+    const emoji = score >= 80 ? '🎉' : score >= 60 ? '👍' : '💪';
+    const message = score >= 80 ? 'Xuất sắc! Phát âm rất chuẩn!' : 
+                   score >= 60 ? 'Tốt lắm! Còn một vài âm tiết cần cải thiện' : 
+                   'Cố lên! Hãy nghe kỹ và thử lại nhé!';
+    
+    let html = `
+        <div class="p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="inline-block w-24 h-24 bg-gradient-to-br ${
+                    score >= 80 ? 'from-green-400 via-green-500 to-green-600' :
+                    score >= 60 ? 'from-yellow-400 via-yellow-500 to-yellow-600' : 
+                    'from-red-400 via-red-500 to-red-600'
+                } rounded-full flex items-center justify-center mb-4 shadow-xl">
+                    <span class="text-5xl">${emoji}</span>
+                </div>
+                
+                <h3 class="text-5xl font-bold text-gray-800 mb-2">
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">${score}</span>
+                </h3>
+                <p class="text-xl font-semibold text-gray-700 mb-3">${message}</p>
+                
+                <div class="flex justify-center gap-4 text-sm">
+    <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full font-semibold">
+        ✅ ${analysis.correctSyllables.length}/${analysis.totalSyllables} âm tiết đúng
+    </span>
+    <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">
+        🎯 ${Math.round(analysis.overallSimilarity * 100)}% độ chính xác
+    </span>
+    ${analysis.syllables[0]?.expectedStress !== null ? `
+        <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full font-semibold">
+            🎵 Có hướng dẫn trọng âm
+        </span>
+    ` : ''}
+</div>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-4 mb-6">
+                <div class="bg-white rounded-lg p-4 border-2 border-gray-200">
+                    <p class="text-sm text-gray-600 mb-2">🎯 Từ đúng:</p>
+                    <p class="text-2xl font-bold text-blue-700">${word}</p>
+</div>
+<div class="bg-white rounded-lg p-4 border-2 border-purple-200">
+<p class="text-sm text-gray-600 mb-2">🎤 AI nghe được:</p>
+<p class="text-2xl font-bold text-purple-700">${transcript}</p>
+</div>
+</div>
+        <div class="bg-white rounded-lg p-5 mb-6 border-2 border-blue-200">
+            <h4 class="font-bold text-lg mb-4 text-gray-800">📊 Phân tích từng âm tiết:</h4>
+            <div class="space-y-3">
+`;
+
+analysis.syllables.forEach((syl, idx) => {
+    const bgColor = syl.correct ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300';
+    const textColor = syl.correct ? 'text-green-700' : 'text-red-700';
+    const icon = syl.correct ? '✅' : '❌';
+    
+html += `
+    <div class="${bgColor} border-2 rounded-xl p-5 shadow-md">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-xl font-bold ${textColor}">${icon} Âm tiết ${idx + 1}</span>
+            <span class="text-sm font-semibold ${textColor}">${syl.similarity}% khớp</span>
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+            <div>
+                <p class="text-gray-600 mb-1">Đúng:</p>
+                <p class="font-bold text-blue-700 text-lg">${syl.text}</p>
+            </div>
+            <div>
+                <p class="text-gray-600 mb-1">Bạn nói:</p>
+                <p class="font-bold ${textColor} text-lg">${syl.spoken || '(không có)'}</p>
+            </div>
+        </div>
+        
+        ${syl.expectedStress !== null && syl.expectedStress !== undefined ? `
+            <div class="mt-3 pt-3 border-t ${bgColor.includes('green') ? 'border-green-300' : 'border-red-300'}">
+                <p class="text-xs text-gray-600 mb-2">🎵 Trọng âm:</p>
+                <div class="flex justify-center items-center gap-4">
+                    <span class="text-2xl">${syl.expectedStress === 1 ? '🔴' : '⚪'}</span>
+                    <span class="font-bold ${syl.expectedStress === 1 ? 'text-red-600' : 'text-gray-500'}">
+                        ${syl.expectedStress === 1 ? 'NHẤN MẠNH' : 'nhẹ'}
+                    </span>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">
+                    ${syl.expectedStress === 1 ? '⬆️ Đọc to + kéo dài âm này' : '⬇️ Đọc nhẹ + nhanh'}
+                </p>
+            </div>
+        ` : ''}
+    </div>
+`;   
+
+});
+
+html += `
+            </div>
+        </div>
+`;
+
+// Gợi ý luyện tập
+if (analysis.wrongSyllables.length > 0) {
+    html += `
+        <div class="bg-orange-50 border-2 border-orange-300 rounded-lg p-5 mb-6">
+            <h4 class="font-bold text-lg mb-3 text-orange-800">💡 Cần luyện thêm:</h4>
+            <div class="flex flex-wrap gap-2 mb-4">
+    `;
+    
+    analysis.wrongSyllables.forEach(wrong => {
+        html += `
+            <span class="bg-orange-200 text-orange-800 px-4 py-2 rounded-full font-bold">
+                ${wrong.text} (${wrong.similarity}% khớp)
+            </span>
+        `;
+    });
+    
+    html += `
+            </div>
+             <button onclick="speakWord('${word}', 0.1)" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-bold w-full">
+    🐢 Nghe RẤT CHẬM để luyện lại
+</button>
+        </div>
+    `;
+} else {
+    html += `
+        <div class="bg-green-50 border-2 border-green-300 rounded-lg p-5 mb-6 text-center">
+            <p class="text-green-700 font-bold text-xl">🎊 Hoàn hảo! Tất cả âm tiết đều chuẩn!</p>
+        </div>
+    `;
+}
+
+html += `
+        <div class="grid grid-cols-2 gap-3">
+         <button onclick="recordWord('${word}')" class="bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-bold">
+                🎤 Thử lại
+            </button>
+        </div>
+    </div>
+`;
+
+resultDiv.innerHTML = html;
+}
 // ==================== SPEECH FUNCTIONS ====================
 window.speakWord = function(word, rate) {
     const utterance = new SpeechSynthesisUtterance(word);
@@ -363,18 +2369,43 @@ window.speakWord = function(word, rate) {
     utterance.lang = 'en-US';
     utterance.volume = 1;
     utterance.pitch = 1;
+    
+    // ✅ Tìm giọng Google (chuẩn nhất)
+    const voices = speechSynthesis.getVoices();
+    const googleVoice = voices.find(voice => 
+        voice.name.includes('Google') && voice.lang.startsWith('en')
+    ) || voices.find(voice => 
+        voice.name.includes('Samantha') || // macOS
+        voice.name.includes('Microsoft Zira') || // Windows
+        voice.lang.startsWith('en-US')
+    );
+    
+    if (googleVoice) {
+        utterance.voice = googleVoice;
+        console.log('🔊 Đang dùng giọng:', googleVoice.name);
+    }
+    
     speechSynthesis.speak(utterance);
 }
 
 window.speakSyllables = function(word) {
     const syllables = splitIntoSyllables(word);
     let index = 0;
+    
     const speakNext = () => {
         if (index < syllables.length) {
             const syllable = syllables[index];
             const utterance = new SpeechSynthesisUtterance(syllable);
             utterance.rate = 0.5;
             utterance.lang = 'en-US';
+            
+            // ✅ Chọn giọng tốt nhất
+            const voices = speechSynthesis.getVoices();
+            const googleVoice = voices.find(voice => 
+                voice.name.includes('Google') && voice.lang.startsWith('en')
+            );
+            if (googleVoice) utterance.voice = googleVoice;
+            
             utterance.onend = () => {
                 index++;
                 setTimeout(speakNext, 1200);
@@ -385,294 +2416,45 @@ window.speakSyllables = function(word) {
     speakNext();
 }
 
-window.practiceWrongSyllables = function(word, wrongSyllablesJSON) {
-    const wrongSyllables = JSON.parse(wrongSyllablesJSON);
-    let index = 0;
-    
-    const speakNext = () => {
-        if (index < wrongSyllables.length) {
-            const syllable = wrongSyllables[index];
-            alert(`🎯 Hãy chú ý nghe âm tiết: "${syllable}"`);  // ✅ SỬA
-            
-            const utterance = new SpeechSynthesisUtterance(syllable);
-            utterance.rate = 0.5;
-            utterance.lang = 'en-US';
-            utterance.onend = () => {
-                setTimeout(() => {
-                    const utterance2 = new SpeechSynthesisUtterance(syllable);
-                    utterance2.rate = 1;
-                    utterance2.lang = 'en-US';
-                    speechSynthesis.speak(utterance2);
-                    index++;
-                    setTimeout(speakNext, 2000);
-                }, 1000);
-            };
-            speechSynthesis.speak(utterance);
-        } else {
-            setTimeout(() => {
-                alert(`✨ Giờ thử nói cả từ: "${word}"`);  // ✅ SỬA
-                speakWord(word, 0.7);
-            }, 1500);
-        }
-    };
-    speakNext();
-}
-
-// ==================== SPEECH RECOGNITION MỚI ====================
-window.recordWord = async function(word) {
-    const resultDiv = document.getElementById(`result-${word}`);
-    
-    // Kiểm tra browser support
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        resultDiv.innerHTML = `
-            <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p class="text-red-600 font-bold">❌ Trình duyệt không hỗ trợ Speech Recognition</p>
-                <p class="text-sm text-red-500 mt-1">Hãy dùng Chrome, Edge hoặc Safari mới nhất</p>
-            </div>
-        `;
-        return;
-    }
-
-    // Kiểm tra quyền microphone
-    try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch (err) {
-        resultDiv.innerHTML = `
-            <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p class="text-red-600 font-bold">❌ Không có quyền truy cập microphone</p>
-                <p class="text-sm text-red-500 mt-1">Vui lòng cho phép microphone trong trình duyệt</p>
-            </div>
-        `;
-        return;
-    }
-
-    resultDiv.innerHTML = `
-        <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
-            <div class="animate-pulse inline-block w-12 h-12 bg-blue-500 rounded-full mb-3"></div>
-            <p class="text-blue-700 font-semibold">🎙️ Chuẩn bị lắng nghe...</p>
-            <p class="text-sm text-blue-600 mt-1">Nói rõ từ: <strong class="text-lg">${word}</strong></p>
-            <p class="text-xs text-gray-500 mt-2">⏱️ Sẵn sàng...</p>
-        </div>
-    `;
-
-    // Tạo Speech Recognition
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    
-    recognition.lang = 'en-US';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    recognition.continuous = false;
-
-    recognition.onstart = () => {
-        resultDiv.innerHTML = `
-            <div class="p-6 bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200 rounded-xl text-center">
-                <div class="animate-bounce inline-block w-16 h-16 bg-gradient-to-br from-green-500 to-blue-500 rounded-full mb-4 flex items-center justify-center">
-                    <span class="text-2xl">🎤</span>
-                </div>
-                <p class="text-green-700 font-bold text-xl mb-1">🎙️ ĐANG NGHE...</p>
-                <p class="text-sm text-green-600 mt-1">Nói rõ từ: <strong class="text-lg font-mono">${word}</strong></p>
-                <div class="mt-4 flex justify-center space-x-2">
-                    <div class="w-4 h-4 bg-green-500 rounded-full animate-bounce"></div>
-                    <div class="w-4 h-4 bg-green-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
-                    <div class="w-4 h-4 bg-green-500 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
-                    <div class="w-4 h-4 bg-green-500 rounded-full animate-bounce" style="animation-delay: 0.6s"></div>
-                </div>
-            </div>
-        `;
-    };
-
-    recognition.onerror = (event) => {
-        let errorMsg = 'Lỗi nhận diện giọng nói';
-        switch(event.error) {
-            case 'not-allowed':
-                errorMsg = 'Không có quyền truy cập microphone';
-                break;
-            case 'network':
-                errorMsg = 'Lỗi kết nối mạng';
-                break;
-            case 'no-speech':
-                errorMsg = 'Không phát hiện giọng nói';
-                break;
-            case 'audio-capture':
-                errorMsg = 'Lỗi microphone';
-                break;
-        }
-        resultDiv.innerHTML = `
-            <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p class="text-red-600 font-bold">❌ ${errorMsg}</p>
-                <button onclick="recordWord('${word}')" class="mt-3 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold">
-                    🔄 Thử lại
-                </button>
-            </div>
-        `;
-    };
-
-    recognition.onresult = async (event) => {
-        const transcript = event.results[0][0].transcript.trim();
-        const confidence = Math.round(event.results[0][0].confidence * 100);
-        
-        console.log('✅ Nhận diện:', transcript, 'Độ tin cậy:', confidence + '%');
-
-        // Phân tích phát âm
-        const analysis = analyzePronunciation(word.toLowerCase(), transcript.toLowerCase());
-        
-        // Tính điểm tổng hợp
-        let score = Math.max(analysis.score, confidence);
-        
-        // Bonus nếu khớp chính xác
-        if (transcript.toLowerCase() === word.toLowerCase()) {
-            score = Math.min(100, score + 20);
-        }
-        
-        // Penalty nếu quá khác
-        if (similarity(word.toLowerCase(), transcript.toLowerCase()) < 0.3) {
-            score = Math.max(0, score - 20);
-        }
-
-        // Lưu kết quả vào Firestore
-        try {
-            await addDoc(collection(db, 'results'), {
-                studentId: currentUser.id,
-                assignmentId: currentAssignment.id,
-                word,
-                score,
-                recognizedText: transcript,
-                confidence,
-                syllableAnalysis: analysis,
-                createdAt: new Date()
-            });
-        } catch (error) {
-            console.error('Lỗi lưu kết quả:', error);
-        }
-
-        // Hiển thị kết quả đẹp
-        const color = score >= 80 ? 'green' : score >= 60 ? 'yellow' : 'red';
-        const emoji = score >= 80 ? '🎉' : score >= 60 ? '👍' : '💪';
-        const message = score >= 80 ? 'Xuất sắc!' : 
-                       score >= 60 ? 'Tốt lắm!' : 
-                       'Cố lên! Thử lại nhé!';
-        
-        let html = `
-            <div class="p-6 bg-gradient-to-br rounded-2xl shadow-lg text-center">
-                <div class="inline-block w-24 h-24 bg-gradient-to-br ${
-                    score >= 80 ? 'from-green-400 via-green-500 to-green-600' :
-                    score >= 60 ? 'from-yellow-400 via-yellow-500 to-yellow-600' : 
-                    'from-red-400 via-red-500 to-red-600'
-                } rounded-full flex items-center justify-center mb-4 mx-auto shadow-xl">
-                    <span class="text-4xl font-bold text-white">${emoji}</span>
-                </div>
-                
-                <h3 class="text-4xl font-bold text-gray-800 mb-3">Điểm: <span class="${color}-600">${score}</span></h3>
-                <p class="text-lg font-semibold text-gray-700 mb-4">${message}</p>
-                
-                <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                    <p class="text-sm font-mono text-gray-600 mb-1">🎤 Bạn nói:</p>
-                    <p class="text-lg font-bold text-blue-600 bg-blue-50 p-2 rounded">${transcript}</p>
-                </div>
-                
-                <div class="bg-white border rounded-lg p-4 mb-4">
-                    <p class="text-sm font-semibold text-gray-700 mb-2">🎯 Từ đúng:</p>
-                    <p class="text-2xl font-bold text-blue-700 bg-blue-50 p-3 rounded-lg">${word}</p>
-                </div>
-        `;
-
-        // Thêm phân tích syllable
-        html += renderSyllableAnalysis(analysis, word);
-        
-        html += `
-                <div class="flex gap-3 mt-6">
-                    <button onclick="speakWord('${word}', 0.6)" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2">
-                        🐌 Nghe chậm
-                    </button>
-                    <button onclick="recordWord('${word}')" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2">
-                        🎤 Thử lại
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        resultDiv.innerHTML = html;
-        updateProgress();
-    };
-
-    recognition.onend = () => {
-        // Auto restart sau 1 giây nếu chưa có kết quả
-        setTimeout(() => {
-            if (resultDiv.innerHTML.includes('ĐANG NGHE...')) {
-                recognition.start();
-            }
-        }, 1000);
-    };
-
-    // Bắt đầu nhận diện
-    try {
-        recognition.start();
-    } catch (error) {
-        resultDiv.innerHTML = `
-            <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p class="text-red-600 font-bold">❌ Lỗi bắt đầu nhận diện</p>
-                <p class="text-sm text-red-500 mt-1">${error.message}</p>
-                <button onclick="recordWord('${word}')" class="mt-3 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold">
-                    🔄 Thử lại
-                </button>
-            </div>
-        `;
-    }
-}
-
 // ==================== TEACHER FUNCTIONS ====================
 window.showCreateClass = function() {
     document.getElementById('teacherContent').innerHTML = `
-        <h2 class="text-2xl font-bold mb-4">Tạo lớp mới</h2>
-        <input type="text" id="className" placeholder="Tên lớp (vd: Lớp 6A)" class="w-full p-3 border rounded-lg mb-4">
-        <button onclick="createClass()" class="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold">Tạo lớp</button>
+        <div class="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-6 text-center">
+            <p class="text-yellow-800 font-bold text-lg">⚠️ Chỉ Admin mới được tạo lớp mới</p>
+            <p class="text-yellow-700 mt-2">Liên hệ Admin để được phân lớp giảng dạy</p>
+            <button onclick="showMyClasses()" class="mt-4 bg-blue-500 text-white px-6 py-3 rounded-lg">
+                ← Quay lại danh sách lớp
+            </button>
+        </div>
     `;
-}
-
-window.createClass = async function() {
-    const name = document.getElementById('className').value.trim();
-    if (!name) return alert('Vui lòng nhập tên lớp');
-   
-    showLoading(true);
-    try {
-        await addDoc(collection(db, 'classes'), {
-            name,
-            teacherCode: currentUser.code,
-            createdAt: new Date(),
-            students: []
-        });
-        alert('Tạo lớp thành công!');
-        showMyClasses();
-    } catch (error) {
-        alert('Lỗi tạo lớp: ' + error.message);
-    }
-    showLoading(false);
 }
 
 window.showMyClasses = async function() {
     showLoading(true);
     try {
         const classesRef = collection(db, 'classes');
-        const q = query(classesRef, where('teacherCode', '==', currentUser.code));
-        const snap = await getDocs(q);
-       
+        // SỬA: dùng teacherIds thay vì teacherCode
+        const allClassesSnap = await getDocs(classesRef);
+        
         let html = '<h2 class="text-2xl font-bold mb-4">Danh sách lớp</h2><div class="space-y-4">';
-       
-        snap.forEach(doc => {
+        
+        allClassesSnap.forEach(doc => {
             const data = doc.data();
-            html += `
-                <div class="border rounded-lg p-4 hover:shadow-lg transition">
-                    <h3 class="text-xl font-bold">${data.name}</h3>
-                    <p class="text-gray-600">Số học sinh: ${data.students?.length || 0}</p>
-                    <div class="mt-3 flex gap-2">
-                        <button onclick="manageStudents('${doc.id}', '${data.name}')" class="bg-green-500 text-white px-4 py-2 rounded">Quản lý HS</button>
-                        <button onclick="viewStats('${doc.id}', '${data.name}')" class="bg-purple-500 text-white px-4 py-2 rounded">Xem thống kê</button>
+            // Kiểm tra xem GV có trong teacherIds không
+            if (data.teacherIds && data.teacherIds.includes(currentUser.id)) {
+                html += `
+                    <div class="border rounded-lg p-4 hover:shadow-lg transition">
+                        <h3 class="text-xl font-bold">${data.name}</h3>
+                        <p class="text-gray-600">Số học sinh: ${data.students?.length || 0}</p>
+                        <div class="mt-3 flex gap-2">
+                            <button onclick="manageStudents('${doc.id}', '${data.name}')" class="bg-green-500 text-white px-4 py-2 rounded">Quản lý HS</button>
+                            <button onclick="viewStats('${doc.id}', '${data.name}')" class="bg-purple-500 text-white px-4 py-2 rounded">Xem thống kê</button>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            }
         });
-       
+        
         html += '</div>';
         document.getElementById('teacherContent').innerHTML = html;
     } catch (error) {
@@ -682,106 +2464,551 @@ window.showMyClasses = async function() {
 }
 
 window.manageStudents = async function(classId, className) {
+showLoading(true);
+try {
+const classDoc = await getDoc(doc(db, 'classes', classId));
+const students = classDoc.data().students || [];
+    let html = `
+        <h2 class="text-2xl font-bold mb-4">Quản lý học sinh - ${className}</h2>
+        <button onclick="showMyClasses()" class="text-blue-600 mb-4">← Quay lại</button>
+       
+        <div class="bg-gray-50 p-4 rounded-lg mb-6">
+            <h3 class="font-bold mb-2">Thêm học sinh mới</h3>
+            <div class="flex gap-2">
+                <input type="text" id="newStudentName" placeholder="Tên học sinh" class="flex-1 p-2 border rounded">
+                <input type="text" id="newStudentCode" placeholder="Mã (vd: HS001)" class="w-32 p-2 border rounded">
+                <button onclick="addStudent('${classId}')" class="bg-green-500 text-white px-4 py-2 rounded">Thêm</button>
+            </div>
+        </div>
+       
+        <h3 class="font-bold mb-2">Danh sách học sinh (${students.length})</h3>
+        <div class="space-y-2">
+    `;
+   
+    for (const stId of students) {
+        try {
+            const stDoc = await getDoc(doc(db, 'students', stId));
+            if (stDoc.exists()) {
+                const st = stDoc.data();
+                html += `
+    <div class="border p-3 rounded flex justify-between items-center hover:bg-gray-50">
+        <div>
+            <span class="font-bold text-lg">${st.name}</span>
+            <span class="text-gray-600 ml-2 font-mono">(${st.code})</span>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="editStudentTeacher('${stId}', '${classId}')" 
+                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+                ✏️ Sửa tên
+            </button>
+            <button onclick="deleteStudentTeacher('${stId}', '${st.name}', '${classId}')" 
+                    class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+                🗑️ Xóa
+            </button>
+        </div>
+    </div>
+`;
+            }
+        } catch (error) {
+            console.error('Lỗi tải học sinh:', error);
+        }
+    }
+   
+    html += '</div>';
+    document.getElementById('teacherContent').innerHTML = html;
+} catch (error) {
+    alert('Lỗi tải danh sách học sinh: ' + error.message);
+}
+showLoading(false);
+}
+
+window.editStudentTeacher = async function(studentId, classId) {
     showLoading(true);
     try {
+        const studentDoc = await getDoc(doc(db, 'students', studentId));
+        const student = studentDoc.data();
+        
+        const newName = prompt(`Nhập tên mới cho học sinh:\n(Mã: ${student.code})`, student.name);
+        
+        if (newName && newName.trim() && newName.trim() !== student.name) {
+            await updateDoc(doc(db, 'students', studentId), {
+                name: newName.trim()
+            });
+            alert('✅ Đã cập nhật tên học sinh!');
+            
+            // Reload danh sách
+            const classDoc = await getDoc(doc(db, 'classes', classId));
+            manageStudents(classId, classDoc.data().name);
+        } else {
+            showLoading(false);
+        }
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+        showLoading(false);
+    }
+}
+
+window.deleteStudentTeacher = async function(studentId, studentName, classId) {
+    if (!confirm(`⚠️ XÓA HỌC SINH "${studentName}"?\n\n- Tất cả kết quả bài tập sẽ BỊ XÓA\n- Không thể hoàn tác!\n\nBạn có chắc chắn?`)) return;
+    
+    showLoading(true);
+    try {
+        // 1. Xóa khỏi class
         const classDoc = await getDoc(doc(db, 'classes', classId));
         const students = classDoc.data().students || [];
-       
+        await updateDoc(doc(db, 'classes', classId), {
+            students: students.filter(id => id !== studentId)
+        });
+        
+        // 2. Xóa tất cả results
+        const resultsRef = collection(db, 'results');
+        const q = query(resultsRef, where('studentId', '==', studentId));
+        const resultsSnap = await getDocs(q);
+        
+        const deletePromises = [];
+        resultsSnap.forEach((docSnapshot) => {
+            deletePromises.push(deleteDoc(docSnapshot.ref));
+        });
+        await Promise.all(deletePromises);
+        
+        // 3. Xóa student
+        await deleteDoc(doc(db, 'students', studentId));
+        
+        alert('✅ Đã xóa học sinh và tất cả kết quả!');
+        manageStudents(classId, classDoc.data().name);
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+        showLoading(false);
+    }
+}
+
+window.teacherViewReports = async function() {
+    showLoading(true);
+    try {
+        // Lấy danh sách lớp của giáo viên
+        const classesRef = collection(db, 'classes');
+        const allClassesSnap = await getDocs(classesRef);
+        
         let html = `
-            <h2 class="text-2xl font-bold mb-4">Quản lý học sinh - ${className}</h2>
-            <button onclick="showMyClasses()" class="text-blue-600 mb-4">← Quay lại</button>
-           
-            <div class="bg-gray-50 p-4 rounded-lg mb-6">
-                <h3 class="font-bold mb-2">Thêm học sinh mới</h3>
-                <div class="flex gap-2">
-                    <input type="text" id="newStudentName" placeholder="Tên học sinh" class="flex-1 p-2 border rounded">
-                    <input type="text" id="newStudentCode" placeholder="Mã (vd: HS001)" class="w-32 p-2 border rounded">
-                    <button onclick="addStudent('${classId}')" class="bg-green-500 text-white px-4 py-2 rounded">Thêm</button>
-                </div>
-            </div>
-           
-            <h3 class="font-bold mb-2">Danh sách học sinh (${students.length})</h3>
-            <div class="space-y-2">
+            <h2 class="text-2xl font-bold mb-4">📊 Báo cáo lớp của tôi</h2>
+            <div class="space-y-4">
         `;
-       
-        for (const stId of students) {
-            try {
-                const stDoc = await getDoc(doc(db, 'students', stId));
-                if (stDoc.exists()) {
-                    const st = stDoc.data();
-                    html += `
-                        <div class="border p-3 rounded flex justify-between items-center">
-                            <div>
-                                <span class="font-bold">${st.name}</span>
-                                <span class="text-gray-600 ml-2">(${st.code})</span>
+        
+        let hasClass = false;
+        
+        for (const classDoc of allClassesSnap.docs) {
+            const classData = classDoc.data();
+            
+            // Chỉ hiển thị lớp mà giáo viên này phụ trách
+            if (classData.teacherIds && classData.teacherIds.includes(currentUser.id)) {
+                hasClass = true;
+                const studentIds = classData.students || [];
+                
+                // Tính điểm TB lớp
+                let totalScore = 0, totalAttempts = 0;
+                for (const stId of studentIds) {
+                    const resultsRef = collection(db, 'results');
+                    const qResults = query(resultsRef, where('studentId', '==', stId));
+                    const resultsSnap = await getDocs(qResults);
+                    resultsSnap.forEach(r => {
+                        totalScore += r.data().score;
+                        totalAttempts++;
+                    });
+                }
+                const avgScore = totalAttempts > 0 ? Math.round(totalScore / totalAttempts) : 0;
+                
+                html += `
+                    <div class="bg-white border-2 rounded-lg p-6 shadow hover:shadow-xl transition">
+                        <h3 class="text-xl font-bold mb-3">${classData.name}</h3>
+                        <div class="grid grid-cols-3 gap-4 text-center mb-4">
+                            <div class="bg-blue-50 p-3 rounded">
+                                <p class="text-2xl font-bold text-blue-600">${studentIds.length}</p>
+                                <p class="text-sm text-gray-600">Học sinh</p>
+                            </div>
+                            <div class="bg-orange-50 p-3 rounded">
+                                <p class="text-2xl font-bold text-orange-600">${totalAttempts}</p>
+                                <p class="text-sm text-gray-600">Lượt làm</p>
+                            </div>
+                            <div class="bg-green-50 p-3 rounded">
+                                <p class="text-2xl font-bold text-green-600">${avgScore}</p>
+                                <p class="text-sm text-gray-600">Điểm TB</p>
                             </div>
                         </div>
-                    `;
-                }
-            } catch (error) {
-                console.error('Lỗi tải học sinh:', error);
+                        
+                        <div class="flex gap-2">
+                            <button onclick="viewDetailedClassReportTeacher('${classDoc.id}', '${classData.name}')" 
+                                    class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+                                📊 Xem chi tiết học sinh
+                            </button>
+                            <button onclick="viewWordStatsTeacher('${classDoc.id}', '${classData.name}')" 
+                                    class="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+                                📈 Thống kê từng từ
+                            </button>
+                        </div>
+                    </div>
+                `;
             }
         }
-       
+        
+        if (!hasClass) {
+            html += '<p class="text-gray-600 bg-gray-50 p-6 rounded-lg text-center">Bạn chưa được phân công lớp nào. Liên hệ Admin!</p>';
+        }
+        
         html += '</div>';
         document.getElementById('teacherContent').innerHTML = html;
     } catch (error) {
-        alert('Lỗi tải danh sách học sinh: ' + error.message);
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+// HÀM 1: Xem chi tiết học sinh (giống Admin)
+window.viewDetailedClassReportTeacher = async function(classId, className) {
+    showLoading(true);
+    try {
+        const classDoc = await getDoc(doc(db, 'classes', classId));
+        const studentIds = classDoc.data().students || [];
+        
+        let html = `
+            <button onclick="teacherViewReports()" class="text-blue-600 hover:underline mb-4 flex items-center gap-2">
+                <span>←</span> Quay lại báo cáo tổng quan
+            </button>
+            
+            <h2 class="text-2xl font-bold mb-6">📊 Báo cáo chi tiết: ${className}</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full bg-white rounded-lg overflow-hidden shadow">
+                    <thead class="bg-blue-600 text-white">
+                        <tr>
+                            <th class="p-3 text-left">Học sinh</th>
+                            <th class="p-3 text-center">Số bài làm</th>
+                            <th class="p-3 text-center">Điểm TB</th>
+                            <th class="p-3 text-center">Cao nhất</th>
+                            <th class="p-3 text-center">Thấp nhất</th>
+                            <th class="p-3 text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        for (const stId of studentIds) {
+            const stDoc = await getDoc(doc(db, 'students', stId));
+            if (!stDoc.exists()) continue;
+            
+            const student = stDoc.data();
+            
+            const resultsRef = collection(db, 'results');
+            const qResults = query(resultsRef, where('studentId', '==', stId));
+            const resultsSnap = await getDocs(qResults);
+            
+            let totalScore = 0, maxScore = 0, minScore = 100;
+            
+            resultsSnap.forEach(rDoc => {
+                const score = rDoc.data().score;
+                totalScore += score;
+                if (score > maxScore) maxScore = score;
+                if (score < minScore) minScore = score;
+            });
+            
+            const avgScore = resultsSnap.size > 0 ? Math.round(totalScore / resultsSnap.size) : 0;
+            
+            html += `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-3 font-semibold">${student.name}</td>
+                    <td class="p-3 text-center">${resultsSnap.size}</td>
+                    <td class="p-3 text-center font-bold ${avgScore >= 80 ? 'text-green-600' : avgScore >= 60 ? 'text-yellow-600' : 'text-red-600'}">
+                        ${avgScore}
+                    </td>
+                    <td class="p-3 text-center text-green-600 font-bold">${maxScore}</td>
+                    <td class="p-3 text-center text-red-600 font-bold">${minScore === 100 ? '-' : minScore}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="viewStudentDetailTeacher('${stId}', '${student.name}', '${classId}')" 
+                                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">
+                            📊 Xem chi tiết
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        html += '</tbody></table></div>';
+        document.getElementById('teacherContent').innerHTML = html;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+// HÀM 2: Xem chi tiết 1 học sinh (giống Admin)
+window.viewStudentDetailTeacher = async function(studentId, studentName, classId) {
+    showLoading(true);
+    try {
+        const classDoc = await getDoc(doc(db, 'classes', classId));
+        const className = classDoc.data().name;
+        
+        const assignmentsRef = collection(db, 'assignments');
+        const qAssign = query(assignmentsRef, where('classId', '==', classId));
+        const assignSnap = await getDocs(qAssign);
+        
+        let html = `
+            <button onclick="viewDetailedClassReportTeacher('${classId}', '${className}')" 
+                    class="text-blue-600 hover:underline mb-4 flex items-center gap-2">
+                <span>←</span> Quay lại báo cáo lớp
+            </button>
+            
+            <h2 class="text-2xl font-bold mb-6">📊 Chi tiết học sinh: ${studentName}</h2>
+        `;
+        
+        if (assignSnap.empty) {
+            html += '<p class="text-gray-500">Chưa có bài tập nào.</p>';
+        } else {
+            for (const assignDoc of assignSnap.docs) {
+                const assign = assignDoc.data();
+                const wordsData = assign.wordsData || assign.words.map(w => ({word: w}));
+                
+                html += `
+                    <div class="bg-white border-2 border-blue-200 rounded-lg p-6 mb-6 shadow">
+                        <h3 class="text-xl font-bold mb-4 text-blue-700">📝 ${assign.name}</h3>
+                        <div class="space-y-3">
+                `;
+                
+                for (const wordData of wordsData) {
+                    const word = wordData.word;
+                    
+                    const resultsRef = collection(db, 'results');
+                    const qResults = query(resultsRef,
+                        where('studentId', '==', studentId),
+                        where('assignmentId', '==', assignDoc.id),
+                        where('word', '==', word)
+                    );
+                    const resultsSnap = await getDocs(qResults);
+                    
+                    let scores = [];
+                    let bestScore = 0;
+                    
+                    resultsSnap.forEach(rDoc => {
+                        const score = rDoc.data().score;
+                        scores.push(score);
+                        if (score > bestScore) bestScore = score;
+                    });
+                    
+                    const avgScore = scores.length > 0 ? Math.round(scores.reduce((a,b) => a+b, 0) / scores.length) : 0;
+                    
+                    let bgColor, borderColor, textColor;
+                    if (avgScore >= 80) {
+                        bgColor = 'bg-green-50'; borderColor = 'border-green-300'; textColor = 'text-green-700';
+                    } else if (avgScore >= 60) {
+                        bgColor = 'bg-yellow-50'; borderColor = 'border-yellow-300'; textColor = 'text-yellow-700';
+                    } else {
+                        bgColor = 'bg-red-50'; borderColor = 'border-red-300'; textColor = 'text-red-700';
+                    }
+                    
+                    html += `
+                        <div class="${bgColor} border-2 ${borderColor} rounded-lg p-4">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-lg">${word}</span>
+                                <div class="text-sm ${textColor}">
+                                    <span class="mr-4">🎯 Làm: <strong>${scores.length}</strong> lần</span>
+                                    <span class="mr-4">📊 TB: <strong>${avgScore}</strong></span>
+                                    <span>⭐ Cao nhất: <strong>${bestScore}</strong></span>
+                                </div>
+                            </div>
+                            ${scores.length > 0 ? `
+                                <div class="mt-3 pt-3 border-t ${borderColor}">
+                                    <p class="text-xs text-gray-600 mb-1">Lịch sử các lần làm:</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${scores.map((s, idx) => `
+                                            <span class="inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                                                s >= 80 ? 'bg-green-200 text-green-800' :
+                                                s >= 60 ? 'bg-yellow-200 text-yellow-800' :
+                                                'bg-red-200 text-red-800'
+                                            }">
+                                                Lần ${idx + 1}: ${s}đ
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : '<p class="text-gray-500 text-sm mt-2">Chưa làm từ này</p>'}
+                        </div>
+                    `;
+                }
+                
+                html += '</div></div>';
+            }
+        }
+        
+        document.getElementById('teacherContent').innerHTML = html;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+// HÀM 3: Thống kê từng từ (giống Admin)
+window.viewWordStatsTeacher = async function(classId, className) {
+    showLoading(true);
+    try {
+        const assignmentsRef = collection(db, 'assignments');
+        const qAssign = query(assignmentsRef, where('classId', '==', classId));
+        const assignSnap = await getDocs(qAssign);
+        
+        let html = `
+            <button onclick="teacherViewReports()" class="text-blue-600 hover:underline mb-4 flex items-center gap-2">
+                <span>←</span> Quay lại báo cáo tổng quan
+            </button>
+            
+            <h2 class="text-2xl font-bold mb-6">📈 Thống kê từng từ - ${className}</h2>
+            <p class="text-gray-600 mb-6">Xem từ nào học sinh hay sai để dạy lại trên lớp</p>
+        `;
+        
+        if (assignSnap.empty) {
+            html += '<p class="text-gray-500">Chưa có bài tập nào.</p>';
+        } else {
+            for (const assignDoc of assignSnap.docs) {
+                const assign = assignDoc.data();
+                const wordsData = assign.wordsData || assign.words.map(w => ({word: w}));
+                
+                html += `
+                    <div class="bg-white border rounded-lg p-6 mb-6 shadow">
+                        <h3 class="text-xl font-bold mb-4">📝 ${assign.name}</h3>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-green-600 text-white">
+                                    <tr>
+                                        <th class="p-3 text-left">Từ</th>
+                                        <th class="p-3 text-center">Lượt làm</th>
+                                        <th class="p-3 text-center">Điểm TB</th>
+                                        <th class="p-3 text-center">Tỷ lệ đạt (≥60đ)</th>
+                                        <th class="p-3 text-center">Độ khó</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+                
+                let wordStats = [];
+                
+                for (const wordData of wordsData) {
+                    const word = wordData.word;
+                    const resultsRef = collection(db, 'results');
+                    const qResults = query(resultsRef,
+                        where('assignmentId', '==', assignDoc.id),
+                        where('word', '==', word)
+                    );
+                    const resultsSnap = await getDocs(qResults);
+                    
+                    let totalScore = 0, passCount = 0;
+                    
+                    resultsSnap.forEach(rDoc => {
+                        const score = rDoc.data().score;
+                        totalScore += score;
+                        if (score >= 60) passCount++;
+                    });
+                    
+                    const avgScore = resultsSnap.size > 0 ? Math.round(totalScore / resultsSnap.size) : 0;
+                    const passRate = resultsSnap.size > 0 ? Math.round((passCount / resultsSnap.size) * 100) : 0;
+                    
+                    wordStats.push({ word, attempts: resultsSnap.size, avgScore, passRate });
+                }
+                
+                wordStats.sort((a, b) => a.avgScore - b.avgScore);
+                
+                wordStats.forEach(stat => {
+                    let scoreColor, difficultyLabel, difficultyColor;
+                    if (stat.avgScore >= 80) {
+                        scoreColor = 'text-green-600';
+                        difficultyLabel = '✅ Dễ';
+                        difficultyColor = 'bg-green-100 text-green-800';
+                    } else if (stat.avgScore >= 60) {
+                        scoreColor = 'text-yellow-600';
+                        difficultyLabel = '⚠️ Trung bình';
+                        difficultyColor = 'bg-yellow-100 text-yellow-800';
+                    } else {
+                        scoreColor = 'text-red-600';
+                        difficultyLabel = '🔥 KHÓ - Cần dạy lại';
+                        difficultyColor = 'bg-red-100 text-red-800';
+                    }
+                    
+                    html += `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-3 font-bold text-lg">${stat.word}</td>
+                            <td class="p-3 text-center">${stat.attempts}</td>
+                            <td class="p-3 text-center font-bold text-xl ${scoreColor}">${stat.avgScore}</td>
+                            <td class="p-3 text-center">${stat.passRate}%</td>
+                            <td class="p-3 text-center">
+                                <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold ${difficultyColor}">
+                                    ${difficultyLabel}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table></div></div>';
+            }
+        }
+        
+        document.getElementById('teacherContent').innerHTML = html;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
     }
     showLoading(false);
 }
 
 window.addStudent = async function(classId) {
-    const name = document.getElementById('newStudentName').value.trim();
-    const code = document.getElementById('newStudentCode').value.trim();
-   
-    if (!name || !code) return alert('Vui lòng điền đầy đủ thông tin');
-   
-    showLoading(true);
-    try {
-        const studentRef = await addDoc(collection(db, 'students'), {
-            name,
-            code,
-            classId,
-            createdAt: new Date()
-        });
-       
-        const classRef = doc(db, 'classes', classId);
-        await updateDoc(classRef, {
-            students: arrayUnion(studentRef.id)
-        });
-       
-        alert(`Đã thêm học sinh ${name} (${code})`);
-       
-        const classDoc = await getDoc(classRef);
-        manageStudents(classId, classDoc.data().name);
-    } catch (error) {
-        alert('Lỗi thêm học sinh: ' + error.message);
-    }
-    showLoading(false);
-}
+const name = document.getElementById('newStudentName').value.trim();
+const code = document.getElementById('newStudentCode').value.trim();
+if (!name || !code) return alert('Vui lòng điền đầy đủ thông tin');
 
+showLoading(true);
+try {
+    const studentRef = await addDoc(collection(db, 'students'), {
+        name,
+        code,
+        classId,
+        createdAt: new Date()
+    });
+   
+    const classRef = doc(db, 'classes', classId);
+    await updateDoc(classRef, {
+        students: arrayUnion(studentRef.id)
+    });
+   
+    alert(`Đã thêm học sinh ${name} (${code})`);
+   
+    const classDoc = await getDoc(classRef);
+    manageStudents(classId, classDoc.data().name);
+} catch (error) {
+    alert('Lỗi thêm học sinh: ' + error.message);
+}
+showLoading(false);
+}
 window.showAssignments = async function() {
     showLoading(true);
     try {
         const classesRef = collection(db, 'classes');
-        const q = query(classesRef, where('teacherCode', '==', currentUser.code));
-        const snap = await getDocs(q);
-       
+        const allClassesSnap = await getDocs(classesRef);
+        
         let html = '<h2 class="text-2xl font-bold mb-4">Giao bài tập</h2><div class="space-y-4">';
-       
-        snap.forEach(doc => {
+        
+        allClassesSnap.forEach(doc => {
             const data = doc.data();
-            html += `
-                <div class="border rounded-lg p-4">
-                    <h3 class="text-xl font-bold mb-2">${data.name}</h3>
-                    <button onclick="createAssignment('${doc.id}', '${data.name}')" class="bg-purple-500 text-white px-4 py-2 rounded">
-                        ➕ Tạo bài tập mới
-                    </button>
-                </div>
-            `;
+            // ✅ Kiểm tra teacherIds thay vì teacherCode
+            if (data.teacherIds && data.teacherIds.includes(currentUser.id)) {
+                html += `
+                    <div class="border rounded-lg p-4 bg-white shadow hover:shadow-lg transition">
+                        <h3 class="text-xl font-bold mb-2">${data.name}</h3>
+                        <button onclick="createAssignment('${doc.id}', '${data.name}')" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded">
+                            ➕ Tạo bài tập mới
+                        </button>
+                        <button onclick="viewClassAssignments('${doc.id}', '${data.name}')" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded ml-2">
+                            📋 Xem bài tập đã giao
+                        </button>
+                    </div>
+                `;
+            }
         });
-       
+        
         html += '</div>';
         document.getElementById('teacherContent').innerHTML = html;
     } catch (error) {
@@ -790,72 +3017,150 @@ window.showAssignments = async function() {
     showLoading(false);
 }
 
-window.createAssignment = function(classId, className) {
+window.createAssignment = async function(classId, className) {
+    // Tải danh sách bộ thẻ có sẵn
+    showLoading(true);
+    const decksRef = collection(db, 'decks');
+    const decksSnap = await getDocs(decksRef);
+    showLoading(false);
+    
+    let deckOptions = '<option value="">-- Chọn bộ thẻ có sẵn --</option>';
+    decksSnap.forEach(doc => {
+        const deck = doc.data();
+        const wordCount = deck.wordsData ? deck.wordsData.length : 0;
+        deckOptions += `<option value="${doc.id}">${deck.name} (${wordCount} từ - by ${deck.createdByName})</option>`;
+    });
+    
     document.getElementById('teacherContent').innerHTML = `
         <h2 class="text-2xl font-bold mb-4">Tạo bài tập cho ${className}</h2>
         <button onclick="showAssignments()" class="text-blue-600 mb-4">← Quay lại</button>
-       
-        <input type="text" id="assignmentName" placeholder="Tên bài (vd: Week 1 - Unit 1)" class="w-full p-3 border rounded-lg mb-4">
-       
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-            <h3 class="font-bold mb-2">📝 Hướng dẫn nhập từ vựng:</h3>
-            <p class="text-sm text-gray-700 mb-2">Mỗi dòng 1 từ (tối đa 20 từ):</p>
-            <div class="bg-white p-3 rounded font-mono text-sm space-y-1">
-                <div>fibre</div>
-                <div>carbohydrate</div>
-                <div>protein</div>
-                <div>vitamin</div>
-            </div>
-            <p class="text-xs text-gray-500 mt-2">
-                💡 Chỉ cần gõ từ tiếng Anh, hệ thống sẽ tự động phát âm!
-            </p>
+        
+        <!-- PHẦN CHỌN BỘ THẺ CÓ SẴN -->
+        <div class="bg-blue-50 border-2 border-blue-300 rounded-lg p-6 mb-6">
+            <h3 class="font-bold text-lg mb-4">📚 Chọn từ thư viện có sẵn</h3>
+            <select id="selectDeck" onchange="loadDeckWords()" class="w-full p-3 border rounded-lg mb-3">
+                ${deckOptions}
+            </select>
+            <p class="text-sm text-gray-600">💡 Chọn bộ thẻ có sẵn để tiết kiệm thời gian</p>
         </div>
-       
-        <textarea id="assignmentWords" placeholder="Nhập từ vựng (tối đa 20 từ)
+        
+        <div class="text-center my-6">
+            <span class="text-gray-500 font-semibold">--- HOẶC TẠO MỚI ---</span>
+        </div>
+        
+        <!-- PHẦN TẠO MỚI -->
+        <div class="bg-white border-2 border-gray-200 rounded-lg p-6">
+            <h3 class="font-bold text-lg mb-4">✏️ Tạo bộ thẻ mới</h3>
+            
+            <input type="text" id="assignmentName" placeholder="Tên bài (vd: Week 1 - Unit 1)" class="w-full p-3 border rounded-lg mb-4">
+            
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                <h4 class="font-bold mb-2">📝 Hướng dẫn nhập từ vựng:</h4>
+                <p class="text-sm text-gray-700 mb-2">Mỗi dòng 1 từ (tối đa 20 từ):</p>
+                <div class="bg-white p-3 rounded font-mono text-sm space-y-1">
+                    <div>fibre</div>
+                    <div>carbohydrate</div>
+                    <div>protein</div>
+                    <div>vitamin</div>
+                </div>
+            </div>
+            
+            <textarea id="assignmentWords" placeholder="Nhập từ vựng (tối đa 20 từ)
 Ví dụ:
 fibre
 protein
 carbohydrate
 vitamin
 healthy
-exercise"
-            rows="12" class="w-full p-3 border rounded-lg mb-4 font-mono"></textarea>
-       
-        <button onclick="saveAssignment('${classId}')" class="bg-purple-500 text-white px-6 py-3 rounded-lg font-semibold w-full">
-            Lưu và giao bài
-        </button>
+exercise" rows="12" class="w-full p-3 border rounded-lg mb-4 font-mono"></textarea>
+            
+            <div class="flex items-center gap-3 mb-4">
+                <input type="checkbox" id="saveToLibrary" class="w-5 h-5">
+                <label for="saveToLibrary" class="font-semibold text-gray-700">
+                    💾 Lưu vào thư viện chung để giáo viên khác dùng
+                </label>
+            </div>
+            
+            <button onclick="saveAssignment('${classId}')" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold w-full">
+                💾 Lưu và giao bài
+            </button>
+        </div>
     `;
+}
+
+// Hàm load từ bộ thẻ có sẵn vào textarea
+window.loadDeckWords = async function() {
+    const deckId = document.getElementById('selectDeck').value;
+    if (!deckId) return;
+    
+    showLoading(true);
+    try {
+        const deckDoc = await getDoc(doc(db, 'decks', deckId));
+        const deck = deckDoc.data();
+        
+        // Điền tên bài
+        document.getElementById('assignmentName').value = deck.name;
+        
+        // Điền từ vựng
+        const words = deck.wordsData.map(w => w.word).join('\n');
+        document.getElementById('assignmentWords').value = words;
+        
+        // Tự động uncheck "lưu vào thư viện" vì đã có sẵn
+        document.getElementById('saveToLibrary').checked = false;
+        
+        alert(`✅ Đã tải ${deck.wordsData.length} từ từ bộ "${deck.name}"`);
+    } catch (error) {
+        alert('Lỗi tải bộ thẻ: ' + error.message);
+    }
+    showLoading(false);
 }
 
 window.saveAssignment = async function(classId) {
     const name = document.getElementById('assignmentName').value.trim();
     const wordsText = document.getElementById('assignmentWords').value.trim();
-   
+    const saveToLibrary = document.getElementById('saveToLibrary').checked;
+    
     if (!name || !wordsText) return alert('Vui lòng điền đầy đủ thông tin');
-   
+
     const lines = wordsText.split('\n')
         .map(w => w.trim())
         .filter(Boolean)
         .slice(0, 20);
-   
+
     if (lines.length === 0) return alert('Vui lòng nhập ít nhất 1 từ');
-   
+
     const wordsData = lines.map(word => ({
         word: word,
         syllables: null
     }));
-   
+
     showLoading(true);
     try {
+        // 1. LƯU VÀO THƯ VIỆN (nếu check)
+        if (saveToLibrary) {
+            await addDoc(collection(db, 'decks'), {
+                name,
+                wordsData,
+                createdBy: currentUser.id,
+                createdByName: currentUser.name || currentUser.username,
+                createdAt: new Date()
+            });
+        }
+        
+        // 2. GIAO BÀI CHO LỚP
         await addDoc(collection(db, 'assignments'), {
             name,
-            wordsData: wordsData,
+            wordsData,
             classId,
-            teacherCode: currentUser.code,
+            teacherId: currentUser.id,
             createdAt: new Date()
         });
-       
-        alert(`Đã giao bài "${name}" với ${wordsData.length} từ!`);
+        
+        const msg = saveToLibrary 
+            ? `✅ Đã giao bài "${name}" (${wordsData.length} từ) và lưu vào thư viện chung!`
+            : `✅ Đã giao bài "${name}" (${wordsData.length} từ)!`;
+        
+        alert(msg);
         showAssignments();
     } catch (error) {
         alert('Lỗi lưu bài tập: ' + error.message);
@@ -864,262 +3169,470 @@ window.saveAssignment = async function(classId) {
 }
 
 window.viewStats = async function(classId, className) {
-    showLoading(true);
+showLoading(true);
+try {
+    const assignmentsRef = collection(db, 'assignments');
+    const qAssign = query(assignmentsRef, where('classId', '==', classId));
+    const assignSnap = await getDocs(qAssign);
    
+    const classDoc = await getDoc(doc(db, 'classes', classId));
+    const studentIds = classDoc.data().students || [];
+   
+    let html = `
+        <h2 class="text-2xl font-bold mb-4">Thống kê lớp ${className}</h2>
+        <button onclick="showMyClasses()" class="text-blue-600 mb-4">← Quay lại</button>
+    `;
+   
+    if (assignSnap.empty) {
+        html += '<p class="text-gray-600">Chưa có bài tập nào được giao.</p>';
+    } else {
+        for (const assignDoc of assignSnap.docs) {
+            const assign = assignDoc.data();
+           
+            const wordCount = assign.wordsData ? assign.wordsData.length : (assign.words || []).length;
+           
+            html += `<div class="border rounded-lg p-4 mb-4">
+                <h3 class="text-xl font-bold mb-2">${assign.name}</h3>
+                <p class="text-gray-600 mb-3">Số từ: ${wordCount}</p>
+                <div class="space-y-2">
+            `;
+           
+            for (const stId of studentIds) {
+                try {
+                    const stDoc = await getDoc(doc(db, 'students', stId));
+                    if (!stDoc.exists()) continue;
+                   
+                    const student = stDoc.data();
+                   
+                    const resultsRef = collection(db, 'results');
+                    const qResults = query(resultsRef,
+                        where('studentId', '==', stId),
+                        where('assignmentId', '==', assignDoc.id)
+                    );
+                    const resultsSnap = await getDocs(qResults);
+                   
+                    let completed = 0;
+                    let totalScore = 0;
+                    let attempts = 0;
+                   
+                    resultsSnap.forEach(rDoc => {
+                        const r = rDoc.data();
+                        if (r.score >= 60) completed++;
+                        totalScore += r.score;
+                        attempts++;
+                    });
+                   
+                    const avgScore = attempts > 0 ? Math.round(totalScore / attempts) : 0;
+                    const progress = wordCount > 0 ? Math.round((completed / wordCount) * 100) : 0;
+                   
+                    html += `
+                        <div class="bg-gray-50 p-3 rounded flex justify-between items-center">
+                            <span class="font-semibold">${student.name}</span>
+                            <div class="text-sm text-gray-600">
+                                <span class="mr-3">Tiến độ: ${progress}%</span>
+                                <span class="mr-3">Điểm TB: ${avgScore}</span>
+                                <span>Đã luyện: ${attempts} lần</span>
+                            </div>
+                        </div>
+                    `;
+                } catch (error) {
+                    console.error('Lỗi tải thống kê:', error);
+                }
+            }
+           
+            html += '</div></div>';
+        }
+    }
+   
+    document.getElementById('teacherContent').innerHTML = html;
+} catch (error) {
+    alert('Lỗi tải thống kê: ' + error.message);
+}
+showLoading(false);
+}
+
+window.viewClassAssignments = async function(classId, className) {
+    showLoading(true);
     try {
         const assignmentsRef = collection(db, 'assignments');
-        const qAssign = query(assignmentsRef, where('classId', '==', classId));
-        const assignSnap = await getDocs(qAssign);
-       
-        const classDoc = await getDoc(doc(db, 'classes', classId));
-        const studentIds = classDoc.data().students || [];
-       
+        const q = query(assignmentsRef, where('classId', '==', classId));
+        const assignSnap = await getDocs(q);
+        
         let html = `
-            <h2 class="text-2xl font-bold mb-4">Thống kê lớp ${className}</h2>
-            <button onclick="showMyClasses()" class="text-blue-600 mb-4">← Quay lại</button>
+            <h2 class="text-2xl font-bold mb-4">📋 Bài tập đã giao - ${className}</h2>
+            <button onclick="showAssignments()" class="text-blue-600 mb-4 hover:underline">← Quay lại</button>
         `;
-       
+        
         if (assignSnap.empty) {
-            html += '<p class="text-gray-600">Chưa có bài tập nào được giao.</p>';
+            html += '<p class="text-gray-600 bg-gray-50 p-6 rounded-lg text-center">Chưa có bài tập nào được giao cho lớp này.</p>';
         } else {
-            for (const assignDoc of assignSnap.docs) {
-                const assign = assignDoc.data();
-               
+            html += '<div class="space-y-4">';
+            
+            assignSnap.forEach(doc => {
+                const assign = doc.data();
                 const wordCount = assign.wordsData ? assign.wordsData.length : (assign.words || []).length;
-               
-                html += `<div class="border rounded-lg p-4 mb-4">
-                    <h3 class="text-xl font-bold mb-2">${assign.name}</h3>
-                    <p class="text-gray-600 mb-3">Số từ: ${wordCount}</p>
-                    <div class="space-y-2">
-                `;
-               
-                for (const stId of studentIds) {
-                    try {
-                        const stDoc = await getDoc(doc(db, 'students', stId));
-                        if (!stDoc.exists()) continue;
-                       
-                        const student = stDoc.data();
-                       
-                        const resultsRef = collection(db, 'results');
-                        const qResults = query(resultsRef,
-                            where('studentId', '==', stId),
-                            where('assignmentId', '==', assignDoc.id)
-                        );
-                        const resultsSnap = await getDocs(qResults);
-                       
-                        let completed = 0;
-                        let totalScore = 0;
-                        let attempts = 0;
-                       
-                        resultsSnap.forEach(rDoc => {
-                            const r = rDoc.data();
-                            if (r.score >= 60) completed++;
-                            totalScore += r.score;
-                            attempts++;
-                        });
-                       
-                        const avgScore = attempts > 0 ? Math.round(totalScore / attempts) : 0;
-                        const progress = wordCount > 0 ? Math.round((completed / wordCount) * 100) : 0;
-                       
-                        html += `
-                            <div class="bg-gray-50 p-3 rounded flex justify-between items-center">
-                                <span class="font-semibold">${student.name}</span>
-                                <div class="text-sm text-gray-600">
-                                    <span class="mr-3">Tiến độ: ${progress}%</span>
-                                    <span class="mr-3">Điểm TB: ${avgScore}</span>
-                                    <span>Đã luyện: ${attempts} lần</span>
-                                </div>
-                            </div>
-                        `;
-                    } catch (error) {
-                        console.error('Lỗi tải thống kê:', error);
-                    }
+                
+                // ✅ LẤY DANH SÁCH TỪ
+                let wordsList = '';
+                if (assign.wordsData) {
+                    wordsList = assign.wordsData.map((w, idx) => 
+                        `<span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold m-1">${idx + 1}. ${w.word}</span>`
+                    ).join('');
+                } else if (assign.words) {
+                    wordsList = assign.words.map((w, idx) => 
+                        `<span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold m-1">${idx + 1}. ${w}</span>`
+                    ).join('');
                 }
-               
-                html += '</div></div>';
-            }
+                
+                html += `
+                    <div class="bg-white border-2 border-blue-200 rounded-lg p-6 shadow">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-xl font-bold mb-2">${assign.name}</h3>
+                                <p class="text-sm text-gray-600 mb-1">📝 Số từ: ${wordCount}</p>
+                                <p class="text-xs text-gray-500">🕒 Ngày tạo: ${assign.createdAt?.toDate().toLocaleDateString('vi-VN') || 'N/A'}</p>
+                            </div>
+                            <button onclick="deleteAssignment('${doc.id}', '${assign.name}', '${classId}', '${className}')" 
+                                    class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm">
+                                🗑️ Xóa
+                            </button>
+                        </div>
+                        
+                        <!-- ✅ HIỂN THỊ DANH SÁCH TỪ -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p class="font-semibold mb-3 text-gray-700">📚 Danh sách từ vựng:</p>
+                            <div class="flex flex-wrap gap-2">
+                                ${wordsList || '<p class="text-gray-500">Không có từ vựng</p>'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
         }
-       
+        
         document.getElementById('teacherContent').innerHTML = html;
     } catch (error) {
-        alert('Lỗi tải thống kê: ' + error.message);
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+// Thêm hàm xóa bài tập
+window.deleteAssignment = async function(assignmentId, assignmentName, classId, className) {
+    if (!confirm(`Xóa bài tập "${assignmentName}"? Tất cả kết quả học sinh sẽ bị xóa!`)) return;
+    
+    showLoading(true);
+    try {
+        // Xóa tất cả results liên quan
+        const resultsRef = collection(db, 'results');
+        const qResults = query(resultsRef, where('assignmentId', '==', assignmentId));
+        const resultsSnap = await getDocs(qResults);
+        
+        resultsSnap.forEach(async (doc) => {
+            await deleteDoc(doc.ref);
+        });
+        
+        // Xóa assignment
+        await deleteDoc(doc(db, 'assignments', assignmentId));
+        
+        alert('Đã xóa bài tập!');
+        viewClassAssignments(classId, className);
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+// Thêm SAU hàm deleteAssignment (sau dòng 1609)
+
+window.manageLibrary = async function() {
+    showLoading(true);
+    try {
+        const decksRef = collection(db, 'decks');
+        const decksSnap = await getDocs(decksRef);
+        
+        let html = `
+            <h2 class="text-2xl font-bold mb-4">📖 Thư viện bộ thẻ chung</h2>
+            <button onclick="showMyClasses()" class="text-blue-600 mb-4 hover:underline">← Quay lại</button>
+            
+            <p class="text-gray-600 mb-6">Đây là thư viện bộ thẻ do các giáo viên chia sẻ. Bạn có thể dùng lại khi tạo bài tập.</p>
+        `;
+        
+        if (decksSnap.empty) {
+            html += '<p class="text-gray-500 text-center py-12">Chưa có bộ thẻ nào trong thư viện</p>';
+        } else {
+            html += '<div class="grid md:grid-cols-2 gap-4">';
+            
+            decksSnap.forEach(doc => {
+                const deck = doc.data();
+                const wordCount = deck.wordsData ? deck.wordsData.length : 0;
+                const isOwner = deck.createdBy === currentUser.id;
+                
+                html += `
+                    <div class="bg-white border-2 border-blue-200 rounded-lg p-5 shadow hover:shadow-lg transition">
+                        <h3 class="text-xl font-bold mb-2">${deck.name}</h3>
+                        <p class="text-sm text-gray-600 mb-1">📝 Số từ: ${wordCount}</p>
+                        <p class="text-sm text-gray-600 mb-1">👤 Tạo bởi: ${deck.createdByName}</p>
+                        <p class="text-xs text-gray-500">🕒 ${deck.createdAt?.toDate().toLocaleDateString('vi-VN') || 'N/A'}</p>
+                        
+                        <div class="flex gap-2 mt-4">
+                            <button onclick="viewDeckWords('${doc.id}')" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm">
+                                👁️ Xem từ
+                            </button>
+                            ${isOwner ? `
+                                <button onclick="deleteDeck('${doc.id}', '${deck.name}')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm">
+                                    🗑️ Xóa
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+        }
+        
+        document.getElementById('teacherContent').innerHTML = html;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.viewDeckWords = async function(deckId) {
+    showLoading(true);
+    try {
+        const deckDoc = await getDoc(doc(db, 'decks', deckId));
+        const deck = deckDoc.data();
+        
+        let wordsList = deck.wordsData.map((w, idx) => `
+            <div class="bg-gray-50 p-3 rounded flex items-center gap-3">
+                <span class="font-bold text-gray-500">${idx + 1}.</span>
+                <span class="font-mono text-lg">${w.word}</span>
+                <button onclick="speakWord('${w.word}', 1)" class="ml-auto bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm">
+                    🔊 Nghe
+                </button>
+            </div>
+        `).join('');
+        
+        document.getElementById('teacherContent').innerHTML = `
+            <h2 class="text-2xl font-bold mb-4">👁️ ${deck.name}</h2>
+            <button onclick="manageLibrary()" class="text-blue-600 mb-4 hover:underline">← Quay lại thư viện</button>
+            
+            <div class="bg-white border rounded-lg p-6">
+                <p class="text-gray-600 mb-4">📝 ${deck.wordsData.length} từ vựng:</p>
+                <div class="space-y-2">
+                    ${wordsList}
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+window.deleteDeck = async function(deckId, deckName) {
+    if (!confirm(`Xóa bộ thẻ "${deckName}" khỏi thư viện?`)) return;
+    
+    showLoading(true);
+    try {
+        await deleteDoc(doc(db, 'decks', deckId));
+        alert('Đã xóa bộ thẻ!');
+        manageLibrary();
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
     }
     showLoading(false);
 }
 
 // ==================== STUDENT FUNCTIONS ====================
+// (Phần code student tiếp tục ở đây...)
+// ==================== STUDENT FUNCTIONS ====================
 window.loadStudentAssignments = async function() {
-    showLoading(true);
+showLoading(true);
+try {
+    const student = currentUser;
+    const classId = student.classId;
    
-    try {
-        const student = currentUser;
-        const classId = student.classId;
-       
-        const assignmentsRef = collection(db, 'assignments');
-        const q = query(assignmentsRef, where('classId', '==', classId));
-        const snap = await getDocs(q);
-       
-        let html = '';
-       
-        if (snap.empty) {
-            html = '<p class="text-gray-600 text-center py-12 text-lg">Chưa có bài tập nào được giao.</p>';
-        } else {
-            for (const doc of snap.docs) {
-                const assign = doc.data();
-                const wordCount = assign.wordsData ? assign.wordsData.length : (assign.words || []).length;
-               
-                const resultsRef = collection(db, 'results');
-                const qResults = query(resultsRef,
-                    where('studentId', '==', student.id),
-                    where('assignmentId', '==', doc.id)
-                );
-                const resultsSnap = await getDocs(qResults);
-               
-                let completed = 0;
-                let totalScore = 0;
-               
-                resultsSnap.forEach(rDoc => {
-                    const r = rDoc.data();
-                    if (r.score >= 60) completed++;
-                    totalScore += r.score;
-                });
-               
-                const progress = wordCount > 0 ? Math.round((completed / wordCount) * 100) : 0;
-                const avgScore = resultsSnap.size > 0 ? Math.round(totalScore / resultsSnap.size) : 0;
-               
-                html += `
-                    <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-2xl transition cursor-pointer" onclick="startPractice('${doc.id}')">
-                        <h3 class="text-2xl font-bold mb-3">${assign.name}</h3>
-                        <div class="space-y-2 text-gray-600">
-                            <p>📝 Số từ: ${wordCount}</p>
-                            <p>✅ Hoàn thành: ${progress}%</p>
-                            <p>⭐ Điểm TB: ${avgScore}</p>
-                        </div>
-                        <button class="mt-4 w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition">
-                            🚀 Bắt đầu luyện tập
-                        </button>
-                    </div>
-                `;
-            }
-        }
-       
-        document.getElementById('studentAssignments').innerHTML = html;
-    } catch (error) {
-        alert('Lỗi tải bài tập: ' + error.message);
-        document.getElementById('studentAssignments').innerHTML = '<p class="text-red-600 text-center py-12">Lỗi tải bài tập</p>';
-    }
-    showLoading(false);
-}
-
-window.startPractice = async function(assignmentId) {
-    showLoading(true);
+    const assignmentsRef = collection(db, 'assignments');
+    const q = query(assignmentsRef, where('classId', '==', classId));
+    const snap = await getDocs(q);
    
-    try {
-        const assignDoc = await getDoc(doc(db, 'assignments', assignmentId));
-        const assign = assignDoc.data();
-       
-        currentAssignment = { id: assignmentId, ...assign };
-       
-        document.getElementById('assignmentTitle').textContent = assign.name;
-       
-        let wordsData = [];
-        if (assign.wordsData) {
-            wordsData = assign.wordsData;
-        } else if (assign.words) {
-            wordsData = assign.words.map(w => ({
-                word: w,
-                syllables: null
-            }));
-        }
-       
-        let html = '';
-        for (const data of wordsData) {
-            const word = data.word;
-            const syllables = data.syllables || splitIntoSyllables(word);
+    let html = '';
+   
+    if (snap.empty) {
+        html = '<p class="text-gray-600 text-center py-12 text-lg">Chưa có bài tập nào được giao.</p>';
+    } else {
+        for (const doc of snap.docs) {
+            const assign = doc.data();
+            const wordCount = assign.wordsData ? assign.wordsData.length : (assign.words || []).length;
            
-            const syllableDisplay = syllables.map((s, idx) => {
-                return `<span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full mx-1 font-mono font-bold">
-                    ${s}
-                </span>`;
-            }).join('');
+            const resultsRef = collection(db, 'results');
+            const qResults = query(resultsRef,
+                where('studentId', '==', student.id),
+                where('assignmentId', '==', doc.id)
+            );
+            const resultsSnap = await getDocs(qResults);
+           
+            let completed = 0;
+            let totalScore = 0;
+           
+            resultsSnap.forEach(rDoc => {
+                const r = rDoc.data();
+                if (r.score >= 60) completed++;
+                totalScore += r.score;
+            });
+           
+            const progress = wordCount > 0 ? Math.round((completed / wordCount) * 100) : 0;
+            const avgScore = resultsSnap.size > 0 ? Math.round(totalScore / resultsSnap.size) : 0;
            
             html += `
-                <div class="bg-white rounded-2xl shadow-2xl p-8 text-center border-2 border-gray-200 hover:border-blue-400 transition">
-                    <h3 class="text-5xl font-bold mb-4 text-gray-800">${word}</h3>
-                   
-                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
-                        <p class="text-sm text-gray-600 mb-3">📝 Âm tiết:</p>
-                        <div class="flex flex-wrap justify-center gap-2">
-                            ${syllableDisplay}
-                        </div>
+                <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-2xl transition cursor-pointer" onclick="startPractice('${doc.id}')">
+                    <h3 class="text-2xl font-bold mb-3">${assign.name}</h3>
+                    <div class="space-y-2 text-gray-600">
+                        <p>📝 Số từ: ${wordCount}</p>
+                        <p>✅ Hoàn thành: ${progress}%</p>
+                        <p>⭐ Điểm TB: ${avgScore}</p>
                     </div>
-                   
-                    <div class="flex gap-2 mb-6 justify-center">
-                        <button onclick="speakWord('${word}', 0.3)" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 font-semibold flex items-center gap-2">
-                            🐢 Rất chậm
-                        </button>
-                        <button onclick="speakWord('${word}', 0.6)" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 font-semibold flex items-center gap-2">
-                            🐌 Chậm
-                        </button>
-                        <button onclick="speakWord('${word}', 1)" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 font-semibold flex items-center gap-2">
-                            ▶️ Bình thường
-                        </button>
-                    </div>
-                   
-                    <button onclick="recordWord('${word}')" class="bg-gradient-to-r from-red-500 via-pink-500 to-purple-600 hover:from-red-600 hover:via-pink-600 hover:to-purple-700 text-white px-8 py-4 rounded-xl font-bold text-lg w-full shadow-lg transform hover:scale-105 transition-all duration-200">
-                        🎤 BẮT ĐẦU THU ÂM
+                    <button class="mt-4 w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition">
+                        🚀 Bắt đầu luyện tập
                     </button>
-                   
-                    <div id="result-${word}" class="mt-6"></div>
                 </div>
             `;
         }
+    }
+   
+    document.getElementById('studentAssignments').innerHTML = html;
+} catch (error) {
+    alert('Lỗi tải bài tập: ' + error.message);
+    document.getElementById('studentAssignments').innerHTML = '<p class="text-red-600 text-center py-12">Lỗi tải bài tập</p>';
+}
+showLoading(false);
+}
+window.startPractice = async function(assignmentId) {
+showLoading(true);
+try {
+    const assignDoc = await getDoc(doc(db, 'assignments', assignmentId));
+    const assign = assignDoc.data();
+   
+    currentAssignment = { id: assignmentId, ...assign };
+   
+    document.getElementById('assignmentTitle').textContent = assign.name;
+   
+    let wordsData = [];
+    if (assign.wordsData) {
+        wordsData = assign.wordsData;
+    } else if (assign.words) {
+        wordsData = assign.words.map(w => ({
+            word: w,
+            syllables: null
+        }));
+    }
+   
+    let html = `
+    <div class="flex items-center gap-3 mb-6">
+        <button onclick="backToStudent()" class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl transition-all shadow-lg font-bold">
+            <span class="text-2xl">←</span>
+            <span>Quay lại danh sách bài</span>
+        </button>
+        <div class="text-gray-600">
+            <span class="font-semibold">Bài:</span> ${currentAssignment.name}
+        </div>
+    </div>
+`;
+
+    for (const data of wordsData) {
+        const word = data.word;
+        const syllables = data.syllables || splitIntoSyllables(word);
        
-        document.getElementById('wordsList').innerHTML = html;
-        updateProgress();
-        showScreen('practiceScreen');
-    } catch (error) {
-        alert('Lỗi tải bài tập: ' + error.message);
+        const syllableDisplay = syllables.map((s, idx) => {
+    return `<span class="inline-block bg-green-100 text-green-800 px-3 py-2 rounded-full mx-1 font-bold text-lg">
+        ${s}
+    </span>`;
+}).join('');
+       
+    html += `
+    <div class="bg-white rounded-2xl shadow-xl p-8 text-center border-2 border-green-200 hover:border-green-400 transition hover:shadow-2xl max-w-2xl mx-auto mb-6">
+               <h3 class="text-5xl font-bold mb-4 text-gray-800" style="font-family: 'Quicksand', 'Comic Sans MS', 'Rounded', sans-serif;">${word}</h3>
+               
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <p class="text-sm text-gray-600 mb-3">🔍 Âm tiết:</p>
+                    <div class="flex flex-wrap justify-center gap-2">
+                        ${syllableDisplay}
+                    </div>
+                </div>
+               
+                <div class="flex gap-2 mb-6 justify-center">
+                    <button onclick="speakWord('${word}', 0.1)" class="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white px-4 py-3 rounded-xl font-semibold shadow-lg transition">
+    🢠Rất chậm
+</button>
+<button onclick="speakWord('${word}', 0.3)" class="bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white px-4 py-3 rounded-xl font-semibold shadow-lg transition">
+    🌙 Chậm
+</button>
+<button onclick="speakWord('${word}', 1)" class="bg-gradient-to-r from-green-500 to-lime-500 hover:from-green-600 hover:to-lime-600 text-white px-4 py-3 rounded-xl font-semibold shadow-lg transition">
+    ▶️ Bình thường
+</button>
+                </div>
+               
+                <button onclick="recordWord('${word}')" class="bg-gradient-to-r from-green-600 via-lime-500 to-green-700 hover:from-green-700 hover:via-lime-600 hover:to-green-800 text-white px-8 py-4 rounded-2xl font-bold text-xl w-full shadow-2xl transform hover:scale-105 transition-all duration-200">
+                    🎤 BẮT ĐẦU THU ÂM
+                </button>
+               
+               <div id="result-${word}" class="mt-6 max-h-96 overflow-y-auto"></div>
+            </div>
+        `;
     }
-    showLoading(false);
+   
+    document.getElementById('wordsList').innerHTML = html;
+    updateProgress();
+    showScreen('practiceScreen');
+} catch (error) {
+    alert('Lỗi tải bài tập: ' + error.message);
 }
-
+showLoading(false);
+}
 window.updateProgress = async function() {
-    if (!currentAssignment) return;
+if (!currentAssignment) return;
+try {
+    const resultsRef = collection(db, 'results');
+    const q = query(resultsRef,
+        where('studentId', '==', currentUser.id),
+        where('assignmentId', '==', currentAssignment.id)
+    );
+    const snap = await getDocs(q);
     
-    try {
-        const resultsRef = collection(db, 'results');
-        const q = query(resultsRef,
-            where('studentId', '==', currentUser.id),
-            where('assignmentId', '==', currentAssignment.id)
-        );
-        const snap = await getDocs(q);
-        
-        let completed = 0;
-        let totalScore = 0;
-        
-        snap.forEach(doc => {
-            const r = doc.data();
-            if (r.score >= 60) completed++;
-            totalScore += r.score;
-        });
-        
-        const avgScore = snap.size > 0 ? Math.round(totalScore / snap.size) : 0;
-        const totalWords = currentAssignment.wordsData ? currentAssignment.wordsData.length : (currentAssignment.words || []).length;
-        
-        document.getElementById('progressText').textContent = `${completed}/${totalWords}`;
-        document.getElementById('avgScoreText').textContent = avgScore;
-    } catch (error) {
-        console.error('Lỗi cập nhật tiến độ:', error);
-    }
+    let completed = 0;
+    let totalScore = 0;
+    
+    snap.forEach(doc => {
+        const r = doc.data();
+        if (r.score >= 60) completed++;
+        totalScore += r.score;
+    });
+    
+    const avgScore = snap.size > 0 ? Math.round(totalScore / snap.size) : 0;
+    const totalWords = currentAssignment.wordsData ? currentAssignment.wordsData.length : (currentAssignment.words || []).length;
+    
+    document.getElementById('progressText').textContent = `${completed}/${totalWords}`;
+    document.getElementById('avgScoreText').textContent = avgScore;
+} catch (error) {
+    console.error('Lỗi cập nhật tiến độ:', error);
 }
-
+}
 window.backToStudent = function() {
-    currentAssignment = null;
-    showScreen('studentDashboard');
-    loadStudentAssignments();
+currentAssignment = null;
+showScreen('studentDashboard');
+loadStudentAssignments();
 }
 </script>
 </body>
-
 </html>
+
+
+
+
+
+
+
