@@ -366,6 +366,7 @@ import {
     getAuth, 
     signInWithEmailAndPassword, 
     createUserWithEmailAndPassword,  // ← THÊM DÒNG NÀY
+updatePassword,  
     signOut, 
     onAuthStateChanged 
 } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
@@ -403,17 +404,6 @@ let mediaRecorder;
 let audioChunks = [];
 
 // ==================== UTILITIES ====================
-
-// Hàm hash mật khẩu đơn giản (PRODUCTION nên dùng bcrypt)
-function simpleHash(password) {
-    let hash = 0;
-    for (let i = 0; i < password.length; i++) {
-        const char = password.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
-    }
-    return hash.toString();
-}
 
 // ĐĂNG NHẬP ADMIN
 window.loginAdmin = async function() {
@@ -470,10 +460,10 @@ window.loginAdmin = async function() {
     showLoading(false);
 }
 
-// ĐĂNG NHẬP GIÁO VIÊN (SỬA)
+// ĐĂNG NHẬP GIÁO VIÊN (FIX: KHÔNG TRIM PASSWORD!)
 window.loginTeacher = async function() {
     const username = document.getElementById('teacherUsername').value.trim();
-    const password = document.getElementById('teacherPassword').value.trim();
+    const password = document.getElementById('teacherPassword').value; // ⚠️ KHÔNG TRIM PASSWORD!
     
     if (!username || !password) {
         return alert('Vui lòng nhập đầy đủ thông tin');
@@ -481,47 +471,64 @@ window.loginTeacher = async function() {
     
     showLoading(true);
     try {
-        // 1. Tìm teacher trong Firestore
+        // B1: Tìm giáo viên theo username
         const teachersRef = collection(db, 'teachers');
         const q = query(teachersRef, where('username', '==', username));
         const snap = await getDocs(q);
         
         if (snap.empty) {
             showLoading(false);
-            return alert('Tài khoản không tồn tại');
+            return alert('❌ Tài khoản không tồn tại');
         }
         
         const teacherData = snap.docs[0].data();
-        
-        // 2. Kiểm tra mật khẩu
-        if (teacherData.password !== password) {
-            showLoading(false);
-            return alert('Mật khẩu không đúng');
+        const teacherId = snap.docs[0].id;
+
+        // B2: Lấy email
+        let email = teacherData.email;
+        if (!email || email.trim() === '') {
+            email = `${username}@lime.edu.vn`;
         }
+        email = email.toLowerCase().trim();
         
-        // 3. Đăng nhập Firebase Auth
-        const email = teacherData.email || `${username}@lime.edu.vn`;
-        
+        console.log('🔑 Đăng nhập với:', { username, email, passwordLength: password.length });
+
+        // B3: Đăng nhập Firebase Auth
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            const result = await signInWithEmailAndPassword(auth, email, password);
+            console.log('✅ Auth thành công:', result.user.email);
         } catch (authError) {
-            if (authError.code === 'auth/user-not-found') {
-                showLoading(false);
-                return alert('Vui lòng liên hệ admin để tạo tài khoản Firebase Auth');
+            showLoading(false);
+            console.error('❌ Auth Error:', authError);
+            
+            if (authError.code === 'auth/invalid-credential' || authError.code === 'auth/wrong-password') {
+                return alert(`❌ Mật khẩu không đúng!\n\n📧 Email: ${email}\n🔐 Password length: ${password.length}\n\n💡 Liên hệ Admin để reset mật khẩu.`);
+            } else if (authError.code === 'auth/user-not-found') {
+                return alert(`❌ Tài khoản chưa được tạo!\n\nEmail tìm thấy: ${email}\n\n🔧 Liên hệ Admin tạo lại tài khoản.`);
+            } else if (authError.code === 'auth/too-many-requests') {
+                return alert('⏰ Bạn đã nhập sai quá nhiều lần. Đợi 5 phút.');
+            } else {
+                return alert(`❌ Lỗi: ${authError.message}`);
             }
-            throw authError;
         }
         
+        // B4: Lưu thông tin
         currentUser = { 
             role: 'teacher', 
-            id: snap.docs[0].id,
-            ...teacherData
+            id: teacherId,
+            ...teacherData,
+            username: username,
+            email: email
         };
         
+        console.log('✅ Đăng nhập thành công:', currentUser);
         document.getElementById('teacherCodeDisplay').textContent = teacherData.name || username;
         showScreen('teacherDashboard');
+        
     } catch (error) {
-        alert('Lỗi đăng nhập: ' + error.message);
+        showLoading(false);
+        console.error('System Error:', error);
+        alert('❌ Lỗi hệ thống: ' + error.message);
     }
     showLoading(false);
 }
@@ -904,7 +911,7 @@ window.editTeacher = async function(teacherId) {
 window.saveEditTeacher = async function(teacherId) {
     const name = document.getElementById('editTeacherName').value.trim();
     const username = document.getElementById('editTeacherUsername').value.trim();
-    const password = document.getElementById('editTeacherPassword').value.trim();
+    const newPassword = document.getElementById('editTeacherPassword').value.trim();
     const email = document.getElementById('editTeacherEmail').value.trim();
     
     if (!name || !username) {
@@ -913,22 +920,34 @@ window.saveEditTeacher = async function(teacherId) {
     
     showLoading(true);
     try {
-        const updateData = {
+        // ✅ Cập nhật Firestore (KHÔNG CẬP NHẬT PASSWORD)
+        await updateDoc(doc(db, 'teachers', teacherId), {
             name,
             username,
             email
-        };
+        });
         
-        // Chỉ update password nếu có nhập mới
-        if (password) {
-            updateData.password = password;
+        // ✅ Nếu có nhập mật khẩu mới → cập nhật Firebase Auth
+        if (newPassword) {
+            try {
+                const user = auth.currentUser;
+                if (user && user.uid === teacherId) {
+                    // Nếu đang đăng nhập = tài khoản này
+                    await updatePassword(user, newPassword);
+                    alert('✅ Đã cập nhật mật khẩu mới!');
+                } else {
+                    alert('⚠️ Đã cập nhật thông tin, nhưng không thể đổi mật khẩu (chỉ user đang đăng nhập mới đổi được).\n\nGiáo viên cần:\n1. Đăng nhập\n2. Đổi mật khẩu ở phần "Quên mật khẩu"');
+                }
+            } catch (authError) {
+                console.error('Lỗi đổi mật khẩu:', authError);
+                alert('⚠️ Đã cập nhật thông tin, nhưng không thể đổi mật khẩu.');
+            }
         }
         
-        await updateDoc(doc(db, 'teachers', teacherId), updateData);
-        alert('Cập nhật thành công!');
+        alert('✅ Cập nhật thành công!');
         adminManageTeachers();
     } catch (error) {
-        alert('Lỗi: ' + error.message);
+        alert('❌ Lỗi: ' + error.message);
     }
     showLoading(false);
 }
