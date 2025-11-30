@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Luyện Phát Âm</title>
     <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hyphen@1.8.0/dist/jquery.hyphenate.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hyphen@1.8.0/patterns/en-us.js"></script>
    <style>
@@ -336,32 +337,7 @@
         <div id="wordsList" class="space-y-6 max-w-3xl mx-auto"></div>
     </div>
 </div>
-
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getFirestore, collection, addDoc, getDocs, query, where, updateDoc, doc, getDoc, setDoc, orderBy, arrayUnion, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
-const firebaseConfig = {
-    apiKey: "AIzaSyB2VOZ0A5im13MC6FNLa4bEupKedm5iiBo",
-    authDomain: "lime-phat-am.firebaseapp.com",
-    projectId: "lime-phat-am",
-    storageBucket: "lime-phat-am.firebasestorage.app",
-    messagingSenderId: "434295865710",
-    appId: "1:434295865710:web:5f373900f5e8c1d679417f"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-let currentUser = null;
-let currentAssignment = null;
-
-// ==================== WHISPER AI CONFIGURATION ====================
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbznNlh8Pu17U_ggJkOqHa_hU87acomNHkazEDw5-1evMBJbNWrDUaXHC0tLUURkyw6G/exec';
-let mediaRecorder;
-let audioChunks = [];
-
-// ==================== UTILITIES ====================
+<script>
 window.showScreen = function(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
     document.getElementById(screenId).classList.remove('hidden');
@@ -381,6 +357,52 @@ window.selectRole = function(role) {
         showScreen('studentLoginScreen');
     }
 }
+</script>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getFirestore, collection, addDoc, getDocs, query, where, updateDoc, doc, getDoc, setDoc, orderBy, arrayUnion, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { 
+    getAuth, 
+    signInWithEmailAndPassword, 
+    createUserWithEmailAndPassword,  // ← THÊM DÒNG NÀY
+    signOut, 
+    onAuthStateChanged 
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDmE6e4MyjQu_JraLySSYEuwDS238RKazs",
+    authDomain: "lime-phat-am-auth.firebaseapp.com",
+    projectId: "lime-phat-am-auth",
+    storageBucket: "lime-phat-am-auth.firebasestorage.app",
+    messagingSenderId: "270278561876",
+    appId: "1:270278561876:web:15b706ee123b146ea25dc1"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+let currentUser = null;
+let currentAssignment = null;
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        console.log('User logged in:', user.email);
+    } else {
+        console.log('User logged out');
+        if (currentUser) {
+            currentUser = null;
+            showScreen('loginScreen');
+        }
+    }
+});
+
+// ==================== WHISPER AI CONFIGURATION ====================
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbznNlh8Pu17U_ggJkOqHa_hU87acomNHkazEDw5-1evMBJbNWrDUaXHC0tLUURkyw6G/exec';
+let mediaRecorder;
+let audioChunks = [];
+
+// ==================== UTILITIES ====================
 
 // Hàm hash mật khẩu đơn giản (PRODUCTION nên dùng bcrypt)
 function simpleHash(password) {
@@ -404,6 +426,7 @@ window.loginAdmin = async function() {
     
     showLoading(true);
     try {
+        // ✅ BƯỚC 1: Tìm admin trong Firestore (chỉ lấy email)
         const adminsRef = collection(db, 'admins');
         const q = query(adminsRef, where('username', '==', username));
         const snap = await getDocs(q);
@@ -414,13 +437,25 @@ window.loginAdmin = async function() {
         }
         
         const adminData = snap.docs[0].data();
-       // const hashedPassword = simpleHash(password);
+        const email = adminData.email || `${username}@lime.edu.vn`;
         
-        if (adminData.password !== password) {
+        // ✅ BƯỚC 2: ĐĂNG NHẬP FIREBASE AUTH (Không cần kiểm tra Firestore password)
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+        } catch (authError) {
             showLoading(false);
-            return alert('Mật khẩu không đúng');
+            
+            // Xử lý lỗi Auth cụ thể
+            if (authError.code === 'auth/invalid-credential') {
+                return alert('❌ Mật khẩu không đúng');
+            } else if (authError.code === 'auth/user-not-found') {
+                return alert('❌ Tài khoản không tồn tại trong hệ thống Auth');
+            } else {
+                return alert('❌ Lỗi đăng nhập: ' + authError.message);
+            }
         }
         
+        // ✅ BƯỚC 3: Lưu thông tin user
         currentUser = { 
             role: 'admin', 
             id: snap.docs[0].id,
@@ -446,6 +481,7 @@ window.loginTeacher = async function() {
     
     showLoading(true);
     try {
+        // 1. Tìm teacher trong Firestore
         const teachersRef = collection(db, 'teachers');
         const q = query(teachersRef, where('username', '==', username));
         const snap = await getDocs(q);
@@ -456,11 +492,24 @@ window.loginTeacher = async function() {
         }
         
         const teacherData = snap.docs[0].data();
-       // const hashedPassword = simpleHash(password);
         
+        // 2. Kiểm tra mật khẩu
         if (teacherData.password !== password) {
             showLoading(false);
             return alert('Mật khẩu không đúng');
+        }
+        
+        // 3. Đăng nhập Firebase Auth
+        const email = teacherData.email || `${username}@lime.edu.vn`;
+        
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+        } catch (authError) {
+            if (authError.code === 'auth/user-not-found') {
+                showLoading(false);
+                return alert('Vui lòng liên hệ admin để tạo tài khoản Firebase Auth');
+            }
+            throw authError;
         }
         
         currentUser = { 
@@ -504,10 +553,16 @@ window.loginStudent = async function() {
     showLoading(false);
 }
 
-window.logout = function() {
-    currentUser = null;
-    showScreen('loginScreen');
+window.logout = async function() {
+    try {
+        await signOut(auth);
+        currentUser = null;
+        showScreen('loginScreen');
+    } catch (error) {
+        alert('Lỗi đăng xuất: ' + error.message);
+    }
 }
+
 // ==================== ADMIN FUNCTIONS ====================
 
 // Quản lý Lớp
@@ -670,17 +725,22 @@ window.adminManageTeachers = async function() {
         const snap = await getDocs(teachersRef);
         
         let html = `
-            <div class="mb-6">
-                <h2 class="text-2xl font-bold mb-4">👨‍🏫 Quản lý Giáo viên</h2>
-                <button onclick="showAddTeacherForm()" class="bg-green-500 text-white px-6 py-3 rounded-lg font-semibold">
-                    ➕ Thêm giáo viên
-                </button>
-            </div>
-            
-            <div id="teacherFormArea"></div>
-            
-            <div class="grid md:grid-cols-2 gap-4 mt-6">
-        `;
+    <div class="mb-6">
+        <h2 class="text-2xl font-bold mb-4">👨‍🏫 Quản lý Giáo viên</h2>
+        <div class="flex gap-2">
+            <button onclick="showAddTeacherForm()" class="bg-green-500 text-white px-6 py-3 rounded-lg font-semibold">
+                ➕ Thêm giáo viên
+            </button>
+            <button onclick="showImportTeachersForm()" class="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold">
+                📤 Import Excel
+            </button>
+        </div>
+    </div>
+    
+    <div id="teacherFormArea"></div>
+    
+    <div class="grid md:grid-cols-2 gap-4 mt-6">
+`;
         
         snap.forEach(doc => {
             const data = doc.data();
@@ -742,31 +802,44 @@ window.showAddTeacherForm = function() {
 </div>
 `;
 }
-window.saveNewTeacher = async function() {
-const name = document.getElementById('newTeacherName').value.trim();
-const username = document.getElementById('newTeacherUsername').value.trim();
-const password = document.getElementById('newTeacherPassword').value.trim();
-const email = document.getElementById('newTeacherEmail').value.trim();
-if (!name || !username || !password) {
-    return alert('Vui lòng nhập đầy đủ thông tin bắt buộc');
-}
 
-showLoading(true);
-try {
-    await addDoc(collection(db, 'teachers'), {
-        name,
-        username,
-        password: password,
-        email,
-        assignedClasses: [],
-        createdAt: new Date()
-    });
-    alert('Thêm giáo viên thành công!');
-    adminManageTeachers();
-} catch (error) {
-    alert('Lỗi: ' + error.message);
-}
-showLoading(false);
+window.saveNewTeacher = async function() {
+    const name = document.getElementById('newTeacherName').value.trim();
+    const username = document.getElementById('newTeacherUsername').value.trim();
+    const password = document.getElementById('newTeacherPassword').value.trim();
+    const email = document.getElementById('newTeacherEmail').value.trim() || `${username}@lime.edu.vn`;
+    
+    if (!name || !username || !password) {
+        return alert('Vui lòng nhập đầy đủ thông tin bắt buộc');
+    }
+
+    showLoading(true);
+    try {
+        // ✅ BƯỚC 1: TẠO TÀI KHOẢN FIREBASE AUTH
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const uid = userCredential.user.uid;
+        
+        // ✅ BƯỚC 2: LƯU THÔNG TIN VÀO FIRESTORE (KHÔNG LƯU PASSWORD)
+        await setDoc(doc(db, 'teachers', uid), {
+            name,
+            username,
+            email,
+            assignedClasses: [],
+            createdAt: new Date()
+        });
+        
+        alert('✅ Thêm giáo viên thành công!');
+        adminManageTeachers();
+    } catch (error) {
+        if (error.code === 'auth/email-already-in-use') {
+            alert('❌ Email đã được sử dụng!');
+        } else if (error.code === 'auth/weak-password') {
+            alert('❌ Mật khẩu phải ít nhất 6 ký tự!');
+        } else {
+            alert('Lỗi: ' + error.message);
+        }
+    }
+    showLoading(false);
 }
 
 // ==================== ADMIN FUNCTIONS (TIẾP THEO) ====================
@@ -1006,17 +1079,22 @@ window.adminManageStudents = async function() {
         const classesRef = collection(db, 'classes');
         const classesSnap = await getDocs(classesRef);
         
-        let html = `
-            <div class="mb-6">
-                <h2 class="text-2xl font-bold mb-4">👨‍🎓 Quản lý Học sinh</h2>
-                <button onclick="showAddStudentFormAdmin()" class="bg-purple-500 text-white px-6 py-3 rounded-lg font-semibold">
-                    ➕ Thêm học sinh
-                </button>
-            </div>
-            
-            <div id="studentFormArea"></div>
-            
-            <div class="overflow-x-auto mt-6">
+       let html = `
+    <div class="mb-6">
+        <h2 class="text-2xl font-bold mb-4">👨‍🎓 Quản lý Học sinh</h2>
+        <div class="flex gap-2">
+            <button onclick="showAddStudentFormAdmin()" class="bg-purple-500 text-white px-6 py-3 rounded-lg font-semibold">
+                ➕ Thêm học sinh
+            </button>
+            <button onclick="showImportStudentsForm()" class="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold">
+                📤 Import Excel
+            </button>
+        </div>
+    </div>
+    
+    <div id="studentFormArea"></div>
+    
+    <div class="overflow-x-auto mt-6">
                 <table class="w-full bg-white rounded-lg overflow-hidden">
                     <thead class="bg-purple-600 text-white">
                         <tr>
@@ -1071,6 +1149,255 @@ window.adminManageStudents = async function() {
         alert('Lỗi: ' + error.message);
     }
     showLoading(false);
+}
+
+// IMPORT GIÁO VIÊN
+window.showImportTeachersForm = function() {
+    document.getElementById('teacherFormArea').innerHTML = `
+        <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-4">
+            <h3 class="font-bold text-lg mb-4">📤 Import giáo viên từ Excel</h3>
+            
+            <div class="bg-yellow-50 border border-yellow-300 rounded p-3 mb-4">
+                <p class="text-sm font-semibold mb-2">📋 File Excel cần có các cột:</p>
+                <ul class="text-sm list-disc ml-5">
+                    <li><strong>name</strong> - Họ tên (bắt buộc)</li>
+                    <li><strong>username</strong> - Tên đăng nhập (bắt buộc)</li>
+                    <li><strong>password</strong> - Mật khẩu (bắt buộc)</li>
+                    <li><strong>email</strong> - Email (không bắt buộc)</li>
+                </ul>
+                <a href="#" onclick="downloadTeacherTemplate()" class="text-blue-600 underline text-sm mt-2 inline-block">
+                    ⬇️ Tải file mẫu
+                </a>
+            </div>
+            
+            <input type="file" id="teacherExcelFile" accept=".xlsx,.xls" class="w-full p-3 border rounded-lg mb-3">
+            
+            <div class="flex gap-2">
+                <button onclick="importTeachers()" class="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold">
+                    📤 Import
+                </button>
+                <button onclick="document.getElementById('teacherFormArea').innerHTML=''" class="bg-gray-500 text-white px-6 py-2 rounded-lg">
+                    ✖ Hủy
+                </button>
+            </div>
+            
+            <div id="importTeacherProgress" class="mt-4"></div>
+        </div>
+    `;
+}
+
+window.downloadTeacherTemplate = function() {
+    const ws = XLSX.utils.json_to_sheet([
+        { name: "Nguyễn Văn A", username: "gv001", password: "123456", email: "a@example.com" },
+        { name: "Trần Thị B", username: "gv002", password: "123456", email: "b@example.com" }
+    ]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Teachers");
+    XLSX.writeFile(wb, "Mau_Import_GiaoVien.xlsx");
+}
+
+window.importTeachers = async function() {
+    const fileInput = document.getElementById('teacherExcelFile');
+    if (!fileInput.files.length) return alert('Vui lòng chọn file Excel');
+    
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = async function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+            
+            if (jsonData.length === 0) return alert('File Excel trống');
+            
+            const progressDiv = document.getElementById('importTeacherProgress');
+            progressDiv.innerHTML = `<p class="text-blue-600">Đang import ${jsonData.length} giáo viên...</p>`;
+            
+            let success = 0, failed = 0;
+            const errors = [];
+            
+            for (const row of jsonData) {
+    if (!row.name || !row.username || !row.password) {
+        failed++;
+        errors.push(`Dòng thiếu thông tin: ${JSON.stringify(row)}`);
+        continue;
+    }
+    
+    try {
+        const email = row.email ? row.email.trim() : `${row.username.trim()}@lime.edu.vn`;
+        
+        // ✅ BƯỚC 1: TẠO TÀI KHOẢN AUTH
+        const userCredential = await createUserWithEmailAndPassword(
+            auth, 
+            email, 
+            row.password.toString().trim()
+        );
+        const uid = userCredential.user.uid;
+        
+        // ✅ BƯỚC 2: LƯU VÀO FIRESTORE (KHÔNG LƯU PASSWORD)
+        await setDoc(doc(db, 'teachers', uid), {
+            name: row.name.trim(),
+            username: row.username.trim(),
+            email,
+            assignedClasses: [],
+            createdAt: new Date()
+        });
+        
+        success++;
+    } catch (error) {
+        failed++;
+        if (error.code === 'auth/email-already-in-use') {
+            errors.push(`${row.username}: Email đã tồn tại`);
+        } else {
+            errors.push(`${row.username}: ${error.message}`);
+        }
+    }
+}
+            
+            progressDiv.innerHTML = `
+                <div class="bg-green-50 border border-green-300 rounded p-3">
+                    <p class="font-bold">✅ Hoàn thành!</p>
+                    <p>Thành công: ${success}</p>
+                    <p>Thất bại: ${failed}</p>
+                    ${errors.length > 0 ? `<details class="mt-2"><summary class="cursor-pointer">Xem lỗi</summary><pre class="text-xs mt-2">${errors.join('\n')}</pre></details>` : ''}
+                </div>
+            `;
+            
+            if (success > 0) setTimeout(() => adminManageTeachers(), 2000);
+            
+        } catch (error) {
+            alert('Lỗi đọc file: ' + error.message);
+        }
+    };
+    
+    reader.readAsArrayBuffer(file);
+}
+
+// IMPORT HỌC SINH
+window.showImportStudentsForm = async function() {
+    const classesSnap = await getDocs(collection(db, 'classes'));
+    let classOptions = '<option value="">-- Chọn lớp --</option>';
+    classesSnap.forEach(doc => {
+        classOptions += `<option value="${doc.id}">${doc.data().name}</option>`;
+    });
+    
+    document.getElementById('studentFormArea').innerHTML = `
+        <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-4">
+            <h3 class="font-bold text-lg mb-4">📤 Import học sinh từ Excel</h3>
+            
+            <div class="bg-yellow-50 border border-yellow-300 rounded p-3 mb-4">
+                <p class="text-sm font-semibold mb-2">📋 File Excel cần có các cột:</p>
+                <ul class="text-sm list-disc ml-5">
+                    <li><strong>name</strong> - Họ tên (bắt buộc)</li>
+                    <li><strong>code</strong> - Mã học sinh (bắt buộc, VD: HS001)</li>
+                </ul>
+                <a href="#" onclick="downloadStudentTemplate()" class="text-blue-600 underline text-sm mt-2 inline-block">
+                    ⬇️ Tải file mẫu
+                </a>
+            </div>
+            
+            <select id="importClassId" class="w-full p-3 border rounded-lg mb-3">
+                ${classOptions}
+            </select>
+            
+            <input type="file" id="studentExcelFile" accept=".xlsx,.xls" class="w-full p-3 border rounded-lg mb-3">
+            
+            <div class="flex gap-2">
+                <button onclick="importStudents()" class="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold">
+                    📤 Import
+                </button>
+                <button onclick="document.getElementById('studentFormArea').innerHTML=''" class="bg-gray-500 text-white px-6 py-2 rounded-lg">
+                    ✖ Hủy
+                </button>
+            </div>
+            
+            <div id="importStudentProgress" class="mt-4"></div>
+        </div>
+    `;
+}
+
+window.downloadStudentTemplate = function() {
+    const ws = XLSX.utils.json_to_sheet([
+        { name: "Nguyễn Văn An", code: "HS001" },
+        { name: "Trần Thị Bình", code: "HS002" }
+    ]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Students");
+    XLSX.writeFile(wb, "Mau_Import_HocSinh.xlsx");
+}
+
+window.importStudents = async function() {
+    const classId = document.getElementById('importClassId').value;
+    if (!classId) return alert('Vui lòng chọn lớp');
+    
+    const fileInput = document.getElementById('studentExcelFile');
+    if (!fileInput.files.length) return alert('Vui lòng chọn file Excel');
+    
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = async function(e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+            
+            if (jsonData.length === 0) return alert('File Excel trống');
+            
+            const progressDiv = document.getElementById('importStudentProgress');
+            progressDiv.innerHTML = `<p class="text-blue-600">Đang import ${jsonData.length} học sinh...</p>`;
+            
+            let success = 0, failed = 0;
+            const errors = [];
+            
+            for (const row of jsonData) {
+                if (!row.name || !row.code) {
+                    failed++;
+                    errors.push(`Dòng thiếu thông tin: ${JSON.stringify(row)}`);
+                    continue;
+                }
+                
+                try {
+                    const studentRef = await addDoc(collection(db, 'students'), {
+                        name: row.name.trim(),
+                        code: row.code.toString().trim(),
+                        classId,
+                        createdAt: new Date()
+                    });
+                    
+                    await updateDoc(doc(db, 'classes', classId), {
+                        students: arrayUnion(studentRef.id)
+                    });
+                    
+                    success++;
+                } catch (error) {
+                    failed++;
+                    errors.push(`${row.code}: ${error.message}`);
+                }
+            }
+            
+            progressDiv.innerHTML = `
+                <div class="bg-green-50 border border-green-300 rounded p-3">
+                    <p class="font-bold">✅ Hoàn thành!</p>
+                    <p>Thành công: ${success}</p>
+                    <p>Thất bại: ${failed}</p>
+                    ${errors.length > 0 ? `<details class="mt-2"><summary class="cursor-pointer">Xem lỗi</summary><pre class="text-xs mt-2">${errors.join('\n')}</pre></details>` : ''}
+                </div>
+            `;
+            
+            if (success > 0) setTimeout(() => adminManageStudents(), 2000);
+            
+        } catch (error) {
+            alert('Lỗi đọc file: ' + error.message);
+        }
+    };
+    
+    reader.readAsArrayBuffer(file);
 }
 
 window.showAddStudentFormAdmin = async function() {
