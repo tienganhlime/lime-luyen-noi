@@ -3443,33 +3443,52 @@ window.createAssignment = async function(classId, className) {
     const decksSnap = await getDocs(decksRef);
     showLoading(false);
     
-    let deckOptions = '<option value="">-- Chọn bộ thẻ có sẵn --</option>';
+    let decksList = '';
     decksSnap.forEach(doc => {
         const deck = doc.data();
         const wordCount = deck.wordsData ? deck.wordsData.length : 0;
-        deckOptions += `<option value="${doc.id}">${deck.name} (${wordCount} từ - by ${deck.createdByName})</option>`;
+        decksList += `
+            <div class="deck-item bg-white border-2 border-blue-200 rounded-lg p-4 hover:border-blue-500 cursor-pointer transition"
+                 data-name="${deck.name.toLowerCase()}"
+                 data-creator="${(deck.createdByName || '').toLowerCase()}"
+                 onclick="loadDeckWordsNew('${doc.id}', '${deck.name}')">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h4 class="font-bold text-lg text-blue-700">${deck.name}</h4>
+                        <p class="text-sm text-gray-600">📝 ${wordCount} từ</p>
+                        <p class="text-xs text-gray-500">👤 ${deck.createdByName || 'Không rõ'}</p>
+                    </div>
+                    <button onclick="event.stopPropagation(); loadDeckWordsNew('${doc.id}', '${deck.name}')" 
+                            class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+                        ✅ Chọn
+                    </button>
+                </div>
+            </div>
+        `;
     });
     
     document.getElementById('teacherContent').innerHTML = `
         <h2 class="text-2xl font-bold mb-4">Tạo bài tập cho ${className}</h2>
         <button onclick="showAssignments()" class="text-blue-600 mb-4">← Quay lại</button>
         
-       <!-- PHẦN CHỌN BỘ THẺ CÓ SẴN -->
-<div class="bg-blue-50 border-2 border-blue-300 rounded-lg p-6 mb-6">
-    <h3 class="font-bold text-lg mb-4">📚 Chọn từ thư viện có sẵn</h3>
-    
-    <!-- ✅ THÊM Ô TÌM KIẾM -->
-    <input type="text" 
-           id="searchDeck" 
-           placeholder="🔍 Gõ tên bộ thẻ để tìm kiếm..." 
-           oninput="filterDecks()"
-           class="w-full p-3 border rounded-lg mb-3 font-semibold">
-    
-    <select id="selectDeck" onchange="loadDeckWords()" class="w-full p-3 border rounded-lg mb-3">
-        ${deckOptions}
-    </select>
-    <p class="text-sm text-gray-600">💡 Chọn bộ thẻ có sẵn để tiết kiệm thời gian</p>
-</div>
+        <!-- PHẦN CHỌN BỘ THẺ CÓ SẴN -->
+        <div class="bg-blue-50 border-2 border-blue-300 rounded-lg p-6 mb-6">
+            <h3 class="font-bold text-lg mb-4">📚 Chọn từ thư viện có sẵn</h3>
+            
+            <!-- ✅ Ô TÌM KIẾM -->
+            <input type="text" 
+                   id="searchDeck" 
+                   placeholder="🔍 Gõ tên bộ thẻ hoặc tên giáo viên để tìm kiếm..." 
+                   oninput="filterDecksNew()"
+                   class="w-full p-3 border-2 border-blue-300 rounded-lg mb-4 font-semibold focus:border-blue-500 focus:outline-none">
+            
+            <!-- ✅ DANH SÁCH BỘ THẺ (thay vì dropdown) -->
+            <div id="decksList" class="space-y-3 max-h-96 overflow-y-auto">
+                ${decksList || '<p class="text-gray-500 text-center py-4">Chưa có bộ thẻ nào</p>'}
+            </div>
+            
+            <p class="text-sm text-gray-600 mt-4">💡 Click vào bộ thẻ để chọn và tự động điền vào form bên dưới</p>
+        </div>
         
         <div class="text-center my-6">
             <span class="text-gray-500 font-semibold">--- HOẶC TẠO MỚI ---</span>
@@ -4483,9 +4502,52 @@ window.lookupPersonalWord = async function(word) {
         `;
     }
 }
+    // ✅ HÀM LỌC BỘ THẺ
+window.filterDecksNew = function() {
+    const searchText = document.getElementById('searchDeck').value.toLowerCase();
+    const deckItems = document.querySelectorAll('.deck-item');
+    
+    deckItems.forEach(item => {
+        const name = item.dataset.name;
+        const creator = item.dataset.creator;
+        const match = name.includes(searchText) || creator.includes(searchText);
+        item.style.display = match ? '' : 'none';
+    });
+}
+
+// ✅ HÀM TẢI TỪ BỘ THẺ (phiên bản mới)
+window.loadDeckWordsNew = async function(deckId, deckName) {
+    showLoading(true);
+    try {
+        const deckDoc = await getDoc(doc(db, 'decks', deckId));
+        const deck = deckDoc.data();
+        
+        // Điền tên bài
+        document.getElementById('assignmentName').value = deck.name;
+        
+        // ✅ ĐIỀN ĐẦY ĐỦ: Từ | Loại từ | Nghĩa
+        const wordsText = deck.wordsData.map(w => {
+            return `${w.word}\t${w.type || 'n.'}\t${w.meaning || ''}`;
+        }).join('\n');
+        
+        document.getElementById('assignmentWords').value = wordsText;
+        
+        // Tự động uncheck "lưu vào thư viện" vì đã có sẵn
+        document.getElementById('saveToLibrary').checked = false;
+        
+        // ✅ SCROLL XUỐNG FORM
+        document.getElementById('assignmentWords').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        alert(`✅ Đã tải ${deck.wordsData.length} từ từ bộ "${deck.name}"\n\n💡 Kéo xuống để xem và chỉnh sửa!`);
+    } catch (error) {
+        alert('Lỗi tải bộ thẻ: ' + error.message);
+    }
+    showLoading(false);
+}
 </script>
 </body>
 </html>
+
 
 
 
