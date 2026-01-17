@@ -4153,62 +4153,97 @@ window.showPersonalLibrary = async function() {
         const snap = await getDocs(q);
         
         let wordsList = '';
+        
         snap.forEach(doc => {
             const word = doc.data().word;
+            const syllables = splitIntoSyllables(word);
+            
+            const syllableDisplay = syllables.map(s => {
+                return `<span class="inline-block bg-green-100 text-green-800 px-3 py-2 rounded-full mx-1 font-bold text-lg">${s}</span>`;
+            }).join('');
+            
             wordsList += `
-    <div class="bg-white border-2 border-purple-200 rounded-lg p-4">
-        <div class="flex justify-between items-center mb-2">
-            <span class="font-bold text-xl">${word}</span>
-            <div class="flex gap-2">
-                <button onclick="lookupPersonalWord('${word}')" 
-                        class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-2 rounded">
-                    📖 Tra nghĩa
-                </button>
-                <button onclick="speakWord('${word}', 1)" 
-                        class="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded">
-                    🔊 Nghe
-                </button>
-                <button onclick="recordWord('${word}')" 
-                        class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded">
-                    🎤 Luyện
-                </button>
-                <button onclick="deletePersonalWord('${doc.id}', '${word}')" 
-                        class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded">
-                    🗑️
-                </button>
-            </div>
-        </div>
-        <div id="meaning-personal-${word}"></div>
-        <!-- ✅ THÊM DÒNG NÀY -->
-        <div id="result-${word}" class="mt-4"></div>
-    </div>
-`;
+                <div class="bg-white rounded-2xl shadow-xl p-8 text-center border-2 border-purple-300 hover:border-purple-500 transition hover:shadow-2xl max-w-2xl mx-auto mb-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-5xl font-bold text-gray-800 flex-1" style="font-family: 'Quicksand', 'Comic Sans MS', sans-serif;">${word}</h3>
+                        <button onclick="deletePersonalWord('${doc.id}', '${word}')" 
+                                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+                            🗑️ Xóa
+                        </button>
+                    </div>
+                    
+                    <div id="meaning-personal-${word}" class="mb-4">
+                        <button onclick="lookupPersonalWord('${word}')" 
+                                class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transform hover:scale-105 transition">
+                            📖 Tra nghĩa từ này
+                        </button>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                        <p class="text-sm text-gray-600 mb-3">🔍 Âm tiết:</p>
+                        <div class="flex flex-wrap justify-center gap-2">
+                            ${syllableDisplay}
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-2 mb-6 justify-center">
+                        <button onclick="speakWord('${word}', 0.1)" 
+                                class="bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white px-4 py-3 rounded-xl font-semibold shadow-lg transition">
+                            🐢 Rất chậm
+                        </button>
+                        <button onclick="speakWord('${word}', 0.3)" 
+                                class="bg-gradient-to-r from-orange-400 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white px-4 py-3 rounded-xl font-semibold shadow-lg transition">
+                            🌙 Chậm
+                        </button>
+                        <button onclick="speakWord('${word}', 1)" 
+                                class="bg-gradient-to-r from-green-500 to-lime-500 hover:from-green-600 hover:to-lime-600 text-white px-4 py-3 rounded-xl font-semibold shadow-lg transition">
+                            ▶️ Bình thường
+                        </button>
+                    </div>
+                    
+                    <button onclick="recordWord('${word}')" 
+                            class="bg-gradient-to-r from-purple-600 via-pink-500 to-purple-700 hover:from-purple-700 hover:via-pink-600 hover:to-purple-800 text-white px-8 py-4 rounded-2xl font-bold text-xl w-full shadow-2xl transform hover:scale-105 transition-all duration-200">
+                        🎤 BẮT ĐẦU THU ÂM
+                    </button>
+                    
+                    <div id="result-${word}" class="mt-6 max-h-96 overflow-y-auto"></div>
+                </div>
+            `;
         });
         
         document.getElementById('studentAssignments').innerHTML = `
             <button onclick="loadStudentAssignments()" 
-                    class="text-blue-600 mb-4 hover:underline flex items-center gap-2">
-                <span>←</span> Quay lại bài tập
+                    class="flex items-center gap-2 px-4 py-3 bg-white hover:bg-gray-100 rounded-lg transition-colors shadow-md mb-6 font-semibold text-gray-700">
+                <span class="text-2xl">←</span>
+                <span>Quay lại bài tập</span>
             </button>
             
-            <h2 class="text-3xl font-bold mb-6">📖 Từ vựng của tôi</h2>
+            <h2 class="text-3xl font-bold mb-6 text-center">📖 Từ vựng của tôi</h2>
             
-            <div class="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-300 rounded-lg p-6 mb-6">
-                <h3 class="font-bold text-lg mb-4">➕ Thêm từ mới</h3>
-                <div class="flex gap-2">
+            <div class="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-300 rounded-2xl p-6 mb-8 shadow-lg max-w-2xl mx-auto">
+                <h3 class="font-bold text-xl mb-4 text-center">➕ Thêm từ mới</h3>
+                <div class="flex gap-3">
                     <input type="text" 
                            id="newPersonalWord" 
                            placeholder="Nhập từ mới (vd: beautiful)" 
-                           class="flex-1 p-3 border rounded-lg">
+                           class="flex-1 p-4 border-2 border-purple-300 rounded-xl text-lg focus:border-purple-500 focus:outline-none"
+                           onkeypress="if(event.key==='Enter') addPersonalWord()">
                     <button onclick="addPersonalWord()" 
-                            class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg font-bold">
+                            class="bg-purple-500 hover:bg-purple-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg transform hover:scale-105 transition">
                         💾 Thêm
                     </button>
                 </div>
+                <p class="text-sm text-gray-600 mt-3 text-center">💡 Nhấn Enter để thêm nhanh</p>
             </div>
             
-            <div class="space-y-3">
-                ${wordsList || '<p class="text-gray-500 text-center py-12">Chưa có từ nào. Hãy thêm từ mới!</p>'}
+            <div class="space-y-6">
+                ${wordsList || `
+                    <div class="text-center py-20">
+                        <div class="text-8xl mb-6">📚</div>
+                        <p class="text-gray-500 text-xl font-semibold mb-4">Chưa có từ nào</p>
+                        <p class="text-gray-400">Hãy thêm từ mới ở phía trên!</p>
+                    </div>
+                `}
             </div>
         `;
     } catch (error) {
@@ -4451,6 +4486,7 @@ window.lookupPersonalWord = async function(word) {
 </script>
 </body>
 </html>
+
 
 
 
