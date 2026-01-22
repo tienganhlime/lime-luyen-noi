@@ -1108,52 +1108,118 @@ window.adminManageStudents = async function() {
         const classesRef = collection(db, 'classes');
         const classesSnap = await getDocs(classesRef);
         
-       let html = `
+        // ✅ TẠO DROPDOWN LỌC LỚP
+        let classFilterOptions = '<option value="">-- Tất cả lớp --</option>';
+        classesSnap.forEach(doc => {
+            classFilterOptions += `<option value="${doc.id}">${doc.data().name}</option>`;
+        });
+        
+        let html = `
     <div class="mb-6">
         <h2 class="text-2xl font-bold mb-4">👨‍🎓 Quản lý Học sinh</h2>
-        <div class="flex gap-2">
+        <div class="flex gap-2 mb-4">
             <button onclick="showAddStudentFormAdmin()" class="bg-purple-500 text-white px-6 py-3 rounded-lg font-semibold">
                 ➕ Thêm học sinh
             </button>
             <button onclick="showImportStudentsForm()" class="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold">
                 📤 Import Excel
             </button>
+            <button id="deleteSelectedBtn" onclick="deleteSelectedStudents()" disabled 
+                    class="bg-red-500 text-white px-6 py-3 rounded-lg font-semibold opacity-50 cursor-not-allowed">
+                🗑️ Xóa đã chọn (<span id="selectedCount">0</span>)
+            </button>
+        </div>
+        
+        <!-- ✅ BỘ LỌC -->
+        <div class="bg-gray-100 border-2 border-gray-300 rounded-lg p-4 mb-4">
+            <div class="grid md:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm font-semibold mb-2">🔍 Tìm theo tên/mã:</label>
+                    <input type="text" 
+                           id="searchStudentInput" 
+                           placeholder="Nhập tên hoặc mã học sinh..." 
+                           oninput="filterStudentsAdmin()"
+                           class="w-full p-3 border-2 border-gray-300 rounded-lg font-semibold focus:border-blue-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2">📚 Lọc theo lớp:</label>
+                    <select id="filterClassSelect" 
+                            onchange="filterStudentsAdmin()"
+                            class="w-full p-3 border-2 border-gray-300 rounded-lg font-semibold focus:border-blue-500 focus:outline-none">
+                        ${classFilterOptions}
+                    </select>
+                </div>
+            </div>
+            <p class="text-sm text-gray-600 mt-3">
+                💡 Tổng: <span id="totalStudents" class="font-bold">${studentsSnap.size}</span> học sinh
+                | Đang hiển thị: <span id="visibleStudents" class="font-bold">${studentsSnap.size}</span>
+            </p>
         </div>
     </div>
     
     <div id="studentFormArea"></div>
     
     <div class="overflow-x-auto mt-6">
-                <table class="w-full bg-white rounded-lg overflow-hidden">
-                    <thead class="bg-purple-600 text-white">
-                        <tr>
-                            <th class="p-3 text-left">Mã HS</th>
-                            <th class="p-3 text-left">Họ tên</th>
-                            <th class="p-3 text-left">Lớp</th>
-                            <th class="p-3 text-center">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+        <table class="w-full bg-white rounded-lg overflow-hidden">
+            <thead class="bg-purple-600 text-white">
+                <tr>
+                    <th class="p-3 text-center">
+                        <input type="checkbox" 
+                               id="selectAllCheckbox" 
+                               onchange="toggleSelectAll()"
+                               class="w-5 h-5 cursor-pointer">
+                    </th>
+                    <th class="p-3 text-left">Mã HS</th>
+                    <th class="p-3 text-left">Họ tên</th>
+                    <th class="p-3 text-left">Lớp</th>
+                    <th class="p-3 text-center">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody id="studentsTableBody">
         `;
         
         for (const studentDoc of studentsSnap.docs) {
             const student = studentDoc.data();
             
-            // Tìm tên lớp
-            let className = 'Chưa phân lớp';
-            if (student.classId) {
-                const classDoc = classesSnap.docs.find(c => c.id === student.classId);
+            // ✅ HỖ TRỢ HỌC SINH CÓ NHIỀU LỚP
+            let classNames = [];
+            let classIdsData = [];
+            
+            if (student.classIds && Array.isArray(student.classIds)) {
+                classIdsData = student.classIds;
+            } else if (student.classId) {
+                classIdsData = [student.classId];
+            }
+            
+            for (const cId of classIdsData) {
+                const classDoc = classesSnap.docs.find(c => c.id === cId);
                 if (classDoc) {
-                    className = classDoc.data().name;
+                    classNames.push(classDoc.data().name);
                 }
             }
             
+            const classDisplay = classNames.length > 0 ? classNames.join(', ') : 'Chưa phân lớp';
+            
             html += `
-                <tr class="border-b hover:bg-gray-50">
+                <tr class="border-b hover:bg-gray-50 student-row" 
+                    data-student-id="${studentDoc.id}"
+                    data-name="${student.name.toLowerCase()}"
+                    data-code="${student.code.toLowerCase()}"
+                    data-class-ids="${classIdsData.join(',')}">
+                    <td class="p-3 text-center">
+                        <input type="checkbox" 
+                               class="student-checkbox w-5 h-5 cursor-pointer" 
+                               value="${studentDoc.id}"
+                               onchange="updateSelectedCount()">
+                    </td>
                     <td class="p-3 font-mono">${student.code}</td>
                     <td class="p-3 font-semibold">${student.name}</td>
-                    <td class="p-3">${className}</td>
+                    <td class="p-3">${classDisplay}</td>
                     <td class="p-3 text-center">
+                        <button onclick="manageStudentClasses('${studentDoc.id}', '${student.name}')" 
+                                class="bg-blue-500 text-white px-3 py-1 rounded text-sm mr-2">
+                            🎓 Quản lý lớp
+                        </button>
                         <button onclick="editStudentAdmin('${studentDoc.id}')" 
                                 class="bg-yellow-500 text-white px-3 py-1 rounded text-sm mr-2">
                             ✏️ Sửa
@@ -3351,12 +3417,11 @@ window.addStudent = async function(classId) {
     
     showLoading(true);
     try {
-        // ✅ TỰ ĐỘNG TẠO MÃ NẾU KHÔNG NHẬP
+        // Tự động tạo mã
         if (!code) {
             const studentsRef = collection(db, 'students');
             const allStudents = await getDocs(studentsRef);
             
-            // Tìm mã lớn nhất hiện tại
             let maxNum = 0;
             allStudents.forEach(doc => {
                 const existingCode = doc.data().code;
@@ -3367,11 +3432,10 @@ window.addStudent = async function(classId) {
                 }
             });
             
-            // Tạo mã mới
             code = `HS${String(maxNum + 1).padStart(3, '0')}`;
         }
         
-        // ✅ KIỂM TRA TRÙNG
+        // Kiểm tra trùng
         const studentsRef = collection(db, 'students');
         const q = query(studentsRef, where('code', '==', code));
         const existSnap = await getDocs(q);
@@ -3381,27 +3445,29 @@ window.addStudent = async function(classId) {
             return alert(`❌ Mã ${code} đã tồn tại! Vui lòng đổi mã khác.`);
         }
         
-       const studentRef = await addDoc(collection(db, 'students'), {
-        name,
-        code,
-        classId,
-        createdAt: new Date()
-    });
-   
-    const classRef = doc(db, 'classes', classId);
-    await updateDoc(classRef, {
-        students: arrayUnion(studentRef.id)
-    });
-   
-    alert(`Đã thêm học sinh ${name} (${code})`);
-   
-    const classDoc = await getDoc(classRef);
-    manageStudents(classId, classDoc.data().name);
-} catch (error) {
-    alert('Lỗi thêm học sinh: ' + error.message);
+        // ✅ THÊM HỌC SINH VỚI classIds (ARRAY)
+        const studentRef = await addDoc(collection(db, 'students'), {
+            name,
+            code,
+            classIds: [classId],  // ← ĐỔI THÀNH ARRAY
+            createdAt: new Date()
+        });
+       
+        const classRef = doc(db, 'classes', classId);
+        await updateDoc(classRef, {
+            students: arrayUnion(studentRef.id)
+        });
+       
+        alert(`Đã thêm học sinh ${name} (${code})`);
+       
+        const classDoc = await getDoc(classRef);
+        manageStudents(classId, classDoc.data().name);
+    } catch (error) {
+        alert('Lỗi thêm học sinh: ' + error.message);
+    }
+    showLoading(false);
 }
-showLoading(false);
-}
+
 window.showAssignments = async function() {
     showLoading(true);
     try {
@@ -3969,66 +4035,108 @@ window.deleteDeck = async function(deckId, deckName) {
 // (Phần code student tiếp tục ở đây...)
 // ==================== STUDENT FUNCTIONS ====================
 window.loadStudentAssignments = async function() {
-showLoading(true);
-try {
-    const student = currentUser;
-    const classId = student.classId;
-   
-    const assignmentsRef = collection(db, 'assignments');
-    const q = query(assignmentsRef, where('classId', '==', classId));
-    const snap = await getDocs(q);
-   
-    let html = '';
-   
-    if (snap.empty) {
-        html = '<p class="text-gray-600 text-center py-12 text-lg">Chưa có bài tập nào được giao.</p>';
-    } else {
-        for (const doc of snap.docs) {
-            const assign = doc.data();
-            const wordCount = assign.wordsData ? assign.wordsData.length : (assign.words || []).length;
-           
-            const resultsRef = collection(db, 'results');
-            const qResults = query(resultsRef,
-                where('studentId', '==', student.id),
-                where('assignmentId', '==', doc.id)
-            );
-            const resultsSnap = await getDocs(qResults);
-           
-            let completed = 0;
-            let totalScore = 0;
-           
-            resultsSnap.forEach(rDoc => {
-                const r = rDoc.data();
-                if (r.score >= 60) completed++;
-                totalScore += r.score;
-            });
-           
-            const progress = wordCount > 0 ? Math.round((completed / wordCount) * 100) : 0;
-            const avgScore = resultsSnap.size > 0 ? Math.round(totalScore / resultsSnap.size) : 0;
-           
-            html += `
-                <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-2xl transition cursor-pointer" onclick="startPractice('${doc.id}')">
-                    <h3 class="text-2xl font-bold mb-3">${assign.name}</h3>
-                    <div class="space-y-2 text-gray-600">
-                        <p>📝 Số từ: ${wordCount}</p>
-                        <p>✅ Hoàn thành: ${progress}%</p>
-                        <p>⭐ Điểm TB: ${avgScore}</p>
-                    </div>
-                    <button class="mt-4 w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition">
-                        🚀 Bắt đầu luyện tập
-                    </button>
+    showLoading(true);
+    try {
+        const student = currentUser;
+        
+        // ✅ HỖ TRỢ CẢ classId (cũ) VÀ classIds (mới)
+        let classIds = [];
+        if (student.classIds && Array.isArray(student.classIds)) {
+            // Trường hợp mới: học sinh có nhiều lớp
+            classIds = student.classIds;
+        } else if (student.classId) {
+            // Trường hợp cũ: học sinh chỉ có 1 lớp
+            classIds = [student.classId];
+        }
+        
+        if (classIds.length === 0) {
+            document.getElementById('studentAssignments').innerHTML = `
+                <div class="text-center py-20">
+                    <div class="text-8xl mb-6">⚠️</div>
+                    <p class="text-gray-600 text-xl font-semibold mb-4">Bạn chưa được phân lớp</p>
+                    <p class="text-gray-500">Liên hệ giáo viên để được thêm vào lớp!</p>
                 </div>
             `;
+            showLoading(false);
+            return;
         }
+        
+        // ✅ TẢI BÀI TẬP TỪ TẤT CẢ CÁC LỚP
+        const assignmentsRef = collection(db, 'assignments');
+        const assignmentsMap = new Map();
+        
+        for (const classId of classIds) {
+            const q = query(assignmentsRef, where('classId', '==', classId));
+            const snap = await getDocs(q);
+            
+            snap.forEach(doc => {
+                if (!assignmentsMap.has(doc.id)) {
+                    assignmentsMap.set(doc.id, { id: doc.id, ...doc.data() });
+                }
+            });
+        }
+        
+        let html = '';
+        
+        if (assignmentsMap.size === 0) {
+            html = '<p class="text-gray-600 text-center py-12 text-lg">Chưa có bài tập nào được giao.</p>';
+        } else {
+            for (const [assignId, assign] of assignmentsMap) {
+                const wordCount = assign.wordsData ? assign.wordsData.length : (assign.words || []).length;
+                
+                const resultsRef = collection(db, 'results');
+                const qResults = query(resultsRef,
+                    where('studentId', '==', student.id),
+                    where('assignmentId', '==', assignId)
+                );
+                const resultsSnap = await getDocs(qResults);
+                
+                let completed = 0;
+                let totalScore = 0;
+                
+                resultsSnap.forEach(rDoc => {
+                    const r = rDoc.data();
+                    if (r.score >= 60) completed++;
+                    totalScore += r.score;
+                });
+                
+                const progress = wordCount > 0 ? Math.round((completed / wordCount) * 100) : 0;
+                const avgScore = resultsSnap.size > 0 ? Math.round(totalScore / resultsSnap.size) : 0;
+                
+                // ✅ HIỂN THỊ TÊN LỚP
+                let className = '';
+                if (assign.classId) {
+                    const classDoc = await getDoc(doc(db, 'classes', assign.classId));
+                    if (classDoc.exists()) {
+                        className = classDoc.data().name;
+                    }
+                }
+                
+                html += `
+                    <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-2xl transition cursor-pointer" onclick="startPractice('${assignId}')">
+                        ${className ? `<p class="text-xs text-purple-600 font-semibold mb-2">📚 Lớp: ${className}</p>` : ''}
+                        <h3 class="text-2xl font-bold mb-3">${assign.name}</h3>
+                        <div class="space-y-2 text-gray-600">
+                            <p>📝 Số từ: ${wordCount}</p>
+                            <p>✅ Hoàn thành: ${progress}%</p>
+                            <p>⭐ Điểm TB: ${avgScore}</p>
+                        </div>
+                        <button class="mt-4 w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition">
+                            🚀 Bắt đầu luyện tập
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        document.getElementById('studentAssignments').innerHTML = html;
+    } catch (error) {
+        alert('Lỗi tải bài tập: ' + error.message);
+        document.getElementById('studentAssignments').innerHTML = '<p class="text-red-600 text-center py-12">Lỗi tải bài tập</p>';
     }
-   
-    document.getElementById('studentAssignments').innerHTML = html;
-} catch (error) {
-    alert('Lỗi tải bài tập: ' + error.message);
-    document.getElementById('studentAssignments').innerHTML = '<p class="text-red-600 text-center py-12">Lỗi tải bài tập</p>';
+    showLoading(false);
 }
-showLoading(false);
-}
+
 window.startPractice = async function(assignmentId) {
 showLoading(true);
 try {
@@ -4554,10 +4662,300 @@ window.loadDeckWordsNew = async function(deckId, deckName) {
     }
     showLoading(false);
 }
+
+// ✅ ADMIN: QUẢN LÝ LỚP CỦA HỌC SINH
+window.manageStudentClasses = async function(studentId, studentName) {
+    showLoading(true);
+    try {
+        const studentDoc = await getDoc(doc(db, 'students', studentId));
+        const studentData = studentDoc.data();
+        
+        // Lấy danh sách lớp hiện tại
+        let currentClassIds = [];
+        if (studentData.classIds && Array.isArray(studentData.classIds)) {
+            currentClassIds = studentData.classIds;
+        } else if (studentData.classId) {
+            currentClassIds = [studentData.classId];
+        }
+        
+        // Lấy tất cả lớp
+        const allClassesSnap = await getDocs(collection(db, 'classes'));
+        
+        let classesHtml = '';
+        for (const classDoc of allClassesSnap.docs) {
+            const classData = classDoc.data();
+            const isAssigned = currentClassIds.includes(classDoc.id);
+            
+            classesHtml += `
+                <div class="flex items-center justify-between bg-white border-2 rounded-lg p-4 ${isAssigned ? 'border-green-400 bg-green-50' : 'border-gray-200'}">
+                    <div>
+                        <p class="font-bold text-lg">${classData.name}</p>
+                        <p class="text-sm text-gray-600">${classData.students?.length || 0} học sinh</p>
+                    </div>
+                    ${isAssigned ? `
+                        <button onclick="removeStudentFromClass('${studentId}', '${classDoc.id}', '${studentName}')" 
+                                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold">
+                            ➖ Gỡ
+                        </button>
+                    ` : `
+                        <button onclick="addStudentToClass('${studentId}', '${classDoc.id}', '${studentName}')" 
+                                class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold">
+                            ➕ Thêm vào lớp
+                        </button>
+                    `}
+                </div>
+            `;
+        }
+        
+        document.getElementById('adminContent').innerHTML = `
+            <button onclick="adminManageStudents()" class="text-blue-600 hover:underline mb-4">← Quay lại</button>
+            
+            <h2 class="text-2xl font-bold mb-4">🎓 Quản lý lớp của học sinh: ${studentName}</h2>
+            <p class="text-gray-600 mb-6">Học sinh này đang học ${currentClassIds.length} lớp</p>
+            
+            <div class="space-y-3">
+                ${classesHtml}
+            </div>
+        `;
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+// ✅ THÊM HỌC SINH VÀO LỚP
+window.addStudentToClass = async function(studentId, classId, studentName) {
+    showLoading(true);
+    try {
+        const studentDoc = await getDoc(doc(db, 'students', studentId));
+        const studentData = studentDoc.data();
+        
+        let classIds = [];
+        if (studentData.classIds && Array.isArray(studentData.classIds)) {
+            classIds = studentData.classIds;
+        } else if (studentData.classId) {
+            classIds = [studentData.classId];
+        }
+        
+        if (!classIds.includes(classId)) {
+            classIds.push(classId);
+        }
+        
+        await updateDoc(doc(db, 'students', studentId), {
+            classIds: classIds
+        });
+        
+        await updateDoc(doc(db, 'classes', classId), {
+            students: arrayUnion(studentId)
+        });
+        
+        alert('Đã thêm học sinh vào lớp!');
+        manageStudentClasses(studentId, studentName);
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+// ✅ GỠ HỌC SINH KHỎI LỚP
+window.removeStudentFromClass = async function(studentId, classId, studentName) {
+    if (!confirm('Gỡ học sinh khỏi lớp này?')) return;
+    
+    showLoading(true);
+    try {
+        const studentDoc = await getDoc(doc(db, 'students', studentId));
+        const studentData = studentDoc.data();
+        
+        let classIds = studentData.classIds || [];
+        classIds = classIds.filter(id => id !== classId);
+        
+        await updateDoc(doc(db, 'students', studentId), {
+            classIds: classIds
+        });
+        
+        const classDoc = await getDoc(doc(db, 'classes', classId));
+        const students = classDoc.data().students || [];
+        await updateDoc(doc(db, 'classes', classId), {
+            students: students.filter(id => id !== studentId)
+        });
+        
+        alert('Đã gỡ học sinh khỏi lớp!');
+        manageStudentClasses(studentId, studentName);
+    } catch (error) {
+        alert('Lỗi: ' + error.message);
+    }
+    showLoading(false);
+}
+
+// ✅ LỌC HỌC SINH (THEO TÊN/MÃ VÀ LỚP)
+window.filterStudentsAdmin = function() {
+    const searchText = document.getElementById('searchStudentInput').value.toLowerCase();
+    const selectedClassId = document.getElementById('filterClassSelect').value;
+    
+    const rows = document.querySelectorAll('.student-row');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        const name = row.dataset.name;
+        const code = row.dataset.code;
+        const classIds = row.dataset.classIds.split(',').filter(Boolean);
+        
+        // Kiểm tra tìm kiếm
+        const matchSearch = name.includes(searchText) || code.includes(searchText);
+        
+        // Kiểm tra lọc lớp
+        const matchClass = !selectedClassId || classIds.includes(selectedClassId);
+        
+        // Hiển thị nếu thỏa cả 2 điều kiện
+        if (matchSearch && matchClass) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    // Cập nhật số lượng hiển thị
+    document.getElementById('visibleStudents').textContent = visibleCount;
+}
+
+// ✅ CHỌN TẤT CẢ
+window.toggleSelectAll = function() {
+    const selectAll = document.getElementById('selectAllCheckbox').checked;
+    const checkboxes = document.querySelectorAll('.student-checkbox');
+    
+    checkboxes.forEach(cb => {
+        // Chỉ chọn những hàng đang hiển thị
+        const row = cb.closest('.student-row');
+        if (row.style.display !== 'none') {
+            cb.checked = selectAll;
+        }
+    });
+    
+    updateSelectedCount();
+}
+
+// ✅ CẬP NHẬT SỐ LƯỢNG ĐÃ CHỌN
+window.updateSelectedCount = function() {
+    const checkboxes = document.querySelectorAll('.student-checkbox:checked');
+    const count = checkboxes.length;
+    
+    document.getElementById('selectedCount').textContent = count;
+    
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    if (count > 0) {
+        deleteBtn.disabled = false;
+        deleteBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        deleteBtn.classList.add('hover:bg-red-600');
+    } else {
+        deleteBtn.disabled = true;
+        deleteBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        deleteBtn.classList.remove('hover:bg-red-600');
+    }
+    
+    // Cập nhật checkbox "Chọn tất cả"
+    const allCheckboxes = document.querySelectorAll('.student-checkbox');
+    const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+    document.getElementById('selectAllCheckbox').checked = allChecked && count > 0;
+}
+
+// ✅ XÓA NHIỀU HỌC SINH
+window.deleteSelectedStudents = async function() {
+    const checkboxes = document.querySelectorAll('.student-checkbox:checked');
+    const studentIds = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (studentIds.length === 0) {
+        return alert('Chưa chọn học sinh nào!');
+    }
+    
+    if (!confirm(`⚠️ XÓA ${studentIds.length} HỌC SINH?\n\n- Tất cả kết quả bài tập sẽ BỊ XÓA\n- Không thể hoàn tác!\n\nBạn có chắc chắn?`)) {
+        return;
+    }
+    
+    showLoading(true);
+    
+    let successCount = 0;
+    let failCount = 0;
+    const errors = [];
+    
+    for (const studentId of studentIds) {
+        try {
+            // 1. Lấy thông tin học sinh
+            const studentDoc = await getDoc(doc(db, 'students', studentId));
+            if (!studentDoc.exists()) {
+                failCount++;
+                errors.push(`${studentId}: Không tìm thấy`);
+                continue;
+            }
+            
+            const studentData = studentDoc.data();
+            
+            // 2. Xóa khỏi tất cả lớp
+            let classIds = [];
+            if (studentData.classIds && Array.isArray(studentData.classIds)) {
+                classIds = studentData.classIds;
+            } else if (studentData.classId) {
+                classIds = [studentData.classId];
+            }
+            
+            for (const classId of classIds) {
+                const classDoc = await getDoc(doc(db, 'classes', classId));
+                if (classDoc.exists()) {
+                    const students = classDoc.data().students || [];
+                    await updateDoc(doc(db, 'classes', classId), {
+                        students: students.filter(id => id !== studentId)
+                    });
+                }
+            }
+            
+            // 3. Xóa tất cả results
+            const resultsRef = collection(db, 'results');
+            const qResults = query(resultsRef, where('studentId', '==', studentId));
+            const resultsSnap = await getDocs(qResults);
+            
+            for (const resultDoc of resultsSnap.docs) {
+                await deleteDoc(resultDoc.ref);
+            }
+            
+            // 4. Xóa personalWords
+            const wordsRef = collection(db, 'personalWords');
+            const qWords = query(wordsRef, where('studentId', '==', studentId));
+            const wordsSnap = await getDocs(qWords);
+            
+            for (const wordDoc of wordsSnap.docs) {
+                await deleteDoc(wordDoc.ref);
+            }
+            
+            // 5. Xóa student
+            await deleteDoc(doc(db, 'students', studentId));
+            
+            successCount++;
+        } catch (error) {
+            failCount++;
+            errors.push(`${studentId}: ${error.message}`);
+            console.error('Lỗi xóa:', error);
+        }
+    }
+    
+    showLoading(false);
+    
+    let message = `✅ Đã xóa ${successCount}/${studentIds.length} học sinh`;
+    if (failCount > 0) {
+        message += `\n\n❌ Thất bại: ${failCount}`;
+        if (errors.length > 0) {
+            message += `\n\nChi tiết lỗi:\n${errors.slice(0, 5).join('\n')}`;
+            if (errors.length > 5) {
+                message += `\n... và ${errors.length - 5} lỗi khác`;
+            }
+        }
+    }
+    
+    alert(message);
+    adminManageStudents();
+}
 </script>
 </body>
 </html>
-
 
 
 
