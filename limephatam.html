@@ -1583,61 +1583,62 @@ window.saveNewStudentAdmin = async function() {
 window.editStudentAdmin = async function(studentId) {
     showLoading(true);
     try {
+        // ✅ 1. LẤY THÔNG TIN HỌC SINH
         const studentDoc = await getDoc(doc(db, 'students', studentId));
         const student = studentDoc.data();
-        // Lấy danh sách lớp hiện tại của học sinh
-let currentClassIds = [];
-if (student.classIds && Array.isArray(student.classIds)) {
-    currentClassIds = student.classIds;
-} else if (student.classId) {
-    currentClassIds = [student.classId];
-}
-
-// Tạo checkbox cho từng lớp
-let classCheckboxes = '';
-classesSnap.forEach(doc => {
-    const isChecked = currentClassIds.includes(doc.id);
-    classCheckboxes += `
-        <label class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer border ${isChecked ? 'border-green-400 bg-green-50' : 'border-gray-200'}">
-            <input type="checkbox" 
-                   class="w-5 h-5 edit-class-checkbox" 
-                   value="${doc.id}"
-                   ${isChecked ? 'checked' : ''}>
-            <span class="font-semibold">${doc.data().name}</span>
-            <span class="text-sm text-gray-600">(${doc.data().students?.length || 0} HS)</span>
-        </label>
-    `;
-});
-        // Lấy danh sách lớp
+        
+        // ✅ 2. LẤY DANH SÁCH TẤT CẢ LỚP
         const classesSnap = await getDocs(collection(db, 'classes'));
-        let classOptions = '';
+        
+        // ✅ 3. LẤY DANH SÁCH LỚP HIỆN TẠI CỦA HỌC SINH
+        let currentClassIds = [];
+        if (student.classIds && Array.isArray(student.classIds)) {
+            currentClassIds = student.classIds;
+        } else if (student.classId) {
+            currentClassIds = [student.classId];
+        }
+        
+        // ✅ 4. TẠO CHECKBOX CHO TỪNG LỚP
+        let classCheckboxes = '';
         classesSnap.forEach(doc => {
-            const selected = doc.id === student.classId ? 'selected' : '';
-            classOptions += `<option value="${doc.id}" ${selected}>${doc.data().name}</option>`;
+            const isChecked = currentClassIds.includes(doc.id);
+            classCheckboxes += `
+                <label class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer border ${isChecked ? 'border-green-400 bg-green-50' : 'border-gray-200'}">
+                    <input type="checkbox" 
+                           class="w-5 h-5 edit-class-checkbox" 
+                           value="${doc.id}"
+                           ${isChecked ? 'checked' : ''}>
+                    <span class="font-semibold">${doc.data().name}</span>
+                    <span class="text-sm text-gray-600">(${doc.data().students?.length || 0} HS)</span>
+                </label>
+            `;
         });
         
+        // ✅ 5. HIỂN THị FORM
         document.getElementById('studentFormArea').innerHTML = `
             <div class="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-6 mb-4">
                 <h3 class="font-bold text-lg mb-4">✏️ Sửa thông tin học sinh</h3>
-              <div class="grid md:grid-cols-2 gap-4">
-    <div>
-        <label class="block text-sm font-semibold mb-1">Họ tên</label>
-        <input type="text" id="editStudentName" value="${student.name}" class="w-full p-3 border rounded-lg">
-    </div>
-    <div>
-        <label class="block text-sm font-semibold mb-1">Mã học sinh</label>
-        <input type="text" id="editStudentCode" value="${student.code}" class="w-full p-3 border rounded-lg" disabled>
-    </div>
-</div>
-
-<!-- PHẦN MỚI: CHỌN NHIỀU LỚP -->
-<div class="mt-4">
-    <label class="block text-sm font-semibold mb-2">📚 Chọn lớp học (có thể chọn nhiều lớp)</label>
-    <div id="editStudentClasses" class="space-y-2 max-h-60 overflow-y-auto border-2 border-gray-200 rounded-lg p-3">
-        ${classCheckboxes}
-    </div>
-    <p class="text-xs text-gray-600 mt-2">💡 Tick vào các lớp mà học sinh này tham gia</p>
-</div>
+                
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Họ tên</label>
+                        <input type="text" id="editStudentName" value="${student.name}" class="w-full p-3 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Mã học sinh</label>
+                        <input type="text" id="editStudentCode" value="${student.code}" class="w-full p-3 border rounded-lg" disabled>
+                    </div>
+                </div>
+                
+                <!-- PHẦN CHỌN NHIỀU LỚP -->
+                <div class="mt-4">
+                    <label class="block text-sm font-semibold mb-2">📚 Chọn lớp học (có thể chọn nhiều lớp)</label>
+                    <div id="editStudentClasses" class="space-y-2 max-h-60 overflow-y-auto border-2 border-gray-200 rounded-lg p-3">
+                        ${classCheckboxes}
+                    </div>
+                    <p class="text-xs text-gray-600 mt-2">💡 Tick vào các lớp mà học sinh này tham gia</p>
+                </div>
+                
                 <div class="flex gap-2 mt-4">
                     <button onclick="saveEditStudentAdmin('${studentId}')" class="bg-yellow-500 text-white px-6 py-2 rounded-lg font-semibold">
                         💾 Lưu thay đổi
@@ -5392,6 +5393,7 @@ window.deleteSelectedStudents = async function() {
 </script>
 </body>
 </html>
+
 
 
 
